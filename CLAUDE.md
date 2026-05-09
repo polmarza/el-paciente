@@ -3,6 +3,23 @@
 Archivo de referencia para cualquier agente de codificación que trabaje en este proyecto.
 Lee este archivo completo antes de hacer cualquier cambio.
 
+## Estado del proyecto y arranque
+
+Antes de hacer cualquier cosa, comprueba el estado del repositorio:
+
+1. Lee `docs/prd.md`, `docs/architecture.md` y `docs/business.md`
+2. Si los tres están vacíos (solo tienen comentarios, sin contenido real):
+   - No escribas código
+   - No rellenes nada todavía
+   - Empieza con esta pregunta: "¿Qué quieres construir y para quién?"
+   - A partir de la respuesta, haz las preguntas necesarias para completar 
+     los documentos de docs/ en este orden: prd.md → business.md → 
+     design-system.md → architecture.md → data-model.md → roadmap.md
+   - Confirma con el usuario antes de pasar al siguiente documento
+   - Cuando todos estén rellenos, pregunta: "¿Empezamos a construir?"
+
+3. Si los documentos ya tienen contenido: lee todo antes de actuar.
+
 ---
 
 ## Descripción del proyecto
