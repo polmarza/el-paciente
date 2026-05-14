@@ -43,14 +43,14 @@ git clone [url-del-repo]
 cd [nombre-del-proyecto]
 
 # Instalar dependencias
-npm install
+pnpm install
 
 # Configurar variables de entorno
 cp .env.example .env.local
 # Edita .env.local con tus valores
 
 # Iniciar en modo desarrollo
-npm run dev
+pnpm dev
 ```
 
 <!-- Añade pasos adicionales si son necesarios: migraciones de base de datos, seed, etc. -->

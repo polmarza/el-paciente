@@ -68,16 +68,16 @@
 
 ```bash
 # Todos los tests
-npm run test
+pnpm test
 
 # Modo watch
-npm run test:watch
+pnpm test:watch
 
 # Con cobertura
-npm run test:coverage
+pnpm test:coverage
 
 # E2E
-npm run test:e2e
+pnpm test:e2e
 ```
 
 <!-- Ajusta los comandos al stack elegido una vez relleno architecture.md. -->

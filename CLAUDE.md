@@ -91,6 +91,7 @@ Si un archivo de `docs/` no existe todavía, pregunta antes de asumir.
      - No usar `console.log` en producción.
      - Comentarios en español. -->
 
+- Gestor de paquetes: pnpm v11. No usar npm ni yarn.
 - Idioma de comentarios y variables: <!-- español / inglés -->
 - Nombrado de componentes: <!-- PascalCase -->
 - Nombrado de archivos: <!-- kebab-case -->
@@ -107,6 +108,7 @@ Si un archivo de `docs/` no existe todavía, pregunta antes de asumir.
      - No crear componentes nuevos sin consultar docs/design-system.md primero.
      - No hacer fetch directo a APIs externas desde componentes; usar server actions o route handlers. -->
 
+- No usar `npm` ni `yarn`. Siempre `pnpm` (v11).
 - <!-- ... -->
 
 ---
