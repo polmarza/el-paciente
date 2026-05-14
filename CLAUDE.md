@@ -7,18 +7,18 @@ Lee este archivo completo antes de hacer cualquier cambio.
 
 Antes de hacer cualquier cosa, comprueba el estado del repositorio:
 
-1. Lee `docs/prd.md`, `docs/architecture.md` y `docs/business.md`
-2. Si los tres están vacíos (solo tienen comentarios, sin contenido real):
+1. Lee todos los archivos de `docs/`
+2. Si los documentos están vacíos o incompletos (solo tienen comentarios, sin contenido real):
    - No escribas código
    - No rellenes nada todavía
    - Empieza con esta pregunta: "¿Qué quieres construir y para quién?"
    - A partir de la respuesta, haz las preguntas necesarias para completar 
      los documentos de docs/ en este orden: prd.md → business.md → 
-     design-system.md → architecture.md → data-model.md → roadmap.md
+     design-system.md → architecture.md → data-model.md → roadmap.md → user-flows.md
    - Confirma con el usuario antes de pasar al siguiente documento
    - Cuando todos estén rellenos, pregunta: "¿Empezamos a construir?"
 
-3. Si los documentos ya tienen contenido: lee todo antes de actuar.
+3. Si los documentos ya tienen contenido: lee todo lo que haya en `docs/` antes de actuar.
 
 ---
 
@@ -38,14 +38,8 @@ Antes de hacer cualquier cosa, comprueba el estado del repositorio:
 
 ## Documentación de referencia
 
-Lee estos archivos en este orden antes de empezar a trabajar:
-
-1. `docs/prd.md` — Qué construimos y por qué. Fuente de verdad sobre funcionalidades.
-2. `docs/architecture.md` — Stack, estructura de carpetas, decisiones técnicas.
-3. `docs/data-model.md` — Esquema de base de datos, relaciones, políticas RLS.
-4. `docs/design-system.md` — Colores, tipografía, componentes, tono visual.
-5. `docs/business.md` — Modelo de negocio, métricas, contexto comercial.
-6. `docs/roadmap.md` — Qué está en scope ahora y qué no.
+Lee todo lo que haya en `docs/` antes de empezar a trabajar. Si algún archivo está vacío
+(solo tiene comentarios) o incompleto, pregunta al usuario para rellenarlo antes de actuar.
 
 Si un archivo de `docs/` no existe todavía, pregunta antes de asumir.
 
@@ -123,6 +117,8 @@ Cada vez que hagas un cambio importante en el proyecto, debes:
 
 ### 1. Crear entrada en changelog/
 
+Usa `/changelog` para crear la entrada siguiendo el formato del proyecto.
+
 **Nombre del archivo:** `YYYY-MM-DD_HH-MM_descripcion-breve.md`
 
 **Contenido mínimo:**
@@ -158,11 +154,18 @@ Ejemplos:
 
 Si el cambio afecta cómo se instala, inicializa o usa el proyecto, actualizar `README.md`.
 
+### 4. Revisión de seguridad
+
+Antes de mergear a producción, o cuando el usuario lo pida, ejecuta `/security-review`.
+Analiza los cambios en busca de vulnerabilidades, credenciales expuestas y problemas de seguridad.
+
 ---
 
 ## Registro de mejoras pendientes
 
 Las ideas de mejora que no entran en el sprint actual se anotan en `mejoras/`.
+
+Usa `/mejora` para añadir una entrada al backlog sin interrumpir el flujo de trabajo.
 
 **Formato sugerido:** un archivo Markdown por área temática o un único `mejoras/backlog.md`.
 **Contenido mínimo por idea:** título, descripción breve, motivación, prioridad estimada.

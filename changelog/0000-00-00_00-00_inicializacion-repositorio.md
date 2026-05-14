@@ -1,6 +1,9 @@
 # Inicialización del repositorio
 
-**Fecha:** <!-- YYYY-MM-DD HH:MM -->
+<!-- Al usar este template por primera vez, renombra este archivo con la fecha real
+     (ej: 2025-01-15_10-30_inicializacion-repositorio.md) y rellena la fecha abajo. -->
+
+**Fecha:** <!-- YYYY-MM-DD HH:MM (reemplaza con la fecha real al usar el template) -->
 **Tipo:** Configuración
 
 ## Qué se hizo
