@@ -128,7 +128,7 @@ Usa `/changelog` para crear la entrada siguiendo el formato del proyecto.
 # [Descripción breve del cambio]
 
 **Fecha:** YYYY-MM-DD HH:MM
-**Tipo:** Feature / Fix / Refactor / Migración / Configuración
+**Tipo:** Feature / Fix / Refactor / Migración / Documentación / Configuración
 
 ## Qué se hizo
 [Descripción de lo que se implementó o modificó]
@@ -160,6 +160,21 @@ Si el cambio afecta cómo se instala, inicializa o usa el proyecto, actualizar `
 
 Antes de mergear a producción, o cuando el usuario lo pida, ejecuta `/security-review`.
 Analiza los cambios en busca de vulnerabilidades, credenciales expuestas y problemas de seguridad.
+
+---
+
+## Protocolo de pull requests
+
+Cuando el cambio vaya a un pull request, GitHub rellena automáticamente la descripción con la plantilla de `.github/pull_request_template.md`. Antes de dar el trabajo por cerrado:
+
+1. Rellena las secciones `¿Qué se hizo?` y `Motivación` con el contexto real del cambio (no dejarlo en blanco ni con el placeholder).
+2. Marca con `[x]` la casilla correcta en `Tipo de cambio`. Usa las mismas categorías que el changelog: Feature, Fix, Refactor, Migración, Documentación o Configuración.
+3. Repasa el checklist y marca con `[x]` **solo lo que hayas verificado de verdad**. Si no has hecho algo, déjalo sin marcar.
+4. Si un punto del checklist no aplica (por ejemplo, no hay nada que probar en local para un cambio puramente de markdown), indícalo explícitamente en la descripción del PR en lugar de marcarlo a ciegas o dejarlo en silencio.
+
+El checklist no es burocracia: es el último filtro para que documentación, changelog, pruebas y revisión de seguridad no se queden a medias cuando hay prisa por mergear.
+
+Si el PR lo abre el agente directamente, debe rellenar la plantilla completa antes de enviarlo. Si lo abre una persona, el agente debe haber verificado los puntos del checklist antes de cerrar la sesión y reportar el resultado.
 
 ---
 
