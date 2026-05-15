@@ -5,10 +5,12 @@
 <!-- Por qué es necesario este cambio -->
 
 ## Tipo de cambio
-- [ ] Feature nueva
-- [ ] Bug fix
+- [ ] Feature
+- [ ] Fix
 - [ ] Refactor
-- [ ] Documentación / configuración
+- [ ] Migración
+- [ ] Documentación
+- [ ] Configuración
 
 ## Checklist
 - [ ] Los documentos afectados en `docs/` están actualizados
