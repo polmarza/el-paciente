@@ -165,7 +165,15 @@ Analiza los cambios en busca de vulnerabilidades, credenciales expuestas y probl
 
 ## Protocolo de pull requests
 
-Cuando el cambio vaya a un pull request, GitHub rellena automáticamente la descripción con la plantilla de `.github/pull_request_template.md`. Antes de dar el trabajo por cerrado:
+**El agente es quien debe crear los PRs**, no el usuario. Así la plantilla llega rellena y el checklist verificado. Para abrir un PR, dile al agente:
+
+> "Abre un PR con estos cambios" o usa `/autopilot` para el flujo completo.
+
+Si por algún motivo abres el PR manualmente desde GitHub, tendrás que rellenar la plantilla a mano — es el comportamiento esperado de GitHub, no un error del flujo.
+
+---
+
+Cuando el agente crea un PR, debe rellenar la plantilla de `.github/pull_request_template.md` completa antes de enviarlo:
 
 1. Rellena las secciones `¿Qué se hizo?` y `Motivación` con el contexto real del cambio (no dejarlo en blanco ni con el placeholder).
 2. Marca con `[x]` la casilla correcta en `Tipo de cambio`. Usa las mismas categorías que el changelog: Feature, Fix, Refactor, Migración, Documentación o Configuración.
@@ -173,8 +181,6 @@ Cuando el cambio vaya a un pull request, GitHub rellena automáticamente la desc
 4. Si un punto del checklist no aplica (por ejemplo, no hay nada que probar en local para un cambio puramente de markdown), indícalo explícitamente en la descripción del PR en lugar de marcarlo a ciegas o dejarlo en silencio.
 
 El checklist no es burocracia: es el último filtro para que documentación, changelog, pruebas y revisión de seguridad no se queden a medias cuando hay prisa por mergear.
-
-Si el PR lo abre el agente directamente, debe rellenar la plantilla completa antes de enviarlo. Si lo abre una persona, el agente debe haber verificado los puntos del checklist antes de cerrar la sesión y reportar el resultado.
 
 ---
 

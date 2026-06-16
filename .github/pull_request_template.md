@@ -1,3 +1,6 @@
+<!-- 💡 Si usas el agente (Claude Code), pídele que abra el PR — él rellena esta plantilla automáticamente.
+     Si lo abres tú manualmente desde GitHub, rellena los campos a continuación. -->
+
 ## ¿Qué se hizo?
 <!-- Describe el cambio en una o dos frases -->
 
