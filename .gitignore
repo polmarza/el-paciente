@@ -37,6 +37,10 @@ coverage/
 *.swp
 *.swo
 
+# Claude Code
+# Nota: .mcp.json SÍ se commitea (las claves van como ${VARIABLE}, nunca el valor real).
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db

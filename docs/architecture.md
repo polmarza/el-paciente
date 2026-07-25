@@ -84,6 +84,33 @@ graph TD
 
 ---
 
+## MCPs del proyecto
+
+<!-- Servidores MCP configurados para trabajar con este proyecto desde el agente de código.
+     Rellenar al configurarlos (ver "Protocolo de MCPs" en CLAUDE.md o el comando /mcp-setup).
+
+     Alcances posibles:
+     - user     → global del usuario, no vive en el repo
+     - project  → definido en .mcp.json, commiteado, lo hereda el equipo
+     - local    → solo para ese usuario y solo en este proyecto
+
+     Ejemplo:
+     | Servidor | Alcance | Para qué se usa | Variables necesarias |
+     |----------|---------|-----------------|----------------------|
+     | supabase | project | Consultar esquema y aplicar migraciones sin salir del editor | SUPABASE_ACCESS_TOKEN |
+     | resend   | project | Enviar emails de prueba y revisar entregas | RESEND_API_KEY |
+     | sentry   | user    | Revisar errores de producción | — (OAuth vía /mcp) |
+-->
+
+| Servidor | Alcance | Para qué se usa | Variables necesarias |
+|----------|---------|-----------------|----------------------|
+| <!-- --> | <!-- --> | <!-- --> | <!-- --> |
+
+<!-- Recordatorio: las claves reales nunca van en .mcp.json. Se referencian como ${VARIABLE}
+     y el valor vive en .env.local o en el entorno del shell. -->
+
+---
+
 ## Estrategia de despliegue
 
 <!-- Describe el flujo desde desarrollo hasta producción.
