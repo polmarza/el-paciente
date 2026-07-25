@@ -26,14 +26,17 @@ Ejecuta el checklist de "Inicialización del proyecto" de `CLAUDE.md`:
    referencias a la plantilla.
 2. `CLAUDE.md` — rellena nombre, descripción, estado, stack, estructura de carpetas, convenciones
    y "Qué NO hacer". Borra los comentarios que ya no apliquen y la sección de inicialización del
-   proyecto (ya no hace falta) junto con la referencia a este comando.
+   proyecto (ya no hace falta) junto con la referencia a este comando. **El "Protocolo de MCPs" se
+   queda**: sigue aplicando cada vez que entre una integración nueva.
 3. `LICENSE` — sustituye `[YEAR]` y `[AUTHOR]`.
 4. `.env.example` — deja solo las variables del stack real.
-5. `mejoras/backlog.md` — borra el ejemplo comentado.
-6. `.template/` — bórrala (`rm -rf .template`).
-7. `changelog/` — crea la primera entrada real del proyecto (tipo: Configuración) con `/changelog`
+5. MCPs — pregunta qué servidores MCP quiere y con qué alcance, siguiendo el "Protocolo de MCPs"
+   de `CLAUDE.md`. Si prefieres tratarlo aparte, lanza `/mcp-setup`.
+6. `mejoras/backlog.md` — borra el ejemplo comentado.
+7. `.template/` — bórrala (`rm -rf .template`).
+8. `changelog/` — crea la primera entrada real del proyecto (tipo: Configuración) con `/changelog`
    y limpia de `changelog/README.md` la referencia a la plantilla.
-8. Verifica que no queden restos:
+9. Verifica que no queden restos:
    `grep -ril "plantilla\|template" . --exclude-dir=.git --exclude-dir=node_modules`
 
 ## Al terminar

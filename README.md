@@ -23,7 +23,7 @@ Es agnóstica al stack. El protocolo funciona igual con Next.js, Astro, FastAPI 
 
 ## ¿Qué hay dentro?
 
-- **`CLAUDE.md`** — Contrato de entrada para el agente. Define qué leer, cómo registrar cambios, qué no hacer y cuándo ejecutar revisiones de seguridad.
+- **`CLAUDE.md`** — Contrato de entrada para el agente. Define qué leer, cómo registrar cambios, cómo configurar los MCPs del stack, qué no hacer y cuándo ejecutar revisiones de seguridad.
 - **`docs/`** — Ocho archivos vivos que capturan las decisiones que típicamente se pierden entre conversaciones: producto, arquitectura, modelo de datos, design system, business, roadmap, flujos de usuario y testing.
 - **`changelog/`** — Registro estructurado de cada cambio importante: qué, cuándo y por qué. **Llega vacío**: solo con el archivo que explica el formato.
 - **`mejoras/`** — Backlog de ideas que no entran en el sprint actual pero no se quieren perder.
@@ -39,8 +39,9 @@ Es agnóstica al stack. El protocolo funciona igual con Next.js, Astro, FastAPI 
 1. **Cualquier sesión empieza leyendo `docs/`.** Si están vacíos o incompletos, el agente pregunta antes de actuar.
 2. **Cada cambio importante deja registro en `changelog/`** con qué se hizo, qué se modificó y por qué.
 3. **Si el cambio afecta a algo documentado, se actualiza el doc en la misma sesión.** No hay documentación desincronizada.
-4. **Antes de mergear a producción**, se ejecuta `/security-review` para detectar vulnerabilidades, credenciales filtradas y problemas comunes.
-5. **Las ideas que no entran ahora se anotan en `mejoras/`** sin interrumpir el flujo actual.
+4. **Con el stack ya decidido, el agente pregunta qué MCPs quieres** y con qué alcance: los globales que ya tengas, o servidores configurados a nivel de proyecto en `.mcp.json`. No instala nada por su cuenta ni antes de que haya stack.
+5. **Antes de mergear a producción**, se ejecuta `/security-review` para detectar vulnerabilidades, credenciales filtradas y problemas comunes.
+6. **Las ideas que no entran ahora se anotan en `mejoras/`** sin interrumpir el flujo actual.
 
 ---
 

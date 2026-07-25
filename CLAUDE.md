@@ -46,17 +46,20 @@ Puedes lanzar el proceso completo con `/init-proyecto`.
    estado, stack tecnológico, estructura de carpetas, convenciones de código y "Qué NO hacer".
    Borra los comentarios `<!-- ... -->` que ya no apliquen, esta sección de inicialización
    (deja de tener sentido una vez hecha), el comando `.claude/commands/init-proyecto.md` y las
-   referencias a `.template/` del arranque y del protocolo de changelog.
+   referencias a `.template/` del arranque y del protocolo de changelog. El "Protocolo de MCPs"
+   se queda: sigue aplicando cada vez que entre una integración nueva.
 3. **`LICENSE`** — sustituye `[YEAR]` y `[AUTHOR]` por los valores reales. Pregunta el nombre
    del autor si no lo sabes.
 4. **`.env.example`** — deja solo las variables que el stack elegido necesita de verdad.
-5. **`changelog/`** — debe quedar sin entradas heredadas. Crea la primera entrada real del
+5. **MCPs** — con el stack ya decidido, pregunta al usuario qué servidores MCP quiere y con qué
+   alcance, siguiendo el "Protocolo de MCPs" (o lanza `/mcp-setup`).
+6. **`changelog/`** — debe quedar sin entradas heredadas. Crea la primera entrada real del
    proyecto (tipo: Configuración) describiendo la inicialización, y quita de
    `changelog/README.md` la referencia a la plantilla (o borra el archivo).
-6. **`mejoras/backlog.md`** — borra el ejemplo comentado y déjalo listo para entradas reales.
-7. **`.template/`** — bórrala entera (`rm -rf .template`). Es el historial de la plantilla, no
+7. **`mejoras/backlog.md`** — borra el ejemplo comentado y déjalo listo para entradas reales.
+8. **`.template/`** — bórrala entera (`rm -rf .template`). Es el historial de la plantilla, no
    del proyecto.
-8. **Verificación final** — busca referencias sobrantes:
+9. **Verificación final** — busca referencias sobrantes:
    `grep -ril "plantilla\|template" . --exclude-dir=.git --exclude-dir=node_modules`.
    Revisa cada resultado y corrígelo si habla de la plantilla en lugar del proyecto.
 
@@ -64,6 +67,88 @@ Puedes lanzar el proceso completo con `/init-proyecto`.
 mismo como plantilla ni explicar cómo usar la plantilla. Toda la documentación habla del
 producto que se está construyendo. Si más adelante encuentras un resto de la plantilla en
 cualquier archivo, corrígelo en esa misma sesión.
+
+---
+
+## Protocolo de MCPs
+
+Muchos servicios del stack (Supabase, Resend, Stripe, Vercel, Sentry, Figma, Linear…) publican un
+servidor MCP que te deja operarlos directamente en vez de trabajar a ciegas. Configurarlos es
+decisión del usuario, no tuya: **pregunta, no instales por tu cuenta**.
+
+### Cuándo preguntar
+
+- Al terminar `docs/architecture.md`, cuando el stack ya está decidido (forma parte de la
+  inicialización del proyecto).
+- Cada vez que se añada una integración nueva al stack más adelante.
+
+Fuera de esos dos momentos, no saques el tema.
+
+### Cómo preguntar
+
+1. **Mira qué hay ya configurado** con `claude mcp list` antes de proponer nada. Si un servidor
+   del stack ya está disponible a nivel global, dilo y no propongas duplicarlo.
+2. **Averigua qué existe de verdad.** Si no sabes con certeza si un servicio tiene servidor MCP,
+   cómo se llama el paquete, qué transporte usa o qué credenciales pide, **búscalo en la
+   documentación oficial del servicio antes de proponerlo**. No inventes comandos ni nombres de
+   variables: un `claude mcp add` mal copiado deja el proyecto con un servidor que no arranca.
+3. **Propón una lista corta** de servicios del stack que tengan MCP y pregunta, para cada uno,
+   con qué alcance lo quiere:
+
+   | Alcance | Dónde vive | Quién lo ve | Cuándo usarlo |
+   |---------|-----------|-------------|---------------|
+   | **Global (`user`)** | `~/.claude.json` | Solo el usuario, en todos sus proyectos | Ya lo tiene configurado o lo usa en todas partes. No se toca nada del repo |
+   | **Proyecto (`project`)** | `.mcp.json`, commiteado | Todo el equipo | Recomendado: el servidor forma parte del proyecto y el equipo lo hereda |
+   | **Local (`local`)** | `~/.claude.json`, bajo la ruta del proyecto | Solo el usuario, solo aquí | Pruebas o credenciales que no quiere ni referenciadas en el repo |
+
+   Si el mismo servidor está definido en varios sitios, gana el de mayor precedencia:
+   local → proyecto → usuario. Avísale si eso puede pisar algo que ya tenga.
+
+4. **Pide las credenciales una a una, por su nombre exacto** (`RESEND_API_KEY`,
+   `SUPABASE_ACCESS_TOKEN`…) y solo las del servidor que se vaya a configurar. Muchos servidores
+   remotos usan OAuth y no piden clave: en ese caso añádelos y dile que ejecute `/mcp` para
+   autenticarse.
+
+### Cómo configurarlo
+
+Alcance de proyecto:
+
+```bash
+# Servidor remoto (HTTP)
+claude mcp add --transport http <nombre> --scope project <url>
+
+# Servidor local (stdio). Todo lo que va después de `--` se pasa tal cual al servidor
+claude mcp add --transport stdio <nombre> --scope project -- npx -y <paquete> <flags>
+```
+
+`.mcp.json` admite expansión de variables de entorno en `command`, `args`, `env`, `url` y
+`headers`, con la sintaxis `${VAR}` o `${VAR:-valor-por-defecto}`:
+
+```json
+{
+  "mcpServers": {
+    "ejemplo": {
+      "type": "http",
+      "url": "https://mcp.ejemplo.com/mcp",
+      "headers": { "Authorization": "Bearer ${EJEMPLO_API_KEY}" }
+    }
+  }
+}
+```
+
+**La clave real nunca se escribe en `.mcp.json`.** El archivo se commitea: va la referencia
+`${VAR}`, y el valor vive en `.env.local` (ignorado por git) o en el entorno del shell. Añade
+siempre la variable a `.env.example`, vacía, para que el resto del equipo sepa que hace falta.
+
+Los servidores de alcance de proyecto piden aprobación la primera vez que alguien abre el repo:
+es el comportamiento esperado, no un fallo.
+
+### Después de configurar
+
+- Verifica que el servidor arranca (`claude mcp list`).
+- Documenta el MCP en `docs/architecture.md` → sección "MCPs del proyecto": para qué se usa, con
+  qué alcance y qué variables necesita.
+- Registra el cambio en `changelog/` como Configuración.
 
 ---
 
@@ -154,6 +239,9 @@ Si un archivo de `docs/` no existe todavía, pregunta antes de asumir.
      - No hacer fetch directo a APIs externas desde componentes; usar server actions o route handlers. -->
 
 - No usar `npm` ni `yarn`. Siempre `pnpm` (v11).
+- No escribir claves ni tokens reales en `.mcp.json`: el archivo se commitea. Usa `${VARIABLE}` y
+  guarda el valor en `.env.local` o en el entorno del shell.
+- No instalar servidores MCP por tu cuenta: pregunta antes, según el "Protocolo de MCPs".
 - <!-- ... -->
 
 ---
@@ -200,6 +288,7 @@ Ejemplos:
 - Nuevo componente o patrón visual → actualizar `docs/design-system.md`
 - Cambio en la arquitectura de carpetas → actualizar `docs/architecture.md`
 - Nueva funcionalidad en scope → actualizar `docs/prd.md` y `docs/roadmap.md`
+- Nuevo servidor MCP configurado → actualizar `docs/architecture.md` (sección "MCPs del proyecto")
 
 ### 3. Actualizar README.md si aplica
 
