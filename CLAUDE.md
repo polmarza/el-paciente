@@ -8,7 +8,9 @@ Lee este archivo completo antes de hacer cualquier cambio.
 Antes de hacer cualquier cosa, comprueba el estado del repositorio:
 
 1. Lee todos los archivos de `docs/`
-2. Si los documentos están vacíos o incompletos (solo tienen comentarios, sin contenido real):
+2. Comprueba si existe la carpeta `.template/`. Si existe, este repo sigue siendo la plantilla
+   sin inicializar: hay andamiaje, todavía no hay proyecto.
+3. Si los documentos están vacíos o incompletos (solo tienen comentarios, sin contenido real):
    - No escribas código
    - No rellenes nada todavía
    - Empieza con esta pregunta: "¿Qué quieres construir y para quién?"
@@ -16,9 +18,52 @@ Antes de hacer cualquier cosa, comprueba el estado del repositorio:
      los documentos de docs/ en este orden: prd.md → business.md → 
      design-system.md → architecture.md → data-model.md → roadmap.md → user-flows.md
    - Confirma con el usuario antes de pasar al siguiente documento
-   - Cuando todos estén rellenos, pregunta: "¿Empezamos a construir?"
+   - Cuando todos estén rellenos, ejecuta la **inicialización del proyecto** (sección
+     siguiente) y solo después pregunta: "¿Empezamos a construir?"
 
-3. Si los documentos ya tienen contenido: lee todo lo que haya en `docs/` antes de actuar.
+4. Si los documentos ya tienen contenido: lee todo lo que haya en `docs/` antes de actuar.
+   Si además `.template/` sigue existiendo, la inicialización quedó a medias: avisa al usuario
+   y ofrécete a completarla antes de seguir.
+
+---
+
+## Inicialización del proyecto (una sola vez)
+
+Esta plantilla se distribuye con documentación que habla **de la plantilla**, no del proyecto.
+En cuanto los documentos de `docs/` estén rellenos, conviértela en el repo de *este* proyecto.
+Hazlo por iniciativa propia, sin esperar a que el usuario lo pida.
+
+Puedes lanzar el proceso completo con `/init-proyecto`.
+
+**Checklist de inicialización:**
+
+1. **`README.md`** — reescríbelo entero para el proyecto, a partir de lo que hay en `docs/`.
+   Debe explicar el producto, no la plantilla. Estructura sugerida: nombre y descripción de
+   una línea, qué problema resuelve, requisitos previos, variables de entorno (referencia a
+   `.env.example`), instalación y desarrollo (`pnpm install`, `pnpm dev`), estructura de
+   carpetas, cómo contribuir (referencia a `CLAUDE.md` y al protocolo) y estado del proyecto.
+2. **`CLAUDE.md`** — rellena los placeholders de este mismo archivo: nombre, descripción,
+   estado, stack tecnológico, estructura de carpetas, convenciones de código y "Qué NO hacer".
+   Borra los comentarios `<!-- ... -->` que ya no apliquen, esta sección de inicialización
+   (deja de tener sentido una vez hecha), el comando `.claude/commands/init-proyecto.md` y las
+   referencias a `.template/` del arranque y del protocolo de changelog.
+3. **`LICENSE`** — sustituye `[YEAR]` y `[AUTHOR]` por los valores reales. Pregunta el nombre
+   del autor si no lo sabes.
+4. **`.env.example`** — deja solo las variables que el stack elegido necesita de verdad.
+5. **`changelog/`** — debe quedar sin entradas heredadas. Crea la primera entrada real del
+   proyecto (tipo: Configuración) describiendo la inicialización, y quita de
+   `changelog/README.md` la referencia a la plantilla (o borra el archivo).
+6. **`mejoras/backlog.md`** — borra el ejemplo comentado y déjalo listo para entradas reales.
+7. **`.template/`** — bórrala entera (`rm -rf .template`). Es el historial de la plantilla, no
+   del proyecto.
+8. **Verificación final** — busca referencias sobrantes:
+   `grep -ril "plantilla\|template" . --exclude-dir=.git --exclude-dir=node_modules`.
+   Revisa cada resultado y corrígelo si habla de la plantilla en lugar del proyecto.
+
+**Regla general:** después de la inicialización, ningún archivo del repo debe describirse a sí
+mismo como plantilla ni explicar cómo usar la plantilla. Toda la documentación habla del
+producto que se está construyendo. Si más adelante encuentras un resto de la plantilla en
+cualquier archivo, corrígelo en esa misma sesión.
 
 ---
 
@@ -142,6 +187,10 @@ Usa `/changelog` para crear la entrada siguiendo el formato del proyecto.
 
 Si la carpeta `changelog/` no existe, créala antes de escribir el archivo.
 
+Mientras el repo siga siendo la plantilla sin inicializar (existe `.template/`), los cambios
+sobre el andamiaje se registran en `.template/changelog/`, no en `changelog/`. Así quien use la
+plantilla arranca con el changelog limpio.
+
 ### 2. Actualizar la documentación afectada
 
 Si el cambio afecta algo que está documentado en `docs/`, actualiza ese archivo en la misma sesión. No dejes documentación desincronizada.
@@ -155,6 +204,9 @@ Ejemplos:
 ### 3. Actualizar README.md si aplica
 
 Si el cambio afecta cómo se instala, inicializa o usa el proyecto, actualizar `README.md`.
+
+El `README.md` describe siempre el proyecto en su estado actual. Si encuentras en él (o en
+cualquier doc) restos de la plantilla, reescríbelos en esta misma sesión.
 
 ### 4. Revisión de seguridad
 
