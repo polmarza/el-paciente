@@ -1,5 +1,7 @@
 # EL PACIENTE
 
+> Un escape room en el que tienes que descubrir qué esconde el paciente.
+
 **Una IA con el cerebro abierto.** Chatea en público mientras su memoria y su identidad
 —siete campos de texto— están expuestas en un panel que cualquiera puede reescribir en vivo.
 Cada edición se inyecta al instante en su system prompt, y ella ve el historial de quién la
