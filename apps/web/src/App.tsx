@@ -140,34 +140,47 @@ export default function App() {
   const [heldEnd, setHeldEnd] = useState<BrainRoundEnd | null>(null);
   const [dismissedKey, setDismissedKey] = useState<string | null>(null);
 
-  useEffect(() => {
-    const incoming = brain.roundEnd;
-    if (!incoming) return;
-    setHeldEnd((current) => (endKey(current) === endKey(incoming) ? current : incoming));
-  }, [brain.roundEnd]);
-
-  const showOverlay = heldEnd !== null && endKey(heldEnd) !== dismissedKey;
-
   // El hueco entre confirmar "nueva partida" y que pase algo en pantalla: la petición
   // va y vuelve por Portal hasta el agente. Se cierra en cuanto llega el desenlace (éxito)
   // o, si el agente la rechaza y nunca llega uno, con un techo corto — el rechazo se ve
   // igual en el chat, como aviso del sistema.
   const [requestingNewGame, setRequestingNewGame] = useState(false);
+  /**
+   * Si el relevo lo has pedido tú. El marcador es para el RESTO de la sala, que se
+   * encuentra un paciente nuevo sin haberlo pedido y merece saber por qué; a quien pulsó
+   * el botón le estaría contando lo que acaba de hacer.
+   */
+  const askedForRelevo = useRef(false);
 
   const handleNewGame = useCallback(() => {
     setRequestingNewGame(true);
+    askedForRelevo.current = true;
     brain.requestNewGame();
   }, [brain]);
 
   useEffect(() => {
     if (!requestingNewGame) return;
-    const timeout = setTimeout(() => setRequestingNewGame(false), NEW_GAME_LOADING_TIMEOUT_MS);
+    const timeout = setTimeout(() => {
+      setRequestingNewGame(false);
+      // La petición no prosperó (el agente la rechazó). Se olvida, para no tragarse el
+      // marcador de un relevo que pida otra persona más tarde.
+      askedForRelevo.current = false;
+    }, NEW_GAME_LOADING_TIMEOUT_MS);
     return () => clearTimeout(timeout);
   }, [requestingNewGame]);
 
   useEffect(() => {
-    if (brain.roundEnd) setRequestingNewGame(false);
+    const incoming = brain.roundEnd;
+    if (!incoming) return;
+    setHeldEnd((current) => (endKey(current) === endKey(incoming) ? current : incoming));
+    setRequestingNewGame(false);
+    if (incoming.outcome === "retirado" && askedForRelevo.current) {
+      setDismissedKey(endKey(incoming));
+    }
+    askedForRelevo.current = false;
   }, [brain.roundEnd]);
+
+  const showOverlay = heldEnd !== null && endKey(heldEnd) !== dismissedKey;
 
   // Relevo: la ronda ha terminado y el paciente nuevo aún no ha llegado. Nadie a quien
   // hablarle y nada que operar, así que la sala se bloquea. No depende de que el
