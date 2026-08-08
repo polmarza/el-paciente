@@ -13,6 +13,7 @@ import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
 import { Toast } from "./components/Toast";
 import { RoundOverlay } from "./components/RoundOverlay";
+import { NewGameLoading } from "./components/NewGameLoading";
 import { PasilloPane } from "./components/PasilloPane";
 import { Onboarding } from "./components/Onboarding";
 import { useBrain } from "./hooks/useBrain";
@@ -31,6 +32,13 @@ import { hintsDisabled } from "./lib/hints";
 import { pasilloCollapsed, setPasilloCollapsed } from "./lib/layout";
 
 const TOAST_MS = 4200;
+/**
+ * Techo del aviso de "pidiendo paciente nuevo…". La petición viaja hasta el agente y
+ * vuelve; si el agente la rechaza (ronda recién empezada, reinicio muy reciente), nunca
+ * llega un `round-end` que lo cierre solo, así que sin este techo se quedaría para
+ * siempre. El rechazo real igual se explica por el aviso del sistema en el chat.
+ */
+const NEW_GAME_LOADING_TIMEOUT_MS = 6000;
 
 /** Sin acción del usuario durante este tiempo, se le da un empujón. */
 const HINT_AFTER_MS = 45_000;
@@ -119,6 +127,14 @@ export default function App() {
     [chat.entries, brain.roundStartedAt],
   );
 
+  // El pasillo merece la misma sala limpia: si no, la deliberación de la ronda anterior
+  // (o, en desarrollo, de una sesión de pruebas) se queda ahí para siempre — el canal no
+  // tiene otro mecanismo de purga.
+  const visiblePasillo = useMemo(
+    () => pasillo.entries.filter((entry) => entry.at >= brain.roundStartedAt),
+    [pasillo.entries, brain.roundStartedAt],
+  );
+
   // El desenlace se retiene en local: el canal lo borra en cuanto arranca la ronda
   // siguiente, pero el marcador debe seguir en pantalla hasta que lo cierres tú.
   const [heldEnd, setHeldEnd] = useState<BrainRoundEnd | null>(null);
@@ -131,6 +147,27 @@ export default function App() {
   }, [brain.roundEnd]);
 
   const showOverlay = heldEnd !== null && endKey(heldEnd) !== dismissedKey;
+
+  // El hueco entre confirmar "nueva partida" y que pase algo en pantalla: la petición
+  // va y vuelve por Portal hasta el agente. Se cierra en cuanto llega el desenlace (éxito)
+  // o, si el agente la rechaza y nunca llega uno, con un techo corto — el rechazo se ve
+  // igual en el chat, como aviso del sistema.
+  const [requestingNewGame, setRequestingNewGame] = useState(false);
+
+  const handleNewGame = useCallback(() => {
+    setRequestingNewGame(true);
+    brain.requestNewGame();
+  }, [brain]);
+
+  useEffect(() => {
+    if (!requestingNewGame) return;
+    const timeout = setTimeout(() => setRequestingNewGame(false), NEW_GAME_LOADING_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [requestingNewGame]);
+
+  useEffect(() => {
+    if (brain.roundEnd) setRequestingNewGame(false);
+  }, [brain.roundEnd]);
 
   // Relevo: la ronda ha terminado y el paciente nuevo aún no ha llegado. Nadie a quien
   // hablarle y nada que operar, así que la sala se bloquea. No depende de que el
@@ -187,7 +224,7 @@ export default function App() {
         nickname={identity.nickname}
         nicknameColor={identity.color}
         onRename={rename}
-        onNewGame={brain.requestNewGame}
+        onNewGame={handleNewGame}
         sessionSeconds={sessionSeconds}
         expediente={brain.expediente}
         onShowHelp={() => setOnboarding(true)}
@@ -197,7 +234,7 @@ export default function App() {
 
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <PasilloPane
-          entries={pasillo.entries}
+          entries={visiblePasillo}
           identity={identity}
           online={online}
           collapsed={pasilloPlegado}
@@ -235,6 +272,7 @@ export default function App() {
           onClose={() => setDismissedKey(endKey(heldEnd))}
         />
       )}
+      {requestingNewGame && !showOverlay && <NewGameLoading />}
       {onboarding && (
         <Onboarding
           nickname={identity.nickname}

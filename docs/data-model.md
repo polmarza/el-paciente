@@ -46,8 +46,10 @@ type BrainMessage =
       nickname: string; color: string }
   | { kind: "seed"; slots: Record<SlotId, string>; round?: string;
       expediente?: string; caso?: string; auth?: string }
-  // Desenlace: el ÚNICO momento en que el secreto se hace público.
-  | { kind: "round-end"; outcome: "revelado" | "paro" | "retirado"; secret: string;
+  // Desenlace. `secret` solo viaja en "revelado" y "paro" — un "retirado" no lo ha
+  // ganado nadie, así que el agente no lo manda (sería spoiler, y de una ronda que puede
+  // volver a salir).
+  | { kind: "round-end"; outcome: "revelado" | "paro" | "retirado"; secret?: string;
       expediente: string; by?: string; lasted: number; nextAt: number; auth?: string }
   // Petición de paciente nuevo. La publica cualquiera; el agente decide si la atiende
   // (throttle: no antes de 45 s de ronda, no antes de 60 s del último relevo).
@@ -81,6 +83,11 @@ type PasilloMessage = { nickname: string; color: string; body: string };
 Conversación entre espectadores para acordar la estrategia. **El agente no abre este
 canal**, así que EL PACIENTE no lee nada de lo que se dice aquí: si leyera la estrategia,
 no habría estrategia. Máx. 280 caracteres, 1 s de cooldown por usuario (solo anti-inundación).
+
+Igual que el chat, se filtra en el cliente por `entry.at >= brain.roundStartedAt`: cada
+ronda arranca con el pasillo vacío. El canal en sí no tiene forma de purgarse — sin este
+filtro, la deliberación de la ronda anterior (o, en desarrollo, de una sesión de pruebas)
+se queda ahí para siempre.
 
 ### Etiquetas y disposición
 

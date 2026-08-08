@@ -136,7 +136,7 @@ async function startRound(index: number) {
   console.log(`\n── Ronda "${round.id}" · secreto: ${round.secret} ──`);
 }
 
-/** Cierra la ronda, publica el secreto (ya sin valor) y programa la siguiente. */
+/** Cierra la ronda, publica el desenlace y programa la siguiente. */
 async function endRound(outcome: "revelado" | "paro" | "retirado", by?: string) {
   if (intermission) return;
   intermission = true;
@@ -148,7 +148,10 @@ async function endRound(outcome: "revelado" | "paro" | "retirado", by?: string) 
     content: signed({
       kind: "round-end",
       outcome,
-      secret: round.secret,
+      // Solo se hace público si alguien lo ganó o si murió con él. Un "retirado" no lo ha
+      // merecido nadie — y la ronda puede volver a salir más adelante — así que el
+      // secreto no sale de aquí, igual que mientras la ronda estaba en marcha.
+      secret: outcome === "retirado" ? undefined : round.secret,
       expediente: round.expediente,
       by,
       lasted: Date.now() - roundStartedAt,
