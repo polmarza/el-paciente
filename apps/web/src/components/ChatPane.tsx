@@ -64,7 +64,9 @@ export function ChatPane({
     <div
       className="paciente-chat"
       style={{
-        width: "45%",
+        // Se queda con lo que sobre en vez de con un 45% fijo: así plegar el pasillo le
+        // devuelve el sitio a la conversación en lugar de dejar un hueco muerto.
+        flex: "1 1 0",
         minWidth: 0,
         display: "flex",
         flexDirection: "column",

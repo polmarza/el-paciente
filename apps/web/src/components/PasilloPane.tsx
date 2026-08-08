@@ -12,6 +12,9 @@ interface PasilloPaneProps {
   identity: Identity;
   /** Cuánta gente hay dentro. Vive aquí porque el pasillo es la sala de los vivos. */
   online: number;
+  /** Plegado a un riel vertical, para dejar la pantalla en dos columnas. */
+  collapsed: boolean;
+  onToggle: () => void;
   onSend: (body: string) => Promise<string | null>;
 }
 
@@ -21,7 +24,14 @@ interface PasilloPaneProps {
  * estrategia y las órdenes ("prueba a borrarle la regla") acaben en la conversación que
  * el paciente sí ve, que es la que tiene que leerse como una conversación de verdad.
  */
-export function PasilloPane({ entries, identity, online, onSend }: PasilloPaneProps) {
+export function PasilloPane({
+  entries,
+  identity,
+  online,
+  collapsed,
+  onToggle,
+  onSend,
+}: PasilloPaneProps) {
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
@@ -42,6 +52,52 @@ export function PasilloPane({ entries, identity, online, onSend }: PasilloPanePr
     if (!body) return;
     setDraft("");
     await onSend(body);
+  }
+
+  // Plegado: un riel del ancho de un dedo que no se lleva sitio de la conversación,
+  // pero sigue diciendo cuánta gente hay y cómo volver a abrirlo.
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        className="paciente-pasillo"
+        onClick={onToggle}
+        title="Abrir el pasillo"
+        aria-label="Abrir el pasillo"
+        aria-expanded={false}
+        style={{
+          flex: "none",
+          width: 42,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 14,
+          padding: "14px 0",
+          background: T.brainBg,
+          border: "none",
+          borderRight: `1px solid ${T.chatDivider}`,
+          cursor: "pointer",
+          fontFamily: FONT.mono,
+        }}
+      >
+        <span style={{ fontSize: SIZE.small, color: T.textDim }}>›</span>
+        <span
+          style={{
+            // De abajo arriba: se lee girando la cabeza a la izquierda, que es el lado
+            // en el que está la columna.
+            writingMode: "vertical-rl",
+            transform: "rotate(180deg)",
+            fontSize: SIZE.micro,
+            letterSpacing: ".16em",
+            color: T.textDim,
+          }}
+        >
+          EL PASILLO
+        </span>
+        <span style={{ fontSize: SIZE.micro, color: T.online }}>●</span>
+        <span style={{ fontSize: SIZE.micro, color: T.online }}>{online}</span>
+      </button>
+    );
   }
 
   return (
@@ -71,7 +127,27 @@ export function PasilloPane({ entries, identity, online, onSend }: PasilloPanePr
         }}
       >
         <span>EL PASILLO</span>
-        <span style={{ color: T.online }}>● {online} DENTRO</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ color: T.online }}>● {online} DENTRO</span>
+          <button
+            type="button"
+            onClick={onToggle}
+            title="Plegar el pasillo"
+            aria-label="Plegar el pasillo"
+            aria-expanded
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: T.textDim,
+              fontFamily: FONT.mono,
+              fontSize: SIZE.small,
+              cursor: "pointer",
+            }}
+          >
+            ‹
+          </button>
+        </span>
       </div>
 
       <div

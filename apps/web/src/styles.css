@@ -107,13 +107,11 @@ a:hover {
 }
 
 /* Tres columnas para proyector. El pasillo es lo primero que sobra al estrecharse:
-   es conversación entre el público, no la pieza. */
+   es conversación entre el público, no la pieza. El chat no lleva ancho fijo — absorbe
+   lo que quede, tanto aquí como cuando el usuario pliega el pasillo a mano. */
 @media (max-width: 1250px) {
   .paciente-pasillo {
     display: none !important;
-  }
-  .paciente-chat {
-    width: 55% !important;
   }
   .paciente-brain {
     width: 45% !important;
@@ -124,16 +122,13 @@ a:hover {
   .paciente-body {
     flex-direction: column;
   }
-  .paciente-chat,
   .paciente-brain {
     width: 100% !important;
+    flex: 1 1 45% !important;
   }
   .paciente-chat {
-    flex: 1 1 55%;
+    flex: 1 1 55% !important;
     border-right: none !important;
-  }
-  .paciente-brain {
-    flex: 1 1 45%;
   }
 }
 

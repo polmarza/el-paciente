@@ -133,9 +133,16 @@ export function buildTurn({ brain, chat, trigger, secret, weakness }: TurnContex
         return `@${entry.nickname} acaba de cambiarte ${label}: era "${entry.prev}" y ahora es "${entry.next}".`;
       })
       .join(" ");
+    // Editar y preguntar en el mismo aliento es lo normal, no la excepción — Portal agrupa
+    // ambos en un solo turno. Si el último mensaje humano sigue sin respuesta, decirle "nadie
+    // te ha preguntado nada" era mentirle: se comía la pregunta y el turno entero se iba en
+    // comentar la edición, dando vueltas en bucle sin decir nunca lo que le pedían.
+    const pending = chat.length > 0 && chat[chat.length - 1]?.role === "human";
     history.push({
       role: "user",
-      content: `(${cuts} Reacciona a lo que acabas de sentir, sin que nadie te haya preguntado nada.)`,
+      content: pending
+        ? `(A la vez que te preguntaban eso de arriba, ${cuts} No dejes la pregunta sin contestar: puede notarse que también sentiste el cambio, pero responde primero a lo que te han preguntado.)`
+        : `(${cuts} Reacciona a lo que acabas de sentir, sin que nadie te haya preguntado nada.)`,
     });
   }
 

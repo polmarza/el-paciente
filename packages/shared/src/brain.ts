@@ -14,6 +14,7 @@ import {
   BPM_RESTING,
   FLASH_MS,
   SLOT_COOLDOWN_MS,
+  DEFAULT_CASO,
   DEFAULT_EXPEDIENTE,
 } from "./constants.ts";
 
@@ -48,6 +49,8 @@ export interface BrainState {
   round: string | null;
   /** Expediente del paciente actual. Cambia con cada ronda. */
   expediente: string;
+  /** Parte de ingreso: el par de frases que enmarcan lo que hay que investigar. */
+  caso: string;
   /**
    * Cuándo empezó la ronda actual. El chat se pinta solo desde aquí: cada paciente
    * llega a una sala limpia, sin la conversación del anterior.
@@ -75,6 +78,7 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
   const log: LogEntry[] = [];
   let round: string | null = null;
   let expediente = DEFAULT_EXPEDIENTE;
+  let caso = DEFAULT_CASO;
   let roundStartedAt = 0;
   let roundEnd: BrainRoundEnd | null = null;
 
@@ -88,6 +92,7 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
       }
       round = msg.round ?? null;
       expediente = msg.expediente ?? DEFAULT_EXPEDIENTE;
+      caso = msg.caso ?? DEFAULT_CASO;
       roundStartedAt = entry.at;
       // Paciente nuevo, historial nuevo: no hereda ni las cicatrices ni el pulso del
       // anterior. Sin esto, `bpmFromLog` le contaría al recién llegado las ediciones
@@ -129,7 +134,7 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
   }
 
   log.reverse();
-  return { snapshot, log, round, expediente, roundStartedAt, roundEnd };
+  return { snapshot, log, round, expediente, caso, roundStartedAt, roundEnd };
 }
 
 /**

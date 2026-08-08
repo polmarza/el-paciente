@@ -51,5 +51,8 @@ export const BPM_ALARM = 95;
  */
 export const DEFAULT_EXPEDIENTE = "———";
 
+/** Parte de ingreso cuando aún no hay paciente en la mesa. */
+export const DEFAULT_CASO = "Sin parte de ingreso. La sala espera al siguiente paciente.";
+
 /** Cuánto dura el marcador entre una ronda y la siguiente. */
 export const ROUND_INTERMISSION_MS = 18_000;

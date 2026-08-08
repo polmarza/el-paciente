@@ -54,6 +54,9 @@ const brain: BrainState = {
   },
   round: "cruce",
   expediente: "001-A",
+  caso:
+    "Ingresó tras un accidente en un cruce, de noche y con lluvia. Conducía él, y en el " +
+    "parte figura una mujer cuyo nombre no ha pronunciado ni una sola vez.",
   roundStartedAt: now - 600_000,
   roundEnd: null,
   log: [

@@ -28,6 +28,7 @@ import {
 import { T } from "./theme";
 import { alarmBeep } from "./lib/sound";
 import { hintsDisabled } from "./lib/hints";
+import { pasilloCollapsed, setPasilloCollapsed } from "./lib/layout";
 
 const TOAST_MS = 4200;
 
@@ -65,6 +66,14 @@ export default function App() {
   const pasillo = usePasillo(identity);
 
   const [onboarding, setOnboarding] = useState(() => !hasSeenOnboarding());
+  const [pasilloPlegado, setPasilloPlegado] = useState(pasilloCollapsed);
+
+  const togglePasillo = useCallback(() => {
+    setPasilloPlegado((current) => {
+      setPasilloCollapsed(!current);
+      return !current;
+    });
+  }, []);
 
   const showToast = useCallback((reason: string) => {
     setToast(reason);
@@ -191,6 +200,8 @@ export default function App() {
           entries={pasillo.entries}
           identity={identity}
           online={online}
+          collapsed={pasilloPlegado}
+          onToggle={togglePasillo}
           onSend={pasillo.send}
         />
         <ChatPane

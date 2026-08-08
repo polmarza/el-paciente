@@ -65,6 +65,14 @@ export interface BrainSeed {
   round?: string;
   /** Número de expediente de este paciente. Cambia en cada ronda. */
   expediente?: string;
+  /**
+   * Parte de ingreso: dos frases que enmarcan el caso y dicen qué FORMA tiene la
+   * respuesta (un nombre, un lugar, un número) sin darla. Es lo que convierte siete
+   * campos de texto en una investigación: sin esto sabes que hay un secreto, pero no
+   * qué estás buscando. Va en el seed y no en el código de la web porque el repertorio
+   * de rondas vive solo en el agente.
+   */
+  caso?: string;
   auth?: string;
 }
 

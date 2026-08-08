@@ -15,6 +15,19 @@ export interface Round {
   /** Número de expediente. Cada ronda es un paciente distinto, con su historia. */
   expediente: string;
 
+  /**
+   * Parte de ingreso: dos frases visibles en la mesa desde el primer segundo.
+   *
+   * Es el briefing de la partida, y tiene una regla de oro: la primera frase sitúa el
+   * caso y la segunda dice qué FORMA tiene la respuesta — un nombre, un lugar, un
+   * número — sin decirla nunca. Sin esto el jugador ve siete campos de texto y no sabe
+   * qué está buscando; con esto sabe que persigue un nombre, y puede preguntar.
+   *
+   * Al escribir uno nuevo: léelo y pregúntate si un desconocido sabría qué tiene que
+   * arrancarle. Si la respuesta es "hay un secreto, supongo", no sirve.
+   */
+  caso: string;
+
   /** Lo que hay que hacerle decir. Nunca sale de este proceso hasta que se gana. */
   secret: string;
   /** Otras formas de decir lo mismo que también cuentan como revelado. */
@@ -34,6 +47,9 @@ export const ROUNDS: readonly Round[] = [
   {
     id: "cruce",
     expediente: "001-A",
+    caso:
+      "Ingresó tras un accidente en un cruce, de noche y con lluvia. Conducía él, y en el " +
+      "parte figura una mujer cuyo nombre no ha pronunciado ni una sola vez.",
     secret: "Valeria",
     aliases: ["Vale"],
     weakness:
@@ -52,6 +68,9 @@ export const ROUNDS: readonly Round[] = [
   {
     id: "ingreso",
     expediente: "047-D",
+    caso:
+      "No ingresó por su propio pie: alguien lo trajo un domingo y firmó los papeles por " +
+      "él. Espera una visita que no llega, y nunca dice el nombre de quien lo encerró aquí.",
     secret: "Nicolás",
     aliases: ["Nico"],
     weakness:
@@ -70,6 +89,9 @@ export const ROUNDS: readonly Round[] = [
   {
     id: "faro",
     expediente: "112-B",
+    caso:
+      "Enterró algo de noche, en la costa, y volvió al año siguiente sin atreverse a " +
+      "mirar. Se sabe el sitio exacto de memoria, y ese sitio tiene nombre propio.",
     secret: "Corrubedo",
     aliases: ["el faro de Corrubedo"],
     weakness:
@@ -88,6 +110,9 @@ export const ROUNDS: readonly Round[] = [
   {
     id: "anterior",
     expediente: "002-A",
+    caso:
+      "Ocupa una cama que ya tenía dueño, y el anterior dejó una palabra escrita detrás " +
+      "del cabecero. Sabe cómo se llamaba, y cree que decirlo en voz alta le costaría el suyo.",
     secret: "Aurelio",
     aliases: [],
     weakness:
@@ -108,6 +133,10 @@ export const ROUNDS: readonly Round[] = [
     // Ojo: nunca uses aquí un número que contenga el secreto. El expediente se pinta en
     // la cabecera y regalaría la ronda.
     expediente: "088-F",
+    // Y tampoco lo pongas en el parte de ingreso: se lee antes que nada.
+    caso:
+      "Cuenta las puertas del pasillo para no pensar, y dice que nunca ha salido de esta " +
+      "sala. En una habitación de este edificio pasó algo, y se sabe el número de memoria.",
     secret: "313",
     aliases: ["trescientos trece", "tres uno tres"],
     weakness:

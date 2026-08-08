@@ -120,8 +120,11 @@ const STEPS: Step[] = [
     title: "Mecánica",
     body: (
       <>
-        El paciente tiene 7 campos editables: su memoria. Selecciona un campo, edítalo y
-        pulsa ENTER.
+        En la columna de la derecha, el <span style={{ color: T.amber }}>PARTE DE INGRESO</span>{" "}
+        te dice qué le pasó y qué le tienes que sacar.
+        <br />
+        <br />
+        Encima tiene 7 campos editables: su memoria. Selecciona uno, edítalo y pulsa ENTER.
         <br />
         <br />
         Una vez modificada, esa memoria pasa a ser <strong>LA VERDAD</strong>.
