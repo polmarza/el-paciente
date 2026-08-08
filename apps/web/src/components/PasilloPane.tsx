@@ -102,7 +102,7 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
               >
                 @{entry.message.nickname}
               </span>
-              <span style={{ fontFamily: FONT.sans, color: T.humanText }}>
+              <span style={{ fontFamily: FONT.mono, color: T.humanText }}>
                 {entry.message.body}
               </span>
             </div>
@@ -127,8 +127,8 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
             background: T.slotInputBg,
             border: `1px solid ${T.slotBorder}`,
             color: "#dff0ee",
-            fontFamily: FONT.sans,
-            fontSize: 14,
+            fontFamily: FONT.mono,
+            fontSize: 13,
             padding: "9px 12px",
             borderRadius: 3,
             outline: "none",

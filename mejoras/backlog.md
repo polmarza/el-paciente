@@ -18,6 +18,19 @@ Descripción breve de la mejora y por qué aportaría valor.
 
 ---
 
+### [MEJORA-04] Chat de voz para el pasillo
+**Área:** Frontend / Infraestructura
+**Prioridad estimada:** Baja (post-hackathon)
+**Origen:** Feedback de mentoría del 8/8
+
+Portal no puede: sus mensajes son texto de ≤2KB y los tipos de media están "reservados,
+rechazados en v1" (verificado en los tipos del SDK). Haría falta WebRTC (LiveKit, Daily…),
+que es otra integración y otra cuenta.
+
+Pero la razón de aplazarlo es de producto: la voz vaciaría el pasillo, y el pasillo existe
+para que la deliberación sea VISIBLE — en la demo es lo que demuestra que hay multitud
+coordinándose. Si algún día se hace, que la voz conviva con el texto, no que lo sustituya.
+
 ### [MEJORA-01] Simplificar el anti-suplantación usando la API REST de Portal
 **Área:** Infraestructura
 **Prioridad estimada:** Baja

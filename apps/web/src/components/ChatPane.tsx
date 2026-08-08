@@ -202,8 +202,8 @@ export function ChatPane({
             background: T.chatInputBg,
             border: `1px solid ${T.chatInputBorder}`,
             color: "#e9ded1",
-            fontFamily: FONT.sans,
-            fontSize: 16,
+            fontFamily: FONT.mono,
+            fontSize: 14,
             padding: "11px 14px",
             borderRadius: 3,
             outline: "none",
@@ -263,9 +263,9 @@ function Message({
         </span>
         <span
           style={{
-            fontFamily: FONT.sans,
-            fontSize: 16.5,
-            lineHeight: 1.45,
+            fontFamily: FONT.mono,
+            fontSize: 14.5,
+            lineHeight: 1.5,
             color: T.humanText,
           }}
         >

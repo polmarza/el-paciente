@@ -90,9 +90,7 @@ a:hover {
 }
 
 /* En el diseño esto venía como style-focus en el propio elemento. */
-.chat-input:focus {
-  border-color: #4a3c2e;
-}
+.chat-input:focus,
 .slot-input:focus {
   border-color: #3d5a66;
 }

@@ -121,7 +121,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         </div>
 
         <div
-          style={{ fontFamily: FONT.sans, fontSize: 16, color: T.textMono, marginBottom: 26 }}
+          style={{ fontFamily: FONT.mono, fontSize: 13.5, color: T.textMono, marginBottom: 26 }}
         >
           {won ? (
             <>

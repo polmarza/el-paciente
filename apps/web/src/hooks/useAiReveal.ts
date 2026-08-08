@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChatEntry } from "./useChat";
+import { keyClick } from "../lib/sound";
 
 /** Velocidad del tecleo de EL PACIENTE, tomada del diseño. */
 const STEP_MS = 28;
@@ -63,8 +64,16 @@ export function useAiReveal(entries: readonly ChatEntry[]): {
     // contar pulsos hacía que el mensaje se quedara a medias mientras mirabas otra ventana
     // y siguiera a rastras al volver. Con el reloj, cada pulso pone el texto donde debería
     // estar y al volver aparece ya completo.
+    // El tecleo se oye, pero no a 35 golpes por segundo: uno cada ~90 ms.
+    let lastClickAt = 0;
+
     const tick = () => {
       const shown = Math.min(full.length, Math.ceil((Date.now() - startedAt) / STEP_MS) * step);
+      const now = Date.now();
+      if (shown < full.length && now - lastClickAt > 90) {
+        lastClickAt = now;
+        keyClick();
+      }
       setRevealedText(full.slice(0, shown));
       if (shown >= full.length) {
         clearInterval(timer);

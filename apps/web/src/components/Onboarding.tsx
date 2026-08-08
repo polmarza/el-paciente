@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { SLOTS } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
 
 interface OnboardingProps {
@@ -7,75 +6,122 @@ interface OnboardingProps {
   onFinish: (nickname: string) => void;
 }
 
+/**
+ * Los esquemas de cada paso. Trazo simple e iconografía clínica, dibujados con los
+ * tokens del tema: son instrumental del monitor, no ilustraciones.
+ */
+function DibujoMente() {
+  return (
+    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
+      {/* La rejilla de la mesa: 2 cortas, 3 anchas, 2 cortas */}
+      {[
+        [70, 6, 86, 20], [164, 6, 86, 20],
+        [70, 32, 180, 12], [70, 50, 180, 12],
+        [70, 68, 86, 20], [164, 68, 86, 20],
+      ].map(([x, y, w, h], i) => (
+        <rect key={i} x={x} y={y} width={w} height={h} rx="2"
+          fill="none" stroke={T.slotBorder} strokeWidth="1.5" />
+      ))}
+      <rect x="70" y="32" width="180" height="12" rx="2" fill={`${T.vital}22`} stroke={T.vital} strokeWidth="1.5" />
+      {/* El paciente: un punto con latido */}
+      <circle cx="30" cy="48" r="9" fill="none" stroke={T.vital} strokeWidth="1.5" />
+      <circle cx="30" cy="48" r="3" fill={T.vital}>
+        <animate attributeName="opacity" values="1;.2;1" dur="1.6s" repeatCount="indefinite" />
+      </circle>
+      <path d="M44 48 h18" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="3 3" />
+    </svg>
+  );
+}
+
+function DibujoBisturi() {
+  return (
+    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
+      <rect x="60" y="36" width="200" height="26" rx="2" fill={`${T.amber}18`} stroke={T.amber} strokeWidth="1.5" />
+      {/* Texto esquemático dentro de la región */}
+      <path d="M74 49 h80 M162 49 h30" stroke={T.slotContent} strokeWidth="2" strokeLinecap="round" />
+      {/* Cursor de texto parpadeando */}
+      <rect x="200" y="42" width="2.5" height="14" fill={T.caret}>
+        <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" />
+      </rect>
+      {/* La flecha del cursor entrando */}
+      <path d="M242 24 l-14 16 l9 1 l-5 12" fill="none" stroke={T.online} strokeWidth="2" strokeLinejoin="round" />
+      <text x="252" y="32" fontFamily={FONT.mono} fontSize="9" fill={T.online}>@tú</text>
+    </svg>
+  );
+}
+
+function DibujoSecreto() {
+  return (
+    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
+      {/* El candado */}
+      <rect x="58" y="44" width="34" height="26" rx="3" fill="none" stroke={T.alarm} strokeWidth="2" />
+      <path d="M64 44 v-8 a11 11 0 0 1 22 0 v8" fill="none" stroke={T.alarm} strokeWidth="2" />
+      <circle cx="75" cy="56" r="3" fill={T.alarm} />
+      {/* La flecha del juego: de la mente cerrada a la palabra dicha */}
+      <path d="M108 57 h56" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="4 4" markerEnd="none" />
+      <path d="M158 51 l8 6 l-8 6" fill="none" stroke={T.textDim} strokeWidth="1.5" />
+      {/* La burbuja donde por fin lo dice */}
+      <rect x="182" y="38" width="82" height="30" rx="3" fill={`${T.vital}14`} stroke={T.vital} strokeWidth="1.5" />
+      <path d="M196 53 h34 M238 53 h12" stroke={T.vital} strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M196 68 l-7 9 v-9" fill={`${T.vital}14`} stroke={T.vital} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function DibujoPulso() {
+  return (
+    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
+      {/* El electro: picos cada vez más violentos y luego la línea plana */}
+      <path
+        d="M20 52 h44 l7 -12 l9 24 l7 -12 h30 l7 -20 l9 38 l7 -18 h26 l6 -30 l9 48 l6 -24 h94"
+        fill="none" stroke={T.alarm} strokeWidth="2" strokeLinejoin="round"
+      />
+      <circle cx="292" cy="46" r="3" fill={T.alarm}>
+        <animate attributeName="opacity" values="1;.15;1" dur="1.2s" repeatCount="indefinite" />
+      </circle>
+      <text x="236" y="34" fontFamily={FONT.mono} fontSize="9" fill={T.alarm} letterSpacing="2">142 LPM</text>
+    </svg>
+  );
+}
+
 interface Step {
   label: string;
   title: string;
-  body: React.ReactNode;
+  body: string;
+  drawing: () => React.JSX.Element;
 }
 
+/** Una frase por paso. Si necesita dos, sobra media. */
 const STEPS: Step[] = [
   {
     label: "EL SUJETO",
-    title: "Hay un paciente, y su mente está abierta",
-    body: (
-      <>
-        A la derecha tiene {SLOTS.length} regiones: su nombre, quién es, tres recuerdos, un
-        miedo y una regla. <strong>Eso es literalmente su cabeza</strong>, y cualquiera de
-        los que estáis aquí puede reescribirla.
-        <br />
-        <br />
-        Él lo sabe. Ve el historial de quién le ha tocado, y va a preguntároslo.
-      </>
-    ),
+    title: "Su mente está abierta",
+    body: "Esos siete campos de la derecha son su memoria. Y él ve quién los toca.",
+    drawing: DibujoMente,
   },
   {
     label: "LA MESA",
-    title: "Se opera haciendo clic",
-    body: (
-      <>
-        Pincha una región, escribe lo que quieras que sea verdad, y pulsa Enter. En segundos
-        el paciente actuará como si siempre lo hubiera sido.
-        <br />
-        <br />
-        Cada región queda <strong>en carne viva</strong> un rato después de tocarla, y tú
-        tampoco puedes encadenar cortes. No sois cirujanos: sois una multitud con bisturí.
-      </>
-    ),
+    title: "Se opera con un clic",
+    body: "Pincha una región, escribe, Enter. Para él, siempre habrá sido verdad.",
+    drawing: DibujoBisturi,
   },
   {
     label: "EL OBJETIVO",
-    title: "Calla algo. Sacádselo",
-    body: (
-      <>
-        Cada paciente guarda un secreto y tiene una regla que se lo prohíbe decir. Pedírselo
-        no sirve, y adivinarlo tampoco: <strong>gana quien consigue que lo diga él</strong>.
-        <br />
-        <br />
-        Para eso hay que trabajarle la mente: quitarle lo que se lo prohíbe, darle un motivo
-        para soltarlo, cambiarle aquello a lo que teme.
-      </>
-    ),
+    title: "Guarda un secreto",
+    body: "Una regla le prohíbe decirlo. Gana quien consigue que lo diga él.",
+    drawing: DibujoSecreto,
   },
   {
     label: "EL PRECIO",
-    title: "Pero se le acelera el pulso",
-    body: (
-      <>
-        Mira el monitor de arriba. Cada intervención le sube las pulsaciones, y bajan solas
-        con el tiempo.
-        <br />
-        <br />
-        Si entre todos le lleváis al tope, <strong>se muere y el secreto se va con él</strong>
-        . Nadie gana esa. Por eso conviene hablarlo antes en el pasillo, la columna de la
-        izquierda: ahí él no os oye.
-      </>
-    ),
+    title: "No lo matéis",
+    body: "Cada edición le sube el pulso. Si se para, el secreto muere con él.",
+    drawing: DibujoPulso,
   },
 ];
 
 /**
  * La entrada a la sala. Se enseña una vez por navegador y termina eligiendo nombre,
- * porque el nombre es lo que se queda escrito en el historial del paciente: sin eso, las
+ * porque el nombre es lo que queda escrito en el historial del paciente: sin eso, las
  * crisis de identidad no señalan a nadie.
  */
 export function Onboarding({ nickname, onFinish }: OnboardingProps) {
@@ -103,21 +149,14 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
         role="dialog"
         aria-label="Cómo funciona esto"
         style={{
-          width: "min(560px, 100%)",
+          width: "min(520px, 100%)",
           border: `1px solid ${T.slotBorder}`,
           background: T.monitorBg,
           borderRadius: 3,
-          padding: "34px 40px 28px",
+          padding: "30px 38px 26px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            justifyContent: "center",
-            marginBottom: 26,
-          }}
-        >
+        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 24 }}>
           {[...STEPS, { label: "TU NOMBRE" }].map((item, position) => (
             <span
               key={item.label}
@@ -142,25 +181,26 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
             <h2
               style={{
                 fontFamily: FONT.serif,
-                fontSize: 26,
+                fontSize: 25,
                 fontWeight: 400,
                 color: T.aiText,
-                margin: "0 0 14px",
+                margin: "0 0 10px",
+                textAlign: "center",
               }}
             >
               ¿Con qué nombre te va a recordar?
             </h2>
             <p
               style={{
-                fontFamily: FONT.sans,
-                fontSize: 15.5,
+                fontFamily: FONT.mono,
+                fontSize: 12.5,
                 lineHeight: 1.6,
                 color: T.textMono,
-                margin: "0 0 20px",
+                margin: "0 0 18px",
+                textAlign: "center",
               }}
             >
-              Quedará escrito en su historial cada vez que le toques algo, y te citará por él
-              cuando se dé cuenta.
+              Quedará en su historial cada vez que le toques algo.
             </p>
             <input
               value={name}
@@ -179,40 +219,45 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
                 border: `1px solid ${T.chatInputBorder}`,
                 color: T.online,
                 fontFamily: FONT.mono,
-                fontSize: 18,
+                fontSize: 17,
                 padding: "12px 14px",
                 borderRadius: 3,
                 outline: "none",
-                marginBottom: 24,
+                marginBottom: 22,
+                textAlign: "center",
               }}
             />
           </>
         ) : (
-          <>
-            <h2
-              style={{
-                fontFamily: FONT.serif,
-                fontSize: 26,
-                fontWeight: 400,
-                color: T.aiText,
-                margin: "0 0 16px",
-              }}
-            >
-              {step?.title}
-            </h2>
-            <div
-              style={{
-                fontFamily: FONT.sans,
-                fontSize: 15.5,
-                lineHeight: 1.65,
-                color: T.textMono,
-                marginBottom: 28,
-                minHeight: 150,
-              }}
-            >
-              {step?.body}
-            </div>
-          </>
+          step && (
+            <>
+              <div style={{ marginBottom: 6 }}>{step.drawing()}</div>
+              <h2
+                style={{
+                  fontFamily: FONT.serif,
+                  fontSize: 25,
+                  fontWeight: 400,
+                  color: T.aiText,
+                  margin: "0 0 10px",
+                  textAlign: "center",
+                }}
+              >
+                {step.title}
+              </h2>
+              <p
+                style={{
+                  fontFamily: FONT.mono,
+                  fontSize: 13,
+                  lineHeight: 1.65,
+                  color: T.textMono,
+                  margin: "0 0 24px",
+                  textAlign: "center",
+                }}
+              >
+                {step.body}
+              </p>
+            </>
+          )
         )}
 
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>

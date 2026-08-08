@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { BPM_ALARM } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
+import { isMuted, setMuted } from "../lib/sound";
 
 interface MonitorProps {
   bpm: number;
@@ -19,6 +21,13 @@ export function Monitor({
   onShowHelp,
 }: MonitorProps) {
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
+  const [silenced, setSilenced] = useState(isMuted);
+
+  function toggleSound() {
+    const next = !silenced;
+    setMuted(next);
+    setSilenced(next);
+  }
 
   return (
     <div
@@ -69,6 +78,27 @@ export function Monitor({
       <div style={{ flex: 1 }} />
       <span style={{ color: T.textDim }}>SESIÓN {formatClock(sessionSeconds)}</span>
       <span style={{ color: T.online }}>● {online} DENTRO</span>
+      <button
+        type="button"
+        onClick={toggleSound}
+        title={silenced ? "Activar el sonido" : "Silenciar el monitor"}
+        aria-label={silenced ? "Activar el sonido" : "Silenciar el monitor"}
+        aria-pressed={silenced}
+        style={{
+          fontFamily: FONT.mono,
+          fontSize: 11,
+          color: silenced ? T.textFaint : T.textDim,
+          background: "transparent",
+          border: `1px solid ${T.monitorBorder}`,
+          borderRadius: 2,
+          height: 22,
+          padding: "0 7px",
+          cursor: "pointer",
+          textDecoration: silenced ? "line-through" : "none",
+        }}
+      >
+        ♪
+      </button>
       <button
         type="button"
         onClick={onShowHelp}

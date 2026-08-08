@@ -59,7 +59,7 @@ export async function drawDiploma(roundEnd: BrainRoundEnd): Promise<Blob> {
 
   // Quién y cuánto.
   ctx.fillStyle = T.textMono;
-  ctx.font = "400 30px 'Instrument Sans', sans-serif";
+  ctx.font = "400 26px 'IBM Plex Mono', monospace";
   const lines = won
     ? [`Se lo arrancó @${roundEnd.by ?? "alguien"}`, `tras ${formatLasted(roundEnd.lasted)} de intervención.`]
     : ["Se murió sin decirlo,", `tras ${formatLasted(roundEnd.lasted)}. Nadie ganó esta.`];
