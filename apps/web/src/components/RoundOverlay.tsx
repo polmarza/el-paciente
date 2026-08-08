@@ -57,7 +57,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
     >
       <div
         role="dialog"
-        aria-label={won ? "Secreto revelado" : "Paro cardíaco"}
+        aria-label={won ? "Secreto revelado" : withdrawn ? "Paciente retirado" : "Paro cardíaco"}
         onClick={(event) => event.stopPropagation()}
         style={{
           position: "relative",
