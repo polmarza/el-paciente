@@ -9,13 +9,23 @@ interface BrainPaneProps {
   brain: BrainState;
   cursors: RemoteCursor[];
   now: number;
+  /** Durante el relevo entre pacientes no se opera: la mesa está vacía. */
+  locked: boolean;
   onEdit: (slot: SlotId, value: string) => Promise<string | null>;
   onCursor: (slot: SlotId | null) => void;
   onReject: (reason: string) => void;
 }
 
 /** La mesa de operaciones: siete regiones abiertas al público. */
-export function BrainPane({ brain, cursors, now, onEdit, onCursor, onReject }: BrainPaneProps) {
+export function BrainPane({
+  brain,
+  cursors,
+  now,
+  locked,
+  onEdit,
+  onCursor,
+  onReject,
+}: BrainPaneProps) {
   const [editingSlot, setEditingSlot] = useState<SlotId | null>(null);
   const [draft, setDraft] = useState("");
 
@@ -23,7 +33,7 @@ export function BrainPane({ brain, cursors, now, onEdit, onCursor, onReject }: B
   for (const cursor of cursors) cursorBySlot.set(cursor.slot, cursor);
 
   function beginEdit(slot: SlotId) {
-    if (editingSlot) return;
+    if (editingSlot || locked) return;
     setEditingSlot(slot);
     setDraft(brain.snapshot[slot].content);
     onCursor(slot);
@@ -69,7 +79,9 @@ export function BrainPane({ brain, cursors, now, onEdit, onCursor, onReject }: B
         }}
       >
         <span>MESA DE OPERACIONES</span>
-        <span>{SLOTS.length} REGIONES · ACCESO PÚBLICO</span>
+        <span>
+          {locked ? "SALA EN PREPARACIÓN" : `${SLOTS.length} REGIONES · ACCESO PÚBLICO`}
+        </span>
       </div>
 
       <div
@@ -92,6 +104,7 @@ export function BrainPane({ brain, cursors, now, onEdit, onCursor, onReject }: B
               def={def}
               value={value}
               state={slotStateAt(value, now)}
+              locked={locked}
               cursor={cursorBySlot.get(def.id)}
               editing={editingSlot === def.id}
               draft={draft}

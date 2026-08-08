@@ -231,7 +231,10 @@ async function runTurn() {
   try {
     const round = currentRound();
     const brainState = reduceBrain(readHistory<BrainMessage>(brain));
+    // Solo la conversación de ESTE paciente. Sin este filtro heredaba la del anterior y
+    // acababa hablando del secreto de la ronda pasada como si fuera suyo.
     const chatHistory = readHistory<ChatMessage>(chat)
+      .filter((entry) => entry.at >= roundStartedAt)
       .map((entry) => entry.content)
       .filter((message): message is ChatMessage => Boolean(message?.role));
 

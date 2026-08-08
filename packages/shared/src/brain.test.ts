@@ -56,16 +56,37 @@ describe("reduceBrain", () => {
     expect(log[0]?.prev).toBe("Al mar abierto");
   });
 
-  it("un seed posterior resetea las regiones pero conserva las cicatrices del log", () => {
+  it("un seed empieza un paciente nuevo: restaura las regiones y vacía el historial", () => {
     const seed: HistoryEntry<BrainMessage> = {
       id: "seed",
       at: 3000,
-      content: { kind: "seed", slots: SEED_SLOTS },
+      content: { kind: "seed", slots: SEED_SLOTS, round: "ingreso", expediente: "047-D" },
     };
-    const { snapshot, log } = reduceBrain([edit("a", 1000, { value: "vandalizado" }), seed]);
+    const { snapshot, log, round, expediente, roundStartedAt } = reduceBrain([
+      edit("a", 1000, { value: "vandalizado" }),
+      seed,
+    ]);
     expect(snapshot.miedo.content).toBe(SEED_SLOTS.miedo);
     expect(snapshot.miedo.editor).toBe("");
-    expect(log).toHaveLength(1);
+    // El expediente del paciente anterior no se hereda.
+    expect(log).toHaveLength(0);
+    expect(round).toBe("ingreso");
+    expect(expediente).toBe("047-D");
+    expect(roundStartedAt).toBe(3000);
+  });
+
+  it("el historial posterior al seed sí se conserva", () => {
+    const seed: HistoryEntry<BrainMessage> = {
+      id: "seed",
+      at: 2000,
+      content: { kind: "seed", slots: SEED_SLOTS },
+    };
+    const { log } = reduceBrain([
+      edit("viejo", 1000, { value: "del paciente anterior" }),
+      seed,
+      edit("nuevo", 3000, { value: "de este paciente" }),
+    ]);
+    expect(log.map((e) => e.id)).toEqual(["nuevo"]);
   });
 
   it("ignora ediciones sobre regiones que no existen", () => {

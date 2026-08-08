@@ -15,6 +15,8 @@ interface ChatPaneProps {
   identity: Identity;
   typingNicknames: string[];
   patientThinking: boolean;
+  /** Durante el relevo entre pacientes no hay nadie a quien hablarle. */
+  locked: boolean;
   onSend: (body: string) => Promise<string | null>;
   onTyping: () => void;
   onRename: (nickname: string) => void;
@@ -26,6 +28,7 @@ export function ChatPane({
   identity,
   typingNicknames,
   patientThinking,
+  locked,
   onSend,
   onTyping,
   onRename,
@@ -183,6 +186,7 @@ export function ChatPane({
         <input
           className="chat-input"
           value={draft}
+          disabled={locked}
           maxLength={MAX_CHAT_CHARS}
           onChange={(event) => {
             setDraft(event.target.value);
@@ -191,7 +195,7 @@ export function ChatPane({
           onKeyDown={(event) => {
             if (event.key === "Enter") void submit();
           }}
-          placeholder="Háblale al paciente…"
+          placeholder={locked ? "Preparando al siguiente paciente…" : "Háblale al paciente…"}
           aria-label="Mensaje para EL PACIENTE"
           style={{
             flex: 1,
@@ -203,6 +207,8 @@ export function ChatPane({
             padding: "11px 14px",
             borderRadius: 3,
             outline: "none",
+            opacity: locked ? 0.45 : 1,
+            cursor: locked ? "not-allowed" : "auto",
           }}
         />
       </div>

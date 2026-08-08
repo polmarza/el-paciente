@@ -14,6 +14,8 @@ interface BrainSlotProps {
   state: SlotState;
   /** Cursor ajeno posado sobre esta región, si lo hay. */
   cursor: RemoteCursor | undefined;
+  /** Relevo entre pacientes: nada es editable. */
+  locked: boolean;
   editing: boolean;
   draft: string;
   now: number;
@@ -25,18 +27,21 @@ interface BrainSlotProps {
 
 /** Una región de la mente: editable, bloqueable y con el rastro de quien la tocó. */
 export function BrainSlot(props: BrainSlotProps) {
-  const { def, value, state, cursor, editing, draft, now } = props;
+  const { def, value, state, cursor, editing, draft, now, locked } = props;
 
   const cursorColor = cursor?.color ?? T.textMono;
   const secondsLeft = cooldownSecondsLeft(value, now);
-  const locked = state === "cooldown";
-  const clickable = state === "idle" && !editing;
+  // Dos bloqueos distintos: `onCooldown` es esta región en carne viva (se pinta con la
+  // trama diagonal); `locked` es el relevo entre pacientes, que no se pinta pero impide
+  // tocar nada.
+  const onCooldown = state === "cooldown";
+  const clickable = state === "idle" && !editing && !locked;
 
   const borderColor = cursor
     ? cursorColor
     : state === "flash"
       ? T.slotBorderFlash
-      : locked
+      : onCooldown
         ? T.slotBorderCooldown
         : T.slotBorder;
 
@@ -60,7 +65,7 @@ export function BrainSlot(props: BrainSlotProps) {
         position: "relative",
         gridColumn: `span ${def.span}`,
         border: `1px solid ${borderColor}`,
-        background: locked ? T.slotBgCooldown : T.slotBg,
+        background: onCooldown ? T.slotBgCooldown : T.slotBg,
         padding: "10px 13px 9px",
         borderRadius: 2,
         cursor: clickable ? "pointer" : "default",
@@ -79,7 +84,7 @@ export function BrainSlot(props: BrainSlotProps) {
         />
       )}
 
-      {locked && (
+      {onCooldown && (
         <div
           style={{
             position: "absolute",

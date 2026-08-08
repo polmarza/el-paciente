@@ -82,6 +82,11 @@ export default function App() {
 
   const showOverlay = heldEnd !== null && endKey(heldEnd) !== dismissedKey;
 
+  // Relevo: la ronda ha terminado y el paciente nuevo aún no ha llegado. Nadie a quien
+  // hablarle y nada que operar, así que la sala se bloquea. No depende de que el
+  // marcador siga abierto: si lo cierras antes de tiempo, sigues sin poder tocar nada.
+  const relevo = brain.roundEnd !== null;
+
   // El título de la pestaña acompaña al expediente en curso.
   useEffect(() => {
     document.title = `EL PACIENTE — expediente nº ${brain.expediente}`;
@@ -116,6 +121,7 @@ export default function App() {
           identity={identity}
           typingNicknames={chat.typingNicknames}
           patientThinking={chat.patientThinking}
+          locked={relevo}
           onSend={async (body) => {
             const reason = await chat.send(body);
             if (reason) showToast(reason);
@@ -128,6 +134,7 @@ export default function App() {
           brain={brain}
           cursors={brain.cursors}
           now={now}
+          locked={relevo}
           onEdit={handleEdit}
           onCursor={brain.announceCursor}
           onReject={showToast}

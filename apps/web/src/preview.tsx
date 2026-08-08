@@ -17,6 +17,9 @@ import { T } from "./theme";
 import "./styles.css";
 
 const now = Date.now();
+const params = new URLSearchParams(location.search);
+/** ?relevo=1 muestra la sala bloqueada entre pacientes. */
+const relevo = params.has("relevo");
 const identity: Identity = { nickname: "tú", color: "#9be89b" };
 
 /** El mismo estado intervenido que muestra el diseño, para poder compararlos. */
@@ -99,7 +102,7 @@ function App() {
       }}
     >
       <Monitor bpm={108} online={23} sessionSeconds={3127} expediente="001-A" />
-      {new URLSearchParams(location.search).has("fin") && (
+      {params.has("fin") && (
         <RoundOverlay
           roundEnd={{
             kind: "round-end",
@@ -120,6 +123,7 @@ function App() {
           identity={identity}
           typingNicknames={["marta"]}
           patientThinking
+          locked={relevo}
           onSend={async () => null}
           onTyping={() => {}}
           onRename={() => {}}
@@ -128,6 +132,7 @@ function App() {
           brain={brain}
           cursors={cursors}
           now={now}
+          locked={relevo}
           onEdit={async () => null}
           onCursor={() => {}}
           onReject={() => {}}

@@ -64,9 +64,9 @@ export interface BrainState {
 /**
  * Deriva el estado del cerebro a partir del historial del canal `brain`.
  *
- * Reglas: gana la última edición de cada región, y un `seed` posterior borra
- * cualquier edición anterior (es el botón de reset de la demo). El historial de
- * ediciones se conserva íntegro aunque haya habido reset: las cicatrices se ven.
+ * Reglas: gana la última edición de cada región, y un `seed` empieza un paciente nuevo —
+ * restaura las regiones y vacía el historial clínico, porque el expediente es de cada
+ * paciente, no de la sala.
  */
 export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): BrainState {
   const ordered = [...entries].sort((a, b) => a.at - b.at);
@@ -89,7 +89,11 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
       round = msg.round ?? null;
       expediente = msg.expediente ?? DEFAULT_EXPEDIENTE;
       roundStartedAt = entry.at;
-      // Empieza ronda nueva: el desenlace anterior deja de estar en pantalla.
+      // Paciente nuevo, historial nuevo: no hereda ni las cicatrices ni el pulso del
+      // anterior. Sin esto, `bpmFromLog` le contaría al recién llegado las ediciones
+      // que mataron al que estaba antes.
+      log.length = 0;
+      // Y el desenlace anterior deja de estar en pantalla.
       roundEnd = null;
       continue;
     }
