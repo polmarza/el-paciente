@@ -32,24 +32,6 @@ payload sobraría y desaparecería el riesgo de que un `mask` mal escrito lo fil
 Requiere investigar qué expone `ctx` sobre el origen de la publicación. No tocar antes del
 hackathon: lo que hay está probado.
 
-### [MEJORA-03] Impedir que corran dos agentes a la vez
-**Área:** Infraestructura
-**Prioridad estimada:** Alta (antes de la demo)
-**Origen:** Sesión del 2026-08-08: llegó a haber tres agentes vivos sin darnos cuenta
-
-Cada instancia de `pnpm agent` escucha y responde por su cuenta, así que arrancarlo dos
-veces hace que EL PACIENTE se conteste por duplicado delante del público. No hay ninguna
-guardia.
-
-Lo más simple que funciona: un fichero de bloqueo con el PID al arrancar, y salir con un
-mensaje claro si ya hay uno vivo. Conviene tenerlo antes de la demo, porque el fallo es
-silencioso: no da error, solo duplica al personaje.
-
-Nota operativa relacionada: `pkill -f "apps/agent/src/index.ts"` **no** mata al agente,
-porque pnpm lo lanza con la ruta relativa. El patrón que funciona es
-`pkill -f "experimental-strip-types"` (comprobando antes el `cwd`, para no tocar otros
-proyectos de la máquina).
-
 ### [MEJORA-02] Que el historial clínico crezca en pantallas altas
 **Área:** Frontend
 **Prioridad estimada:** Media

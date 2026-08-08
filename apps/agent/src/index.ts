@@ -11,6 +11,7 @@ import {
   type LogEntry,
 } from "@el-paciente/shared";
 import type { Message } from "@portalsdk/core";
+import { acquireLock, releaseLock } from "./lock.ts";
 import { isLive, openChannel, readHistory, signed } from "./portal-client.ts";
 import { buildTurn, parseReply } from "./prompt.ts";
 import { complete } from "./llm.ts";
@@ -23,6 +24,9 @@ const COALESCE_MS = 1200;
 const BOOT_GRACE_MS = 2500;
 
 const reset = process.argv.includes("--reset");
+
+// Antes de abrir nada: si ya hay otro agente despierto, este no debe conectarse siquiera.
+acquireLock();
 
 const chat = openChannel<ChatMessage>(CHANNEL_CHAT, 60);
 const brain = openChannel<BrainMessage>(CHANNEL_BRAIN, 200);
@@ -176,12 +180,15 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-process.on("SIGINT", () => {
-  console.log("\nEL PACIENTE se duerme.");
-  chat.release();
-  brain.release();
-  process.exit(0);
-});
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    console.log("\nEL PACIENTE se duerme.");
+    chat.release();
+    brain.release();
+    releaseLock();
+    process.exit(0);
+  });
+}
 
 main().catch((error) => {
   console.error("El agente no pudo arrancar:", describe(error));

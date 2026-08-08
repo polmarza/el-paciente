@@ -4,6 +4,12 @@ import { FONT, T } from "../theme";
 import type { ChatEntry } from "../hooks/useChat";
 import { useAiReveal } from "../hooks/useAiReveal";
 
+/**
+ * Margen para considerar que sigues "abajo". Generoso a propósito: con el tecleo en vivo
+ * el contenido crece bajo tus pies, y un umbral corto te soltaría del fondo sin querer.
+ */
+const STICK_THRESHOLD_PX = 120;
+
 interface ChatPaneProps {
   entries: ChatEntry[];
   identity: Identity;
@@ -29,12 +35,20 @@ export function ChatPane({
   const scrollRef = useRef<HTMLDivElement>(null);
   const { revealedId, revealedText } = useAiReveal(entries);
 
-  // Seguimos el final de la conversación salvo que el espectador haya subido a leer.
+  // Seguimos el final de la conversación, pero solo mientras el espectador esté abajo.
+  // La decisión se toma al hacer scroll, no al llegar contenido: si se midiera después de
+  // insertar el mensaje, uno largo despegaría el seguimiento él solo.
+  const stickToBottom = useRef(true);
+
+  function onScroll(event: React.UIEvent<HTMLDivElement>) {
+    const element = event.currentTarget;
+    const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+    stickToBottom.current = distanceFromBottom <= STICK_THRESHOLD_PX;
+  }
+
   useLayoutEffect(() => {
     const element = scrollRef.current;
-    if (!element) return;
-    const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
-    if (distanceFromBottom < 180) element.scrollTop = element.scrollHeight;
+    if (element && stickToBottom.current) element.scrollTop = element.scrollHeight;
   }, [entries, revealedText]);
 
   // useChat ya descarta nuestra propia sesión al resolver los nicknames.
@@ -61,6 +75,7 @@ export function ChatPane({
     >
       <div
         ref={scrollRef}
+        onScroll={onScroll}
         style={{
           flex: 1,
           overflowY: "auto",
