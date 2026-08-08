@@ -12,6 +12,7 @@
     "build": "pnpm --filter @el-paciente/web build",
     "preview": "pnpm --filter @el-paciente/web preview",
     "agent": "pnpm --filter @el-paciente/agent start",
+    "extras": "pnpm --filter @el-paciente/agent extras",
     "portal:deploy": "portal deploy",
     "test": "vitest run",
     "test:watch": "vitest",
