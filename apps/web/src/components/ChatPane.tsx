@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { MAX_CHAT_CHARS, type Identity } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
+import { keyClick } from "../lib/sound";
 import type { ChatEntry } from "../hooks/useChat";
 import { useAiReveal } from "../hooks/useAiReveal";
 
@@ -194,6 +195,7 @@ export function ChatPane({
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter") void submit();
+            else if (event.key.length === 1 || event.key === "Backspace") keyClick();
           }}
           placeholder={locked ? "Preparando al siguiente paciente…" : "Háblale al paciente…"}
           aria-label="Mensaje para EL PACIENTE"

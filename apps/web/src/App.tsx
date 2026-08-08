@@ -26,7 +26,7 @@ import {
   saveIdentity,
 } from "./lib/identity";
 import { T } from "./theme";
-import { monitorPing } from "./lib/sound";
+import { alarmBeep } from "./lib/sound";
 import { hintsDisabled } from "./lib/hints";
 
 const TOAST_MS = 4200;
@@ -96,15 +96,12 @@ export default function App() {
     [brain],
   );
 
-  // El reloj de sesión cuenta desde lo más antiguo que conocemos de esta sala.
-  const sessionSeconds = useMemo(() => {
-    const oldest = Math.min(
-      mountedAt.current,
-      ...chat.entries.map((entry) => entry.at),
-      ...brain.log.map((entry) => entry.at),
-    );
-    return (now - oldest) / 1000;
-  }, [now, chat.entries, brain.log]);
+  // Cuánto lleva vivo ESTE paciente. Antes contaba desde el mensaje más antiguo de la
+  // sala, así que tras unas horas marcaba "12:21:52", que no significaba nada.
+  const sessionSeconds = useMemo(
+    () => Math.max(0, (now - (brain.roundStartedAt || mountedAt.current)) / 1000),
+    [now, brain.roundStartedAt],
+  );
 
   // Cada paciente llega a una sala limpia: el chat se pinta solo desde que empezó su
   // ronda, para que la conversación del anterior no contamine la suya.
@@ -152,16 +149,16 @@ export default function App() {
 
   const bpm = useMemo(() => bpmFromLog(brain.log, now), [brain.log, now]);
 
-  // El ping de monitor: una edición del cerebro = un latido audible. Solo para las que
-  // llegan en vivo — el backfill al conectar no debe sonar como una ráfaga.
-  const lastEditIdRef = useRef<string | null | undefined>(undefined);
+  // La alarma suena UNA vez al cruzar a zona roja, no en cada edición: el latido del
+  // monitor ya acelera solo, y una alarma repetida cansa en treinta segundos.
+  const wasAlarmingRef = useRef<boolean | undefined>(undefined);
   useEffect(() => {
-    const latest = brain.log[0]?.id ?? null;
-    const previous = lastEditIdRef.current;
-    lastEditIdRef.current = latest;
-    if (previous === undefined || latest === null || latest === previous) return;
-    monitorPing(bpm > BPM_ALARM);
-  }, [brain.log, bpm]);
+    const alarming = bpm > BPM_ALARM;
+    const before = wasAlarmingRef.current;
+    wasAlarmingRef.current = alarming;
+    if (before === undefined || before || !alarming) return;
+    alarmBeep();
+  }, [bpm]);
 
   const online = Math.max(brain.presenceCount, chat.presenceCount, 1);
   const disconnected = isDown(brain.status) || isDown(chat.status);

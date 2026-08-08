@@ -6,6 +6,7 @@ import {
   type SlotValue,
 } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
+import { keyClick } from "../lib/sound";
 import type { RemoteCursor } from "../hooks/useBrain";
 
 interface BrainSlotProps {
@@ -161,6 +162,7 @@ export function BrainSlot(props: BrainSlotProps) {
           onKeyDown={(event) => {
             if (event.key === "Enter") props.onCommit();
             else if (event.key === "Escape") props.onCancel();
+            else if (event.key.length === 1 || event.key === "Backspace") keyClick();
           }}
           style={{
             width: "100%",

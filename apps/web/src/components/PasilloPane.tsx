@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { MAX_PASILLO_CHARS, type Identity } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
+import { keyClick } from "../lib/sound";
 import type { PasilloEntry } from "../hooks/usePasillo";
 
 /** Igual que en el chat: seguimos al fondo solo si el lector ya estaba abajo. */
@@ -128,6 +129,7 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter") void submit();
+            else if (event.key.length === 1 || event.key === "Backspace") keyClick();
           }}
           placeholder="Hablad entre vosotros…"
           aria-label={`Mensaje al pasillo como ${identity.nickname}`}

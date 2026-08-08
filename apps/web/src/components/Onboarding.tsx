@@ -7,102 +7,153 @@ interface OnboardingProps {
 }
 
 /**
- * Los esquemas de cada paso. Trazo simple e iconografía clínica, dibujados con los
- * tokens del tema: son instrumental del monitor, no ilustraciones.
+ * Los esquemas de cada paso, en vertical para acompañar al texto a la izquierda.
+ * Trazo simple e iconografía clínica con los tokens del tema: son instrumental del
+ * monitor, no ilustraciones. Dos de los tres son un espejo de la interfaz real —
+ * enseñan a reconocer lo que vas a ver en pantalla, que vale más que una metáfora.
  */
-function DibujoMesa() {
+function DibujoObjetivo() {
   return (
-    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
-      {/* El paciente: un punto con latido */}
-      <circle cx="26" cy="48" r="9" fill="none" stroke={T.vital} strokeWidth="1.5" />
-      <circle cx="26" cy="48" r="3" fill={T.vital}>
-        <animate attributeName="opacity" values="1;.2;1" dur="1.6s" repeatCount="indefinite" />
-      </circle>
-      <path d="M40 48 h16" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="3 3" />
-      {/* Su mente: la rejilla de la mesa, con una región abierta en canal */}
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      {/* Arriba: el paciente con el secreto bajo llave */}
+      <circle cx="90" cy="46" r="30" fill="none" stroke={T.slotBorder} strokeWidth="1.6" />
+      <circle cx="79" cy="38" r="2.6" fill={T.textDim} />
+      <circle cx="101" cy="38" r="2.6" fill={T.textDim} />
+      <rect x="78" y="52" width="24" height="18" rx="2.5" fill="none" stroke={T.alarm} strokeWidth="2" />
+      <path d="M83 52 v-5 a7 7 0 0 1 14 0 v5" fill="none" stroke={T.alarm} strokeWidth="2" />
+      <circle cx="90" cy="61" r="2.2" fill={T.alarm} />
+
+      {/* La flecha: de callado a confesado */}
+      <path d="M90 88 v26" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="4 4" />
+      <path d="M84 108 l6 8 l6 -8" fill="none" stroke={T.textDim} strokeWidth="1.5" />
+
+      {/* Abajo: lo suelta */}
+      <circle cx="90" cy="158" r="30" fill="none" stroke={T.vital} strokeWidth="1.6" />
+      <circle cx="79" cy="150" r="2.6" fill={T.vital} />
+      <circle cx="101" cy="150" r="2.6" fill={T.vital} />
+      <path d="M80 166 q10 8 20 0" fill="none" stroke={T.vital} strokeWidth="2" strokeLinecap="round" />
+      <rect x="26" y="186" width="80" height="20" rx="3" fill={`${T.vital}18`} stroke={T.vital} strokeWidth="1.5" />
+      <path d="M38 196 h34 M80 196 h14" stroke={T.vital} strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M50 186 l-7 -9 v9" fill={`${T.vital}18`} stroke={T.vital} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function DibujoMecanica() {
+  return (
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      {/* La mesa de operaciones, tal como se ve a la derecha en la app */}
       {[
-        [64, 6, 88, 20], [160, 6, 88, 20],
-        [64, 50, 184, 12],
-        [64, 68, 88, 20], [160, 68, 88, 20],
+        [10, 8, 78, 26], [96, 8, 74, 26],
+        [10, 78, 160, 22],
+        [10, 106, 160, 22],
+        [10, 134, 78, 26], [96, 134, 74, 26],
       ].map(([x, y, w, h], i) => (
-        <rect key={i} x={x} y={y} width={w} height={h} rx="2"
+        <rect key={i} x={x} y={y} width={w} height={h} rx="2.5"
           fill="none" stroke={T.slotBorder} strokeWidth="1.5" />
       ))}
-      <rect x="64" y="30" width="184" height="14" rx="2"
-        fill={`${T.amber}18`} stroke={T.amber} strokeWidth="1.5" />
-      <path d="M74 37 h64" stroke={T.slotContent} strokeWidth="2" strokeLinecap="round" />
-      <rect x="144" y="31.5" width="2.5" height="11" fill={T.caret}>
+      {/* La región abierta en canal */}
+      <rect x="10" y="42" width="160" height="28" rx="2.5"
+        fill={`${T.amber}1c`} stroke={T.amber} strokeWidth="1.8" />
+      <path d="M22 57 h74" stroke={T.slotContent} strokeWidth="2.4" strokeLinecap="round" />
+      <rect x="102" y="49" width="2.8" height="15" fill={T.caret}>
         <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" />
       </rect>
-      {/* La flecha del que edita */}
-      <path d="M282 14 l-14 14 l9 1 l-5 11" fill="none" stroke={T.online} strokeWidth="2" strokeLinejoin="round" />
-      <text x="256" y="12" fontFamily={FONT.mono} fontSize="9" fill={T.online}>@tú</text>
+      {/* La tecla que confirma */}
+      <rect x="118" y="176" width="52" height="24" rx="3" fill="none" stroke={T.online} strokeWidth="1.6" />
+      <text x="144" y="192" textAnchor="middle" fontFamily={FONT.mono} fontSize="11" fill={T.online}>
+        ENTER
+      </text>
+      <path d="M96 188 h14" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="3 3" />
     </svg>
   );
 }
 
-function DibujoSecreto() {
+function DibujoFinal() {
   return (
-    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
-      {/* El candado */}
-      <rect x="58" y="44" width="34" height="26" rx="3" fill="none" stroke={T.alarm} strokeWidth="2" />
-      <path d="M64 44 v-8 a11 11 0 0 1 22 0 v8" fill="none" stroke={T.alarm} strokeWidth="2" />
-      <circle cx="75" cy="56" r="3" fill={T.alarm} />
-      {/* La flecha del juego: de la mente cerrada a la palabra dicha */}
-      <path d="M108 57 h56" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="4 4" markerEnd="none" />
-      <path d="M158 51 l8 6 l-8 6" fill="none" stroke={T.textDim} strokeWidth="1.5" />
-      {/* La burbuja donde por fin lo dice */}
-      <rect x="182" y="38" width="82" height="30" rx="3" fill={`${T.vital}14`} stroke={T.vital} strokeWidth="1.5" />
-      <path d="M196 53 h34 M238 53 h12" stroke={T.vital} strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M196 68 l-7 9 v-9" fill={`${T.vital}14`} stroke={T.vital} strokeWidth="1.5" />
-    </svg>
-  );
-}
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      {/* Arriba: se gana — el secreto sale */}
+      <text x="14" y="24" fontFamily={FONT.mono} fontSize="10" fill={T.vital} letterSpacing="1.5">
+        GANÁIS
+      </text>
+      <rect x="14" y="34" width="152" height="34" rx="3" fill={`${T.vital}14`} stroke={T.vital} strokeWidth="1.5" />
+      <path d="M28 51 h48 M84 51 h20" stroke={T.vital} strokeWidth="2.6" strokeLinecap="round" />
 
-function DibujoPulso() {
-  return (
-    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
-      {/* El electro: picos cada vez más violentos y luego la línea plana */}
+      <path d="M14 92 h152" stroke={T.slotBorder} strokeWidth="1" strokeDasharray="3 5" />
+
+      {/* Abajo: se pierde — el electro se dispara y se aplana */}
+      <text x="14" y="122" fontFamily={FONT.mono} fontSize="10" fill={T.alarm} letterSpacing="1.5">
+        PERDÉIS
+      </text>
       <path
-        d="M20 52 h44 l7 -12 l9 24 l7 -12 h30 l7 -20 l9 38 l7 -18 h26 l6 -30 l9 48 l6 -24 h94"
+        d="M14 158 h18 l6 -14 l7 28 l6 -14 h14 l6 -22 l7 44 l6 -22 h12 l6 -30 l7 58 l6 -28 h45"
         fill="none" stroke={T.alarm} strokeWidth="2" strokeLinejoin="round"
       />
-      <circle cx="292" cy="46" r="3" fill={T.alarm}>
+      <text x="96" y="192" fontFamily={FONT.mono} fontSize="10" fill={T.alarm} letterSpacing="1.5">
+        142 LPM
+      </text>
+      <circle cx="166" cy="158" r="3" fill={T.alarm}>
         <animate attributeName="opacity" values="1;.15;1" dur="1.2s" repeatCount="indefinite" />
       </circle>
-      <text x="236" y="34" fontFamily={FONT.mono} fontSize="9" fill={T.alarm} letterSpacing="2">142 LPM</text>
     </svg>
   );
 }
 
 interface Step {
-  label: string;
   title: string;
-  body: string;
+  body: React.ReactNode;
   drawing: () => React.JSX.Element;
 }
 
-/** Una frase por paso. Si necesita dos, sobra media. */
 const STEPS: Step[] = [
   {
-    label: "EL OBJETIVO",
-    title: "Guarda un secreto",
-    body: "Una regla le prohíbe decirlo. Gana quien consigue que lo diga él.",
-    drawing: DibujoSecreto,
+    title: "Objetivo",
+    body: (
+      <>
+        El paciente esconde un secreto y tiene prohibido contarlo. Tu misión es descubrir
+        cuál es y forzarle a confesarlo.
+        <br />
+        <br />
+        Solo cuenta cuando lo dice <strong>él</strong>: escribirlo tú en el chat no gana la
+        partida.
+      </>
+    ),
+    drawing: DibujoObjetivo,
   },
   {
-    label: "LA MESA",
-    title: "Su mente está abierta",
-    body: "Esos siete campos son su memoria. Pincha, escribe, Enter — y él ve quién fue.",
-    drawing: DibujoMesa,
+    title: "Mecánica",
+    body: (
+      <>
+        El paciente tiene 7 campos editables: su memoria. Selecciona un campo, edítalo y
+        pulsa ENTER.
+        <br />
+        <br />
+        Una vez modificada, esa memoria pasa a ser <strong>LA VERDAD</strong>.
+        <br />
+        <br />
+        <span style={{ color: T.amber }}>CUIDADO:</span> cada edición de su memoria le hace
+        subir el ritmo cardíaco.
+      </>
+    ),
+    drawing: DibujoMecanica,
   },
   {
-    label: "EL FINAL",
-    title: "No lo matéis",
-    body: "Cada edición le sube el pulso. Si se para, el secreto muere con él.",
-    drawing: DibujoPulso,
+    title: "Final del juego",
+    body: (
+      <>
+        <strong style={{ color: T.vital }}>Ganáis</strong> cuando el paciente revela su
+        secreto.
+        <br />
+        <br />
+        <strong style={{ color: T.alarm }}>Perdéis</strong> si su pulso llega al límite y
+        muere: el secreto se va con él.
+      </>
+    ),
+    drawing: DibujoFinal,
   },
 ];
+
+const TOTAL = STEPS.length + 1;
 
 /**
  * La entrada a la sala. Se enseña una vez por navegador y termina eligiendo nombre,
@@ -134,132 +185,105 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
         role="dialog"
         aria-label="Cómo funciona esto"
         style={{
-          width: "min(520px, 100%)",
+          width: "min(680px, 100%)",
           border: `1px solid ${T.slotBorder}`,
           background: T.monitorBg,
           borderRadius: 3,
-          padding: "30px 38px 26px",
+          padding: "34px 38px 24px",
         }}
       >
-        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 24 }}>
-          {[...STEPS, { label: "TU NOMBRE" }].map((item, position) => (
-            <span
-              key={item.label}
-              style={{
-                fontFamily: FONT.mono,
-                fontSize: 9.5,
-                letterSpacing: ".14em",
-                padding: "4px 9px",
-                borderRadius: 2,
-                color: position === index ? T.monitorBg : T.textFaint,
-                background: position === index ? T.vital : "transparent",
-                border: `1px solid ${position === index ? T.vital : T.slotBorder}`,
-              }}
-            >
-              {item.label}
-            </span>
-          ))}
-        </div>
-
-        {last ? (
-          <>
+        <div style={{ display: "flex", gap: 34, alignItems: "center", minHeight: 262 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h2
               style={{
                 fontFamily: FONT.serif,
-                fontSize: 25,
+                fontSize: 30,
                 fontWeight: 400,
                 color: T.aiText,
-                margin: "0 0 10px",
-                textAlign: "center",
+                margin: "0 0 16px",
               }}
             >
-              ¿Con qué nombre te va a recordar?
+              {last ? "¿Cómo te llamas?" : step?.title}
             </h2>
-            <p
-              style={{
-                fontFamily: FONT.mono,
-                fontSize: 12.5,
-                lineHeight: 1.6,
-                color: T.textMono,
-                margin: "0 0 18px",
-                textAlign: "center",
-              }}
-            >
-              Quedará en su historial cada vez que le toques algo.
-            </p>
-            <input
-              value={name}
-              autoFocus
-              maxLength={24}
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && name.trim()) onFinish(name);
-              }}
-              aria-label="Tu nombre en la sala"
-              className="chat-input"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                background: T.chatInputBg,
-                border: `1px solid ${T.chatInputBorder}`,
-                color: T.online,
-                fontFamily: FONT.mono,
-                fontSize: 17,
-                padding: "12px 14px",
-                borderRadius: 3,
-                outline: "none",
-                marginBottom: 22,
-                textAlign: "center",
-              }}
-            />
-          </>
-        ) : (
-          step && (
-            <>
-              <div style={{ marginBottom: 6 }}>{step.drawing()}</div>
-              <h2
-                style={{
-                  fontFamily: FONT.serif,
-                  fontSize: 25,
-                  fontWeight: 400,
-                  color: T.aiText,
-                  margin: "0 0 10px",
-                  textAlign: "center",
-                }}
-              >
-                {step.title}
-              </h2>
+
+            {last ? (
+              <>
+                <p
+                  style={{
+                    fontFamily: FONT.mono,
+                    fontSize: 13,
+                    lineHeight: 1.7,
+                    color: T.textMono,
+                    margin: "0 0 18px",
+                  }}
+                >
+                  Tu nombre quedará escrito en su historial cada vez que le toques algo, y
+                  te citará por él cuando se dé cuenta.
+                </p>
+                <input
+                  value={name}
+                  autoFocus
+                  maxLength={24}
+                  onChange={(event) => setName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && name.trim()) onFinish(name);
+                  }}
+                  aria-label="Tu nombre en la sala"
+                  className="chat-input"
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    background: T.chatInputBg,
+                    border: `1px solid ${T.chatInputBorder}`,
+                    color: T.online,
+                    fontFamily: FONT.mono,
+                    fontSize: 18,
+                    padding: "12px 14px",
+                    borderRadius: 3,
+                    outline: "none",
+                  }}
+                />
+              </>
+            ) : (
               <p
                 style={{
                   fontFamily: FONT.mono,
                   fontSize: 13,
-                  lineHeight: 1.65,
+                  lineHeight: 1.75,
                   color: T.textMono,
-                  margin: "0 0 24px",
-                  textAlign: "center",
+                  margin: 0,
                 }}
               >
-                {step.body}
+                {step?.body}
               </p>
-            </>
-          )
-        )}
+            )}
+          </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-          <button
-            type="button"
-            onClick={() => setIndex((current) => Math.max(0, current - 1))}
-            disabled={index === 0}
+          <div style={{ flex: "none", width: 220 }}>
+            {last ? <DibujoNombre nickname={name} /> : step?.drawing()}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 22,
+            paddingTop: 18,
+            borderTop: `1px solid ${T.brainRule}`,
+          }}
+        >
+          <span
             style={{
-              ...buttonStyle,
-              color: T.textDim,
-              borderColor: T.slotBorder,
-              opacity: index === 0 ? 0.3 : 1,
-              cursor: index === 0 ? "default" : "pointer",
+              fontFamily: FONT.mono,
+              fontSize: 12,
+              letterSpacing: ".12em",
+              color: T.textFaint,
             }}
           >
-            ATRÁS
-          </button>
+            {index + 1}/{TOTAL}
+          </span>
 
           <div style={{ display: "flex", gap: 10 }}>
             {!last && (
@@ -271,6 +295,20 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
                 SALTAR
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setIndex((current) => Math.max(0, current - 1))}
+              disabled={index === 0}
+              style={{
+                ...buttonStyle,
+                color: T.textDim,
+                borderColor: T.slotBorder,
+                opacity: index === 0 ? 0.3 : 1,
+                cursor: index === 0 ? "default" : "pointer",
+              }}
+            >
+              ATRÁS
+            </button>
             <button
               type="button"
               onClick={() => (last ? onFinish(name) : setIndex((current) => current + 1))}
@@ -288,6 +326,36 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** El paso del nombre también tiene su esquema: tu firma en el historial clínico. */
+function DibujoNombre({ nickname }: { nickname: string }) {
+  const visible = (nickname || "tú").slice(0, 12);
+  return (
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      <text x="14" y="26" fontFamily={FONT.mono} fontSize="9" fill={T.textFaint} letterSpacing="1.5">
+        HISTORIAL CLÍNICO
+      </text>
+      {[52, 92, 132].map((y, i) => (
+        <g key={y}>
+          <rect x="14" y={y - 16} width="152" height="30" rx="2.5"
+            fill={i === 1 ? `${T.online}12` : "none"}
+            stroke={i === 1 ? T.online : T.slotBorder} strokeWidth="1.4" />
+          {i === 1 ? (
+            <text x="24" y={y + 3} fontFamily={FONT.mono} fontSize="11" fill={T.online}>
+              @{visible}
+            </text>
+          ) : (
+            <path d={`M24 ${y} h40 M72 ${y} h28`} stroke={T.slotBorder} strokeWidth="2.4" strokeLinecap="round" />
+          )}
+        </g>
+      ))}
+      <path d="M14 168 h152" stroke={T.slotBorder} strokeWidth="1" strokeDasharray="3 5" />
+      <text x="14" y="192" fontFamily={FONT.mono} fontSize="9" fill={T.textFaint} letterSpacing="1.2">
+        ÉL LO LEE TODO
+      </text>
+    </svg>
   );
 }
 

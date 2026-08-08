@@ -1,9 +1,10 @@
 /**
  * El sonido del quirófano, sintetizado con WebAudio: cero archivos, cero dependencias.
  *
- * Dos fuentes, y solo dos — el sonido funciona por escasez:
- *  - el tecleo de EL PACIENTE mientras escribe (ruido corto filtrado),
- *  - el ping de monitor de hospital cuando alguien le corta (una edición = un latido).
+ * Tres fuentes, y solo tres — el sonido funciona por escasez:
+ *  - el LATIDO del monitor, continuo, acompasado al electro y acelerando con el pulso,
+ *  - el tecleo (de EL PACIENTE al escribir, y el tuyo al teclear),
+ *  - la alarma, una sola vez, al cruzar a zona roja.
  *
  * Los navegadores bloquean el audio hasta el primer gesto del usuario. Se desbloquea
  * con cualquier gesto (clic o tecla), y el botón ♪ reproduce un ping al reactivar:
@@ -93,26 +94,42 @@ export function keyClick(): void {
   source.start();
 }
 
-/**
- * El ping de monitor de constantes: un seno breve con caída exponencial. Sube medio
- * tono cuando el pulso va alto, que es exactamente lo que hacen las máquinas de verdad.
- */
-export function monitorPing(highRate = false): void {
-  if (muted) return;
+/** Un seno breve con caída exponencial: el "bip" de las máquinas de constantes. */
+function beep(frequency: number, peak: number, decay: number, delay = 0): void {
   const context = audio();
   if (!context || context.state !== "running") return;
 
   const oscillator = context.createOscillator();
   oscillator.type = "sine";
-  oscillator.frequency.value = highRate ? 990 : 880;
+  oscillator.frequency.value = frequency;
 
   const gain = context.createGain();
-  const now = context.currentTime;
-  gain.gain.setValueAtTime(0.001, now);
-  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+  const start = context.currentTime + delay;
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(peak, start + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + decay);
 
   oscillator.connect(gain).connect(context.destination);
-  oscillator.start(now);
-  oscillator.stop(now + 0.3);
+  oscillator.start(start);
+  oscillator.stop(start + decay + 0.02);
+}
+
+/**
+ * El latido del monitor. Lo dispara `Monitor` una vez por ciclo del electro, justo
+ * cuando pasa el pico, así que su ritmo ES el ritmo que se ve en pantalla.
+ * Sube medio tono en zona roja, como las máquinas de verdad.
+ */
+export function monitorPing(highRate = false): void {
+  if (muted) return;
+  beep(highRate ? 990 : 880, 0.18, 0.16);
+}
+
+/**
+ * La alarma de zona roja: doble bip agudo. Suena UNA vez al cruzar el umbral, no en
+ * bucle — una alarma continua es lo único capaz de arruinar una demo por sí sola.
+ */
+export function alarmBeep(): void {
+  if (muted) return;
+  beep(1320, 0.2, 0.1);
+  beep(1320, 0.2, 0.1, 0.16);
 }

@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { BPM_ALARM } from "@el-paciente/shared";
+import { useEffect, useRef, useState } from "react";
+import { BPM_ALARM, BPM_RESTING } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
-import { isMuted, setMuted } from "../lib/sound";
+import { isMuted, monitorPing, setMuted } from "../lib/sound";
 import { hintsDisabled, setHintsDisabled } from "../lib/hints";
 
 interface MonitorProps {
@@ -12,6 +12,14 @@ interface MonitorProps {
   expediente: string;
   onShowHelp: () => void;
 }
+
+/** Duración del ciclo del electro en reposo, tal como venía en el diseño. */
+const ECG_CYCLE_MS = 2200;
+/**
+ * En qué punto del ciclo cae el pico visible. Es lo único de aquí que se afina a ojo:
+ * si el bip suena adelantado respecto al pico, sube este número.
+ */
+const PEAK_AT = 0.3;
 
 /** La cabecera del monitor: identidad del paciente, pulso, reloj de sesión y aforo. */
 export function Monitor({
@@ -24,6 +32,55 @@ export function Monitor({
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
   const [silenced, setSilenced] = useState(isMuted);
   const [noHints, setNoHints] = useState(hintsDisabled);
+  const ecgRef = useRef<SVGPolylineElement>(null);
+
+  // El electro y el latido comparten fase: el bip cae siempre sobre el pico.
+  //
+  // El latido se reprograma a sí mismo leyendo el periodo actual de una referencia, en
+  // vez de reiniciar un intervalo cada vez que cambia el pulso. Con intervalos, cada
+  // cambio de LPM cortaba el latido a media zancada y se oía un tartamudeo — justo en
+  // los momentos de tensión, que es cuando más se nota. Así acelera de forma continua.
+  const period = (ECG_CYCLE_MS * BPM_RESTING) / Math.max(BPM_RESTING, bpm);
+  const alarming = bpm > BPM_ALARM;
+
+  const periodRef = useRef(period);
+  periodRef.current = period;
+  const alarmingRef = useRef(alarming);
+  alarmingRef.current = alarming;
+
+  useEffect(() => {
+    const line = ecgRef.current;
+    if (!line) return;
+
+    const animation = line.animate(
+      [{ strokeDashoffset: "0" }, { strokeDashoffset: "-300" }],
+      { duration: ECG_CYCLE_MS, iterations: Infinity, easing: "linear" },
+    );
+
+    let timer: ReturnType<typeof setTimeout>;
+    const beat = () => {
+      monitorPing(alarmingRef.current);
+      // Realineamos el electro con el bip que acaba de sonar. La corrección por ciclo es
+      // mínima, así que no se ve saltar.
+      animation.currentTime = ECG_CYCLE_MS * PEAK_AT;
+      timer = setTimeout(beat, periodRef.current);
+    };
+    timer = setTimeout(beat, period * PEAK_AT);
+
+    return () => {
+      animation.cancel();
+      clearTimeout(timer);
+    };
+    // Se monta una sola vez: el ritmo lo lleva la referencia, no las dependencias.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // El electro acelera cambiando su velocidad, no su duración: así conserva la fase.
+  useEffect(() => {
+    const line = ecgRef.current;
+    const animation = line?.getAnimations()[0];
+    animation?.updatePlaybackRate(ECG_CYCLE_MS / period);
+  }, [period]);
 
   function toggleSound() {
     const next = !silenced;
@@ -71,12 +128,12 @@ export function Monitor({
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <svg width="110" height="26" viewBox="0 0 110 26" style={{ overflow: "visible" }}>
           <polyline
+            ref={ecgRef}
             points="0,13 22,13 28,13 33,4 38,22 43,13 62,13 68,9 72,13 110,13"
             fill="none"
             stroke={bpmColor}
             strokeWidth="1.6"
             strokeDasharray="150 150"
-            style={{ animation: "ecg 2.2s linear infinite" }}
           />
         </svg>
         <span style={{ color: bpmColor, fontWeight: 600, fontSize: 15 }}>{bpm}</span>
@@ -84,7 +141,9 @@ export function Monitor({
       </div>
 
       <div style={{ flex: 1 }} />
-      <span style={{ color: T.textDim }}>SESIÓN {formatClock(sessionSeconds)}</span>
+      <span style={{ color: T.textDim }} title="Tiempo que lleva vivo este paciente">
+        EN QUIRÓFANO {formatClock(sessionSeconds)}
+      </span>
       <span style={{ color: T.online }}>● {online} DENTRO</span>
       <button
         type="button"
