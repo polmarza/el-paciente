@@ -57,6 +57,26 @@ export const T = {
 } as const;
 
 /**
+ * Escala tipográfica. Había trece tamaños distintos repartidos por los componentes, que
+ * es lo que hacía que la interfaz pareciera cosida de trozos. Seis pasos, y nada fuera
+ * de aquí: si un texto necesita un tamaño nuevo, es que pertenece a un paso que ya existe.
+ */
+export const SIZE = {
+  /** Etiquetas en versalitas, metadatos y marcas de tiempo. */
+  micro: 11,
+  /** Instrumental: cabecera, historial, avisos, botones. */
+  small: 12.5,
+  /** Lo que se lee y se escribe: mensajes, contenido de regiones, onboarding, inputs. */
+  body: 14,
+  /** Lo que debe destacar de un vistazo: el pulso, el nombre que eliges. */
+  lead: 18,
+  /** La voz de EL PACIENTE. */
+  voice: 19,
+  /** Titulares. */
+  title: 30,
+} as const;
+
+/**
  * Dos familias, regla estricta: la serifa es SOLO para la voz de EL PACIENTE.
  * Todo lo demás — humanos incluidos — escribe con la monoespaciada del instrumental.
  */

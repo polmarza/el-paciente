@@ -74,7 +74,8 @@ export interface BrainSeed {
  */
 export interface BrainRoundEnd {
   kind: "round-end";
-  outcome: "revelado" | "paro";
+  /** `retirado` es el relevo pedido por la sala: nadie ganó, pero tampoco lo mataron. */
+  outcome: "revelado" | "paro" | "retirado";
   /** El secreto, ya sin valor: la ronda ha terminado. */
   secret: string;
   /** Expediente del paciente que se lleva (o no) el secreto. */
@@ -88,7 +89,18 @@ export interface BrainRoundEnd {
   auth?: string;
 }
 
-export type BrainMessage = BrainEdit | BrainSeed | BrainRoundEnd;
+/**
+ * Petición de paciente nuevo. La publica cualquiera desde la cabecera; **el agente decide
+ * si la atiende**. Sin autenticación no se puede impedir que alguien la pida, así que el
+ * freno está en el agente, que la ignora si la ronda acaba de empezar o si ya hubo un
+ * reinicio reciente. Y siempre se anuncia con nombre: quien la pide, la firma.
+ */
+export interface BrainNewGame {
+  kind: "new-game";
+  nickname: string;
+}
+
+export type BrainMessage = BrainEdit | BrainSeed | BrainRoundEnd | BrainNewGame;
 
 /** Mensaje efímero: el cursor de un espectador sobre una región. No persiste. */
 export interface BrainCursor {

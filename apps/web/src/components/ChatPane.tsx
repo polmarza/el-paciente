@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { MAX_CHAT_CHARS, type Identity } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { MAX_CHAT_CHARS } from "@el-paciente/shared";
+import { FONT, T, SIZE } from "../theme";
 import { keyClick } from "../lib/sound";
 import type { ChatEntry } from "../hooks/useChat";
 import { useAiReveal } from "../hooks/useAiReveal";
@@ -13,29 +13,24 @@ const STICK_THRESHOLD_PX = 120;
 
 interface ChatPaneProps {
   entries: ChatEntry[];
-  identity: Identity;
   typingNicknames: string[];
   patientThinking: boolean;
   /** Durante el relevo entre pacientes no hay nadie a quien hablarle. */
   locked: boolean;
   onSend: (body: string) => Promise<string | null>;
   onTyping: () => void;
-  onRename: (nickname: string) => void;
 }
 
 /** La voz del paciente: cálida, humana, en contraste con la mesa de operaciones. */
 export function ChatPane({
   entries,
-  identity,
   typingNicknames,
   patientThinking,
   locked,
   onSend,
   onTyping,
-  onRename,
 }: ChatPaneProps) {
   const [draft, setDraft] = useState("");
-  const [renaming, setRenaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { revealedId, revealedText } = useAiReveal(entries);
 
@@ -108,7 +103,7 @@ export function ChatPane({
           alignItems: "center",
           gap: 16,
           fontFamily: FONT.mono,
-          fontSize: 12,
+          fontSize: SIZE.small,
         }}
       >
         {patientThinking && (
@@ -128,62 +123,15 @@ export function ChatPane({
       <div
         style={{
           flex: "none",
+          margin: "10px 34px 16px",
           display: "flex",
-          gap: 12,
-          alignItems: "center",
-          padding: "12px 34px 18px",
-          borderTop: `1px solid ${T.chatComposerBorder}`,
+          alignItems: "stretch",
+          background: T.chatInputBg,
+          border: `1px solid ${T.chatInputBorder}`,
+          borderRadius: 3,
+          opacity: locked ? 0.45 : 1,
         }}
       >
-        {renaming ? (
-          <input
-            className="chat-input"
-            defaultValue={identity.nickname}
-            autoFocus
-            maxLength={24}
-            aria-label="Cambiar tu nombre en la sala"
-            onBlur={(event) => {
-              onRename(event.target.value);
-              setRenaming(false);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") event.currentTarget.blur();
-              else if (event.key === "Escape") setRenaming(false);
-            }}
-            style={{
-              width: 130,
-              flex: "none",
-              boxSizing: "border-box",
-              background: T.chatInputBg,
-              border: `1px solid rgba(155,232,155,.35)`,
-              color: identity.color,
-              fontFamily: FONT.mono,
-              fontSize: 12,
-              padding: "5px 10px",
-              borderRadius: 2,
-              outline: "none",
-            }}
-          />
-        ) : (
-          <button
-            type="button"
-            title="Haz clic para cambiar tu nombre"
-            onClick={() => setRenaming(true)}
-            style={{
-              fontFamily: FONT.mono,
-              fontSize: 12,
-              color: identity.color,
-              background: "transparent",
-              border: `1px solid rgba(155,232,155,.35)`,
-              padding: "5px 10px",
-              borderRadius: 2,
-              flex: "none",
-              cursor: "pointer",
-            }}
-          >
-            @{identity.nickname}
-          </button>
-        )}
         <input
           className="chat-input"
           value={draft}
@@ -201,18 +149,38 @@ export function ChatPane({
           aria-label="Mensaje para EL PACIENTE"
           style={{
             flex: 1,
-            background: T.chatInputBg,
-            border: `1px solid ${T.chatInputBorder}`,
+            minWidth: 0,
+            background: "transparent",
+            border: "none",
             color: "#e9ded1",
             fontFamily: FONT.mono,
-            fontSize: 14,
-            padding: "11px 14px",
+            fontSize: SIZE.body,
+            padding: "9px 12px",
             borderRadius: 3,
             outline: "none",
-            opacity: locked ? 0.45 : 1,
             cursor: locked ? "not-allowed" : "auto",
           }}
         />
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={locked || !draft.trim()}
+          title="Enviar"
+          aria-label="Enviar al paciente"
+          style={{
+            flex: "none",
+            width: 34,
+            background: "transparent",
+            border: "none",
+            borderLeft: `1px solid ${T.chatInputBorder}`,
+            color: draft.trim() && !locked ? T.online : T.textFaint,
+            fontFamily: FONT.mono,
+            fontSize: SIZE.lead,
+            cursor: draft.trim() && !locked ? "pointer" : "default",
+          }}
+        >
+          ↵
+        </button>
       </div>
     </div>
   );
@@ -235,7 +203,7 @@ function Message({
         style={{
           alignSelf: "center",
           fontFamily: FONT.mono,
-          fontSize: 12,
+          fontSize: SIZE.small,
           letterSpacing: ".07em",
           color: T.amberSoft,
           padding: "5px 16px",
@@ -265,7 +233,7 @@ function Message({
         <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 11.5,
+            fontSize: SIZE.micro,
             fontWeight: 600,
             color: message.color,
             marginBottom: 4,
@@ -276,7 +244,7 @@ function Message({
         <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 14,
+            fontSize: SIZE.body,
             lineHeight: 1.5,
             color: T.humanText,
             textAlign: "left",
@@ -301,7 +269,7 @@ function Message({
       <div
         style={{
           fontFamily: FONT.mono,
-          fontSize: 11,
+          fontSize: SIZE.micro,
           letterSpacing: ".2em",
           color: crisis ? T.aiNameCrisis : T.aiName,
           marginBottom: 8,
@@ -312,7 +280,7 @@ function Message({
       <div
         style={{
           fontFamily: FONT.serif,
-          fontSize: 19,
+          fontSize: SIZE.voice,
           lineHeight: 1.55,
           color: crisis ? T.aiTextCrisis : T.aiText,
         }}

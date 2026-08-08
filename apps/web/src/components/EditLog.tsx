@@ -1,5 +1,5 @@
 import { slotDef, type LogEntry } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 
 /** El historial clínico: quién cortó qué y desde qué valor. La IA lee esto mismo. */
 export function EditLog({ log }: { log: LogEntry[] }) {
@@ -13,7 +13,7 @@ export function EditLog({ log }: { log: LogEntry[] }) {
           gap: 10,
           padding: "10px 22px 8px",
           fontFamily: FONT.mono,
-          fontSize: 11,
+          fontSize: SIZE.micro,
           letterSpacing: ".16em",
           color: T.textDim,
           borderTop: `1px solid ${T.brainRule}`,
@@ -43,7 +43,7 @@ export function EditLog({ log }: { log: LogEntry[] }) {
           flexDirection: "column",
           gap: 8,
           fontFamily: FONT.mono,
-          fontSize: 12.5,
+          fontSize: SIZE.small,
         }}
       >
         {log.length === 0 ? (

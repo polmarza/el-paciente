@@ -175,7 +175,10 @@ export default function App() {
     >
       <Monitor
         bpm={bpm}
-        online={online}
+        nickname={identity.nickname}
+        nicknameColor={identity.color}
+        onRename={rename}
+        onNewGame={brain.requestNewGame}
         sessionSeconds={sessionSeconds}
         expediente={brain.expediente}
         onShowHelp={() => setOnboarding(true)}
@@ -184,10 +187,14 @@ export default function App() {
       {disconnected && <Flatline />}
 
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
-        <PasilloPane entries={pasillo.entries} identity={identity} onSend={pasillo.send} />
+        <PasilloPane
+          entries={pasillo.entries}
+          identity={identity}
+          online={online}
+          onSend={pasillo.send}
+        />
         <ChatPane
           entries={visibleEntries}
-          identity={identity}
           typingNicknames={chat.typingNicknames}
           patientThinking={chat.patientThinking}
           locked={relevo}
@@ -198,7 +205,6 @@ export default function App() {
             return reason;
           }}
           onTyping={chat.notifyTyping}
-          onRename={rename}
         />
         <BrainPane
           brain={brain}

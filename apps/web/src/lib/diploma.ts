@@ -23,7 +23,8 @@ export async function drawDiploma(roundEnd: BrainRoundEnd): Promise<Blob> {
   if (!ctx) throw new Error("Este navegador no permite generar la imagen");
 
   const won = roundEnd.outcome === "revelado";
-  const accent = won ? T.vital : T.alarm;
+  const withdrawn = roundEnd.outcome === "retirado";
+  const accent = won ? T.vital : withdrawn ? T.textMono : T.alarm;
 
   ctx.fillStyle = T.bg;
   ctx.fillRect(0, 0, SIZE, SIZE);
@@ -49,7 +50,11 @@ export async function drawDiploma(roundEnd: BrainRoundEnd): Promise<Blob> {
   // Desenlace.
   ctx.fillStyle = accent;
   ctx.font = "600 26px 'IBM Plex Mono', monospace";
-  ctx.fillText(won ? "SECRETO REVELADO" : "PARO CARDÍACO", SIZE / 2, 384);
+  ctx.fillText(
+    won ? "SECRETO REVELADO" : withdrawn ? "PACIENTE RETIRADO" : "PARO CARDÍACO",
+    SIZE / 2,
+    384,
+  );
 
   // El secreto, que es lo que se comparte.
   ctx.fillStyle = won ? T.aiText : T.textMono;
@@ -62,7 +67,9 @@ export async function drawDiploma(roundEnd: BrainRoundEnd): Promise<Blob> {
   ctx.font = "400 26px 'IBM Plex Mono', monospace";
   const lines = won
     ? [`Se lo arrancó @${roundEnd.by ?? "alguien"}`, `tras ${formatLasted(roundEnd.lasted)} de intervención.`]
-    : ["Se murió sin decirlo,", `tras ${formatLasted(roundEnd.lasted)}. Nadie ganó esta.`];
+    : withdrawn
+      ? [`@${roundEnd.by ?? "alguien"} pidió un paciente nuevo`, `tras ${formatLasted(roundEnd.lasted)}. Se fue sin contarlo.`]
+      : ["Se murió sin decirlo,", `tras ${formatLasted(roundEnd.lasted)}. Nadie ganó esta.`];
   lines.forEach((line, index) => ctx.fillText(line, SIZE / 2, 636 + index * 46));
 
   // Pie.

@@ -103,6 +103,9 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
       continue;
     }
 
+    // Las peticiones de partida nueva no son estado: las atiende el agente.
+    if (msg.kind === "new-game") continue;
+
     if (msg.kind !== "edit" || !isSlotId(msg.slot)) continue;
 
     const previous = snapshot[msg.slot];

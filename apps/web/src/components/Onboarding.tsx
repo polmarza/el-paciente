@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 
 interface OnboardingProps {
   nickname: string;
@@ -137,12 +137,12 @@ const STEPS: Step[] = [
     title: "Final del juego",
     body: (
       <>
-        <strong style={{ color: T.vital }}>Ganáis</strong> cuando el paciente revela su
+        <span style={{ color: T.vital }}>GANÁIS:</span> cuando el paciente revela su
         secreto.
         <br />
         <br />
-        <strong style={{ color: T.alarm }}>Perdéis</strong> si su pulso llega al límite y
-        muere: el secreto se va con él.
+        <span style={{ color: T.alarm }}>PERDÉIS:</span> si su pulso llega al límite y
+        muere, el secreto se va con él.
       </>
     ),
     drawing: DibujoFinal,
@@ -193,7 +193,7 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
             <h2
               style={{
                 fontFamily: FONT.serif,
-                fontSize: 30,
+                fontSize: SIZE.title,
                 fontWeight: 400,
                 color: T.aiText,
                 margin: "0 0 16px",
@@ -207,7 +207,7 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
                 <p
                   style={{
                     fontFamily: FONT.mono,
-                    fontSize: 13,
+                    fontSize: SIZE.body,
                     lineHeight: 1.7,
                     color: T.textMono,
                     margin: "0 0 18px",
@@ -233,18 +233,29 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
                     border: `1px solid ${T.chatInputBorder}`,
                     color: T.online,
                     fontFamily: FONT.mono,
-                    fontSize: 18,
+                    fontSize: SIZE.lead,
                     padding: "12px 14px",
                     borderRadius: 3,
                     outline: "none",
                   }}
                 />
+                <p
+                  style={{
+                    fontFamily: FONT.mono,
+                    fontSize: SIZE.micro,
+                    lineHeight: 1.6,
+                    color: T.textFaint,
+                    margin: "10px 0 0",
+                  }}
+                >
+                  * También será el nombre por el cual te reconocerán el resto de usuarios.
+                </p>
               </>
             ) : (
               <p
                 style={{
                   fontFamily: FONT.mono,
-                  fontSize: 13,
+                  fontSize: SIZE.body,
                   lineHeight: 1.75,
                   color: T.textMono,
                   margin: 0,
@@ -273,7 +284,7 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
           <span
             style={{
               fontFamily: FONT.mono,
-              fontSize: 12,
+              fontSize: SIZE.small,
               letterSpacing: ".12em",
               color: T.textFaint,
             }}
@@ -357,7 +368,7 @@ function DibujoNombre({ nickname }: { nickname: string }) {
 
 const buttonStyle: React.CSSProperties = {
   fontFamily: FONT.mono,
-  fontSize: 12,
+  fontSize: SIZE.small,
   letterSpacing: ".08em",
   background: "transparent",
   border: "1px solid",

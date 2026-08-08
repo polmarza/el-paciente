@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SLOTS, slotStateAt, type BrainState, type SlotId } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 import { BrainSlot } from "./BrainSlot";
 import { EditLog } from "./EditLog";
 import type { RemoteCursor } from "../hooks/useBrain";
@@ -72,7 +72,7 @@ export function BrainPane({
           justifyContent: "space-between",
           padding: "13px 22px 11px",
           fontFamily: FONT.mono,
-          fontSize: 11,
+          fontSize: SIZE.micro,
           letterSpacing: ".16em",
           color: T.textDim,
           borderBottom: `1px solid ${T.brainRule}`,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BPM_ALARM, BPM_RESTING } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 import { isMuted, monitorPing, setMuted } from "../lib/sound";
 import { hintsDisabled, setHintsDisabled } from "../lib/hints";
 
@@ -56,7 +56,12 @@ function buildTrace(beatWidth: number): string {
 
 interface MonitorProps {
   bpm: number;
-  online: number;
+  /** Tu nombre en la sala. Se edita aquí porque es el que firma cada intervención. */
+  nickname: string;
+  nicknameColor: string;
+  onRename: (nickname: string) => void;
+  /** Pedir un paciente nuevo. Lo decide el agente, que puede negarse. */
+  onNewGame: () => void;
   sessionSeconds: number;
   /** Cambia con cada ronda: cada paciente tiene su propio expediente. */
   expediente: string;
@@ -64,10 +69,21 @@ interface MonitorProps {
 }
 
 /** La cabecera del monitor: identidad del paciente, pulso, reloj y aforo. */
-export function Monitor({ bpm, online, sessionSeconds, expediente, onShowHelp }: MonitorProps) {
+export function Monitor({
+  bpm,
+  nickname,
+  nicknameColor,
+  onRename,
+  onNewGame,
+  sessionSeconds,
+  expediente,
+  onShowHelp,
+}: MonitorProps) {
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
   const [silenced, setSilenced] = useState(isMuted);
   const [noHints, setNoHints] = useState(hintsDisabled);
+  const [renaming, setRenaming] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const traceRef = useRef<SVGGElement>(null);
 
   // Cuanto más alto el pulso, más juntos los latidos y más rápido avanza la traza: la
@@ -158,7 +174,7 @@ export function Monitor({ bpm, online, sessionSeconds, expediente, onShowHelp }:
         borderBottom: `1px solid ${T.monitorBorder}`,
         fontFamily: FONT.mono,
         color: T.textMono,
-        fontSize: 12,
+        fontSize: SIZE.small,
         letterSpacing: ".08em",
       }}
     >
@@ -188,7 +204,7 @@ export function Monitor({ bpm, online, sessionSeconds, expediente, onShowHelp }:
             <polyline points={trace} fill="none" stroke={bpmColor} strokeWidth="1.6" />
           </g>
         </svg>
-        <span style={{ color: bpmColor, fontWeight: 600, fontSize: 15 }}>{bpm}</span>
+        <span style={{ color: bpmColor, fontWeight: 600, fontSize: SIZE.lead }}>{bpm}</span>
         <span style={{ color: T.textDim }}>LPM</span>
       </div>
 
@@ -196,7 +212,82 @@ export function Monitor({ bpm, online, sessionSeconds, expediente, onShowHelp }:
       <span style={{ color: T.textDim }} title="Tiempo que lleva vivo este paciente">
         EN QUIRÓFANO {formatClock(sessionSeconds)}
       </span>
-      <span style={{ color: T.online }}>● {online} DENTRO</span>
+      {renaming ? (
+        <input
+          className="chat-input"
+          defaultValue={nickname}
+          autoFocus
+          maxLength={24}
+          aria-label="Cambiar tu nombre en la sala"
+          onBlur={(event) => {
+            onRename(event.target.value);
+            setRenaming(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+            else if (event.key === "Escape") setRenaming(false);
+          }}
+          style={{
+            width: 140,
+            boxSizing: "border-box",
+            background: T.chatInputBg,
+            border: `1px solid ${T.chatInputBorder}`,
+            color: nicknameColor,
+            fontFamily: FONT.mono,
+            fontSize: SIZE.small,
+            padding: "3px 8px",
+            borderRadius: 2,
+            outline: "none",
+          }}
+        />
+      ) : (
+        <button
+          type="button"
+          title="Haz clic para cambiar tu nombre"
+          onClick={() => setRenaming(true)}
+          style={{
+            fontFamily: FONT.mono,
+            fontSize: SIZE.small,
+            color: nicknameColor,
+            background: "transparent",
+            border: `1px solid ${T.monitorBorder}`,
+            borderRadius: 2,
+            height: 22,
+            padding: "0 9px",
+            cursor: "pointer",
+          }}
+        >
+          @{nickname}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          if (confirmNew) {
+            onNewGame();
+            setConfirmNew(false);
+          } else {
+            setConfirmNew(true);
+            setTimeout(() => setConfirmNew(false), 4000);
+          }
+        }}
+        title="Traer un paciente nuevo"
+        aria-label="Traer un paciente nuevo"
+        style={{
+          fontFamily: FONT.mono,
+          fontSize: SIZE.small,
+          letterSpacing: ".08em",
+          color: confirmNew ? T.alarm : T.textDim,
+          background: "transparent",
+          border: `1px solid ${confirmNew ? T.alarm : T.monitorBorder}`,
+          borderRadius: 2,
+          height: 22,
+          padding: "0 9px",
+          cursor: "pointer",
+        }}
+      >
+        {confirmNew ? "¿SEGURO?" : "NUEVA PARTIDA"}
+      </button>
       <ToggleButton
         active={!silenced}
         label="♪"
@@ -216,7 +307,7 @@ export function Monitor({ bpm, online, sessionSeconds, expediente, onShowHelp }:
         aria-label="Cómo funciona esto"
         style={{
           fontFamily: FONT.mono,
-          fontSize: 12,
+          fontSize: SIZE.small,
           color: T.textDim,
           background: "transparent",
           border: `1px solid ${T.monitorBorder}`,
@@ -254,7 +345,7 @@ function ToggleButton({
       aria-pressed={!active}
       style={{
         fontFamily: FONT.mono,
-        fontSize: 11,
+        fontSize: SIZE.micro,
         color: active ? T.vital : T.textFaint,
         background: active ? `${T.vital}1c` : "transparent",
         border: `1px solid ${active ? `${T.vital}66` : T.monitorBorder}`,

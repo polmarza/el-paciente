@@ -1,4 +1,4 @@
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 
 /**
  * Aviso efímero: el motivo de un rechazo del quirófano, o una pista. Anclado abajo a la
@@ -16,7 +16,7 @@ export function Toast({ text }: { text: string }) {
         maxWidth: 340,
         zIndex: 40,
         fontFamily: FONT.mono,
-        fontSize: 12.5,
+        fontSize: SIZE.small,
         lineHeight: 1.5,
         letterSpacing: ".04em",
         color: T.amber,

@@ -5,7 +5,7 @@ import {
   type SlotState,
   type SlotValue,
 } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 import { keyClick } from "../lib/sound";
 import type { RemoteCursor } from "../hooks/useBrain";
 
@@ -108,7 +108,7 @@ export function BrainSlot(props: BrainSlotProps) {
             gap: 6,
             background: cursorColor,
             color: T.monitorBg,
-            fontSize: 10.5,
+            fontSize: SIZE.micro,
             fontWeight: 600,
             letterSpacing: ".04em",
             padding: "2px 8px",
@@ -134,7 +134,7 @@ export function BrainSlot(props: BrainSlotProps) {
           display: "flex",
           justifyContent: "space-between",
           gap: 8,
-          fontSize: 10.5,
+          fontSize: SIZE.micro,
           letterSpacing: ".14em",
           marginBottom: 6,
         }}
@@ -171,19 +171,19 @@ export function BrainSlot(props: BrainSlotProps) {
             border: `1px solid ${T.slotInputBorder}`,
             color: "#dff0ee",
             fontFamily: FONT.mono,
-            fontSize: 14.5,
+            fontSize: SIZE.body,
             padding: "3px 6px",
             borderRadius: 2,
             outline: "none",
           }}
         />
       ) : (
-        <div style={{ fontSize: 14.5, color: T.slotContent, lineHeight: 1.42, minHeight: 21 }}>
+        <div style={{ fontSize: SIZE.body, color: T.slotContent, lineHeight: 1.42, minHeight: 21 }}>
           “{value.content}”
         </div>
       )}
 
-      <div style={{ marginTop: 7, fontSize: 10.5, color: T.textFaint }}>
+      <div style={{ marginTop: 7, fontSize: SIZE.micro, color: T.textFaint }}>
         {value.editor ? (
           <>
             últ. edición{" "}

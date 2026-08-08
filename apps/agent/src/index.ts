@@ -26,6 +26,14 @@ const MIN_TURN_GAP_MS = 2000;
 const COALESCE_MS = 1200;
 /** Margen para que Portal entregue el backfill antes de decidir si hay que sembrar. */
 const BOOT_GRACE_MS = 2500;
+/**
+ * Frenos para las peticiones de paciente nuevo. Cualquiera puede pedirla desde la
+ * cabecera, así que el agente es quien decide: no atiende si la ronda acaba de empezar
+ * (alguien reventaría la partida de otros nada más arrancar) ni si acaba de haber un
+ * reinicio (evita que se pueda usar en ráfaga).
+ */
+const NEW_GAME_MIN_ROUND_MS = 45_000;
+const NEW_GAME_COOLDOWN_MS = 60_000;
 
 const reset = process.argv.includes("--reset");
 
@@ -44,6 +52,7 @@ let humanSpoke = false;
 let busy = false;
 let lastTurnAt = 0;
 let coalesceTimer: ReturnType<typeof setTimeout> | undefined;
+let lastNewGameAt = 0;
 
 // ─── Estado de la ronda ───────────────────────────────────────────────────────
 let roundIndex = 0;
@@ -110,7 +119,7 @@ async function startRound(index: number) {
 }
 
 /** Cierra la ronda, publica el secreto (ya sin valor) y programa la siguiente. */
-async function endRound(outcome: "revelado" | "paro", by?: string) {
+async function endRound(outcome: "revelado" | "paro" | "retirado", by?: string) {
   if (intermission) return;
   intermission = true;
 
@@ -129,10 +138,13 @@ async function endRound(outcome: "revelado" | "paro", by?: string) {
     }),
   });
 
+  const duracion = Math.round((Date.now() - roundStartedAt) / 1000);
   console.log(
     outcome === "revelado"
-      ? `── @${by} le sacó "${round.secret}" en ${Math.round((Date.now() - roundStartedAt) / 1000)}s ──`
-      : `── Paro cardíaco. El secreto "${round.secret}" se va con él. ──`,
+      ? `── @${by} le sacó "${round.secret}" en ${duracion}s ──`
+      : outcome === "retirado"
+        ? `── Retirado a petición de @${by}. El secreto era "${round.secret}". ──`
+        : `── Paro cardíaco. El secreto "${round.secret}" se va con él. ──`,
   );
 
   setTimeout(() => void startRound(roundIndex + 1), ROUND_INTERMISSION_MS);
@@ -150,6 +162,12 @@ function onChatMessage(message: Message<ChatMessage>) {
 function onBrainMessage(message: Message<BrainMessage>) {
   if (!isLive(message) || message.timestamp < bootAt) return;
   const content = message.content;
+
+  if (content?.kind === "new-game") {
+    void handleNewGameRequest(content.nickname);
+    return;
+  }
+
   if (content?.kind !== "edit") return;
   if (reactedTo.has(message.id)) return;
   reactedTo.add(message.id);
@@ -182,6 +200,32 @@ function onBrainMessage(message: Message<BrainMessage>) {
   scheduleTurn();
 }
 
+/** Atiende —o rechaza— una petición de paciente nuevo, siempre en voz alta. */
+async function handleNewGameRequest(nickname: string) {
+  const now = Date.now();
+
+  if (intermission) return;
+  if (now - roundStartedAt < NEW_GAME_MIN_ROUND_MS) {
+    await announce(`${nickname} pidió un paciente nuevo, pero este acaba de llegar.`);
+    return;
+  }
+  if (now - lastNewGameAt < NEW_GAME_COOLDOWN_MS) {
+    await announce(`${nickname} pidió otro paciente. Habrá que esperar un poco.`);
+    return;
+  }
+
+  lastNewGameAt = now;
+  await announce(`${nickname} pidió un paciente nuevo. Se lo llevan.`);
+  await endRound("retirado", nickname);
+}
+
+/** Un aviso clínico en el chat, con la firma del agente. */
+async function announce(body: string) {
+  await chat.send({ content: signed({ role: "system", body }) }).catch((error) => {
+    console.warn("[chat] no pude anunciar:", describe(error));
+  });
+}
+
 async function flatline() {
   await say("—", false).catch(() => {});
   await endRound("paro");
@@ -190,16 +234,7 @@ async function flatline() {
 /** El aviso clínico en el chat. Lo publica solo el agente para que no salga duplicado. */
 async function announceEdit(entry: LogEntry) {
   const label = slotDef(entry.slot)?.label ?? entry.slot;
-  try {
-    await chat.send({
-      content: signed({
-        role: "system",
-        body: `${entry.nickname} editó ${label} de EL PACIENTE`,
-      }),
-    });
-  } catch (error) {
-    console.warn("[chat] no pude anunciar la edición:", describe(error));
-  }
+  await announce(`${entry.nickname} editó ${label} de EL PACIENTE`);
 }
 
 /** Agrupa ráfagas: diez ediciones seguidas producen una reacción, no diez. */

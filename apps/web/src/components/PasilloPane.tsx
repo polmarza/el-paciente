@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { MAX_PASILLO_CHARS, type Identity } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 import { keyClick } from "../lib/sound";
 import type { PasilloEntry } from "../hooks/usePasillo";
 
@@ -10,6 +10,8 @@ const STICK_THRESHOLD_PX = 120;
 interface PasilloPaneProps {
   entries: PasilloEntry[];
   identity: Identity;
+  /** Cuánta gente hay dentro. Vive aquí porque el pasillo es la sala de los vivos. */
+  online: number;
   onSend: (body: string) => Promise<string | null>;
 }
 
@@ -19,7 +21,7 @@ interface PasilloPaneProps {
  * estrategia y las órdenes ("prueba a borrarle la regla") acaben en la conversación que
  * el paciente sí ve, que es la que tiene que leerse como una conversación de verdad.
  */
-export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
+export function PasilloPane({ entries, identity, online, onSend }: PasilloPaneProps) {
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
@@ -62,16 +64,27 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
           gap: 8,
           padding: "13px 18px 11px",
           fontFamily: FONT.mono,
-          fontSize: 11,
+          fontSize: SIZE.micro,
           letterSpacing: ".16em",
           color: T.textDim,
           borderBottom: `1px solid ${T.brainRule}`,
         }}
       >
         <span>EL PASILLO</span>
-        <span title="EL PACIENTE no lee este canal" style={{ color: T.textFaint }}>
-          NO LO OYE
-        </span>
+        <span style={{ color: T.online }}>● {online} DENTRO</span>
+      </div>
+
+      <div
+        style={{
+          flex: "none",
+          padding: "9px 18px 0",
+          fontFamily: FONT.mono,
+          fontSize: SIZE.micro,
+          lineHeight: 1.5,
+          color: T.textFaint,
+        }}
+      >
+        El paciente no puede leer este chat
       </div>
 
       <div
@@ -87,12 +100,12 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
         }}
       >
         {entries.length === 0 ? (
-          <div style={{ fontFamily: FONT.mono, fontSize: 12, color: T.logPrev, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.small, color: T.logPrev, lineHeight: 1.5 }}>
             Nadie ha dicho nada aún. Aquí podéis poneros de acuerdo antes de tocarle nada.
           </div>
         ) : (
           entries.map((entry) => (
-            <div key={entry.id} style={{ fontSize: 13.5, lineHeight: 1.45 }}>
+            <div key={entry.id} style={{ fontSize: SIZE.body, lineHeight: 1.45 }}>
               <span
                 style={{
                   fontFamily: FONT.mono,
@@ -140,7 +153,7 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
             border: "none",
             color: "#dff0ee",
             fontFamily: FONT.mono,
-            fontSize: 13,
+            fontSize: SIZE.body,
             padding: "9px 12px",
             borderRadius: 3,
             outline: "none",
@@ -160,7 +173,7 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
             borderLeft: `1px solid ${T.slotBorder}`,
             color: draft.trim() ? T.online : T.textFaint,
             fontFamily: FONT.mono,
-            fontSize: 15,
+            fontSize: SIZE.lead,
             cursor: draft.trim() ? "pointer" : "default",
           }}
         >
