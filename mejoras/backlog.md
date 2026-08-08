@@ -45,12 +45,46 @@ payload sobraría y desaparecería el riesgo de que un `mask` mal escrito lo fil
 Requiere investigar qué expone `ctx` sobre el origen de la publicación. No tocar antes del
 hackathon: lo que hay está probado.
 
-### [MEJORA-02] Que el historial clínico crezca en pantallas altas
+### [MEJORA-02] ~~Que el historial clínico crezca en pantallas altas~~ — RESUELTA (8/8)
 **Área:** Frontend
-**Prioridad estimada:** Media
 **Origen:** Revisión visual a 1920×1080
 
-El diseño fija el historial en 150px. En un proyector 1080p sobra espacio y queda un hueco
-vacío grande entre las regiones y el log. Dejar que el historial crezca llenaría ese hueco
-con más ediciones visibles, que es justo donde está el drama. Es cambiar un `flex-basis`,
-pero conviene consultarlo con el diseño antes.
+Resuelta por otra vía: el historial dejó de ser una franja fija de 150px y pasó a ser un
+cajón arrastrable que el espectador abre a la altura que quiera y que pasa por encima de la
+mesa de operaciones. Se queda aquí como registro, no como pendiente.
+
+### [MEJORA-05] Modo claro
+**Área:** Frontend / UX
+**Prioridad estimada:** Baja (post-hackathon)
+**Origen:** Pregunta del usuario, 8/8
+
+Hoy la interfaz es solo oscura y no reacciona a `prefers-color-scheme`.
+
+**Por qué no se hizo antes del hackathon.** No es coste: es que el negro no es "un tema",
+es el quirófano. Hay piezas que no sobreviven a la traducción a claro y habría que
+rediseñarlas, no recolorearlas — el electro verde sobre blanco deja de leerse como monitor
+médico; el destello ámbar al intervenir una región (`slotFlash`) funciona porque brilla en
+penumbra; y la voz del paciente se distingue del resto con un fondo cálido casi transparente
+(`rgba(240,226,208,.045)`) que sobre blanco desaparece. El favicon y la `og-image` también
+son oscuros. El argumento de peso a favor es de accesibilidad real (a algunas personas el
+texto claro sobre fondo oscuro les produce halo), y precisamente por eso no vale hacerlo
+mal deprisa.
+
+**Cómo hacerlo, si se hace.** Lo mecánico es más barato de lo que parece. Hay 236 usos de
+`T.x` en 13 ficheros, pero si `theme.ts` pasa a devolver `var(--t-xxx)` en vez de hex, esos
+236 usos **no se tocan**: React acepta `var()` en estilos inline. El trabajo real está en:
+
+- Las **6 interpolaciones con sufijo alfa** — `` `${T.vital}1c` ``, `` `${T.amber}1c` ``,
+  `` `${T.vital}66` ``, `` `${T.vital}14` ``, `` `${T.online}12` `` — repartidas por
+  `Monitor.tsx` y `Onboarding.tsx`. Con `var()` son inválidas; hay que convertirlas en
+  tokens propios.
+- Los **~20 colores a pelo** en componentes: overlays de `RoundOverlay`/`Onboarding`, las
+  sombras de `EditLog`/`Toast`, el rayado del cooldown en `BrainSlot`, el `#dff0ee` de los
+  inputs, el aviso de desconexión en `App.tsx` y la pantalla de error de `main.tsx`.
+- Los **9 colores** de `styles.css` (fondo, enlaces, scrollbar, `slotFlash`, foco).
+- **`lib/diploma.ts`**: dibuja el parte descargable en canvas, y el canvas no resuelve
+  `var()`. Necesita valores reales — vía `getComputedStyle` sobre el root, o una paleta JS
+  paralela que se mantenga en sincronía.
+
+Luego queda lo que de verdad cuesta: calibrar la paleta clara entera y decidir qué hacer con
+las piezas del primer párrafo.

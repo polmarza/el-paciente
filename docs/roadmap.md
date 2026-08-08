@@ -59,6 +59,13 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 - [x] Relevo limpio: expediente nuevo, chat, historial y memoria del agente por ronda
 - [x] Sala bloqueada durante el relevo
 - [x] El secreto no viaja por Portal hasta que se gana (verificado sobre el bundle)
+- [x] **Parte de ingreso**: dos frases por ronda que dicen qué se investiga y qué forma tiene
+      la respuesta, sin revelarla. Sin esto la partida empezaba sin briefing y nadie sabía
+      qué buscar entre siete campos de texto
+- [x] Prueba que impide que una ronda se delate sola en su parte, expediente o regla
+- [x] **Botón de partida nueva** abierto a cualquiera, con el freno en el agente (no antes de
+      45 s de ronda, no dos veces en un minuto) y siempre anunciado con el nombre de quien la
+      pide. `retirado` como tercer desenlace: nadie ganó, pero tampoco lo mataron
 
 ---
 
@@ -68,23 +75,58 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 - [x] Canal `pasillo`: tercera columna para que el público delibere **sin que el paciente
       lo lea** (el agente no abre ese canal)
 - [x] Botón de ayuda para reabrir las instrucciones
+- [x] Pasillo plegable a un riel, para dejar la pantalla en dos columnas a gusto de cada uno
+- [x] Aforo y nombre propio editable, cada uno donde toca (pasillo y cabecera)
 
 ---
 
-## Fase 5 — Los entregables ✅ (falta grabar)
+## Fase 5 — El acabado ✅
+
+Casi todo salió de la reunión de mentoría del 8/8 y de jugar partidas reales. Nada de esto
+añade mecánicas: todo va de que se entienda y se sienta.
+
+- [x] **Sonido**, sintetizado con WebAudio (cero archivos): latido del monitor acompasado al
+      electro y acelerando con el pulso, tecleo, y alarma **una sola vez** al entrar en zona
+      roja. Silenciable, y el estado vive en `globalThis` para sobrevivir al recargado en
+      caliente — si no, convivían dos copias del módulo y el latido se duplicaba
+- [x] Electrocardiograma real: una sola animación infinita, con la onda construida para que
+      un ciclo completo sea visualmente idéntico al anterior. El *ping* se dispara mirando el
+      reloj de la propia animación, no un temporizador aparte, así que van clavados
+- [x] **Pistas por inactividad**: si no tocas nada en 45 s, un aviso señala el cerrojo que la
+      sala aún no ha abierto. Se derivan del estado, no de un guion, y se pueden apagar
+- [x] Onboarding reescrito: cuatro pasos (Objetivo · Mecánica · Final del juego · tu nombre),
+      con esquemas dibujados a partir de los tokens del tema — dos de ellos son un espejo de
+      la interfaz real, que enseña más que una metáfora
+- [x] **Escala tipográfica** de seis pasos. Había trece tamaños sueltos repartidos por los
+      componentes, que era lo que hacía que la interfaz pareciera cosida de trozos
+- [x] Historial clínico en cajón arrastrable que **pasa por encima** de la mesa de
+      operaciones en vez de comprimirla: las regiones no se mueven de sitio al consultarlo
+- [x] Avisos arriba a la derecha y con color propio: la pista en ámbar, el rechazo en rojo.
+      Antes compartían color y tapaban el parte de ingreso
+- [x] Los mensajes del público se alinean a la derecha; la voz del paciente se queda sola a
+      la izquierda, en serifa
+
+---
+
+## Fase 6 — Los entregables ✅ (falta grabar)
 
 - [x] Pitch de ≤ 280 caracteres, en tres versiones (`docs/entregables.md`)
-- [x] Descripción del repositorio en GitHub, ya con el objetivo del juego
+- [x] Subtítulo corto —"Un escape room en el que tienes que descubrir qué esconde el
+      paciente"— propagado a la web, la `og:image`, el README y el «About» de GitHub. Servirá
+      también para la descripción corta del formulario de entrega
 - [x] README que explica la premisa **y** a qué se juega
 - [x] Explicación de cómo se usó Portal
+- [x] Favicon y `og:image` (1200×630), generadas con canvas del navegador sin dependencias
+      nuevas, y etiquetas `og:`/`twitter:` completas apuntando ya a `elpaciente.es`
 - [x] Escaleta del vídeo con tiempos, plano a plano
 - [x] `pnpm extras`: tres figurantes con identidades de Portal independientes que pueblan
       la sala durante la grabación. Verificado: la coreografía sola cierra una ronda en 48 s
 - [ ] **Grabar y montar el vídeo** (≤ 1:30)
+- [ ] Descripción corta en el formulario de entrega del hackathon
 
 ---
 
-## Fase 6 — Calibrado y estreno
+## Fase 7 — Calibrado y estreno
 
 Todo lo anterior funciona y está verificado. Lo que queda no es código: es afinar con gente
 delante, que es lo único que no se puede hacer en solitario.
@@ -96,9 +138,19 @@ delante, que es lo único que no se puede hacer en solitario.
       alcanzan; con público numeroso puede resultar demasiado fácil.
 - [ ] **Ajustar los cooldowns** según cuánta gente haya de verdad en la sala.
 - [ ] Ensayo completo con varios navegadores (checklist en `docs/testing.md`)
-- [ ] Deploy a Vercel y `portal origins add <dominio>` — sin eso el navegador queda
-      bloqueado por origen no autorizado
-- [ ] Fusionar el PR a `main`
+- [ ] Deploy a Vercel y `portal origins add elpaciente.es` — sin eso el navegador queda
+      bloqueado por origen no autorizado. El dominio ya está decidido y puesto en las
+      etiquetas `og:`
+- [x] Fusionar el PR a `main` (PR #3, con todo lo de las fases 3 a 6)
+- [x] ~~Vigilar el arranque del agente~~ **Resuelto y explicado.** El canal no estaba vacío:
+      Portal emite `status: "ready"` un instante antes de volcar el backfill en el almacén,
+      y el agente leía en ese hueco. El navegador no lo sufría porque repinta cuando los
+      mensajes llegan; el agente leía una sola vez. Ahora el arranque espera a `ready` Y a
+      que el backfill aparezca. Verificado: tres reinicios seguidos (local y en contenedor)
+      se reincorporan a la ronda en curso en vez de sembrar encima
+- [ ] **Agente 24/7**: `Dockerfile` en la raíz listo y probado (build + arranque + rejoin
+      verificados en contenedor). Falta: crear el servicio en Railway/Fly/Render, pegar las
+      variables del agente y fijarlo a una réplica
 
 ---
 
@@ -112,4 +164,6 @@ delante, que es lo único que no se puede hacer en solitario.
 | Login y cuentas | Descartada: el anonimato alimenta la dinámica vándalo/cuidador |
 | Votaciones para aprobar ediciones | Descartada: mata la inmediatez, que es el corazón del efecto |
 | Simplificar el anti-suplantación con la API REST de Portal | Aplazada (MEJORA-01): lo que hay está probado y no se toca antes del hackathon |
-| Que el historial clínico crezca en pantallas altas | Pendiente de decisión de diseño (MEJORA-02) |
+| Que el historial clínico crezca en pantallas altas | **Resuelta** por otra vía (MEJORA-02): dejó de ser una franja fija y pasó a ser un cajón arrastrable |
+| Chat de voz en el pasillo | Aplazada (MEJORA-04): Portal solo transporta texto, haría falta WebRTC. Y de producto, la voz vaciaría el pasillo, que existe para que la deliberación sea *visible* |
+| Modo claro | Aplazada (MEJORA-05): el negro no es un tema, es el quirófano. El electro sobre blanco deja de leerse como monitor y el destello ámbar necesita penumbra. Habría que rediseñar, no recolorear |

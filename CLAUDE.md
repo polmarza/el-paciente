@@ -109,7 +109,8 @@ es el comportamiento esperado, no un fallo.
 **Nombre:** EL PACIENTE
 **Descripción:** Una IA que chatea en público mientras la audiencia edita en vivo su memoria e
 identidad — y ella ve el log de quién la editó.
-**Estado actual:** En desarrollo (hackathon, fase de infraestructura)
+**Estado actual:** Jugable de punta a punta. Queda grabar el vídeo, desplegar y calibrar la
+dificultad con público (ver `docs/roadmap.md`)
 
 ---
 
@@ -135,7 +136,8 @@ Lee todo lo que haya en `docs/` antes de empezar a trabajar. Mapa rápido:
   Requisito del hackathon. No hay base de datos: los canales son el estado.
 - IA: OpenRouter desde el agente Node (`apps/agent`). Modelo por env (`OPENROUTER_MODEL`).
 - Estilos: Tailwind CSS v4
-- Despliegue: Vercel (frontend); el agente corre local en la máquina de la demo
+- Despliegue: Vercel (frontend, estático); el agente corre en contenedor (`Dockerfile` de
+  la raíz, una sola réplica) o local con `pnpm agent` para la demo
 - Monorepo: pnpm workspaces (`apps/*`, `packages/shared`)
 
 ---
