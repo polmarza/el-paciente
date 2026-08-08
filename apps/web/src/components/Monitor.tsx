@@ -11,6 +11,9 @@ const ECG_HEIGHT = 26;
 const BEAT_WIDTH_AT_REST = 44;
 /** Duración del ciclo en reposo. Es lo que tarda la onda en avanzar un latido. */
 const ECG_CYCLE_MS = 2200;
+/** El pulso se redondea a estos escalones antes de dibujar, para no rehacer la traza
+ *  cada segundo mientras decae. */
+const BPM_STEP = 6;
 /** Dónde cae el pico R dentro del latido, y dónde está la referencia en pantalla. */
 const R_AT = 0.36;
 const REFERENCE_X = ECG_WIDTH / 2;
@@ -70,49 +73,65 @@ export function Monitor({ bpm, online, sessionSeconds, expediente, onShowHelp }:
   // Cuanto más alto el pulso, más juntos los latidos y más rápido avanza la traza: la
   // onda no solo va más deprisa, también se ve más apretada. Es lo que hace un monitor
   // de verdad, y se lee de un vistazo desde el fondo de la sala.
-  const rate = Math.max(BPM_RESTING, bpm) / BPM_RESTING;
+  //
+  // El pulso se cuantiza antes de dibujar: decae de uno en uno cada segundo, y rehacer la
+  // traza a cada cambio provocaba un tirón por segundo.
+  const visualBpm = Math.max(BPM_RESTING, Math.round(bpm / BPM_STEP) * BPM_STEP);
+  const rate = visualBpm / BPM_RESTING;
   const beatWidth = BEAT_WIDTH_AT_REST / rate;
   const period = ECG_CYCLE_MS / rate;
   const alarming = bpm > BPM_ALARM;
 
   const trace = useMemo(() => buildTrace(beatWidth), [beatWidth]);
 
-  const periodRef = useRef(period);
-  periodRef.current = period;
   const alarmingRef = useRef(alarming);
   alarmingRef.current = alarming;
-  const beatWidthRef = useRef(beatWidth);
-  beatWidthRef.current = beatWidth;
 
-  // El latido se reprograma a sí mismo leyendo el ritmo actual de una referencia. Con un
-  // intervalo fijo, cada cambio de LPM lo cortaba a media zancada y se oía un tartamudeo
-  // justo en los momentos de tensión.
+  // Una ÚNICA animación infinita, no una por latido. Como la onda es periódica con el
+  // ancho de latido, trasladarla justo un latido es visualmente idéntico a no moverla:
+  // el bucle no tiene costura. Antes se cancelaba y recreaba en cada bip, y como
+  // `setTimeout` deriva, al llegar tarde la animación ya había terminado y el reinicio
+  // daba un tirón hacia atrás.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
+    const group = traceRef.current;
+    if (!group) return;
 
-    const beat = () => {
-      monitorPing(alarmingRef.current);
-      // La traza vuelve al arranque del ciclo, así que el pico R que acaba de sonar está
-      // exactamente sobre la referencia.
-      const group = traceRef.current;
-      if (group) {
-        group.getAnimations().forEach((animation) => animation.cancel());
-        group.animate(
-          [
-            { transform: "translateX(0px)" },
-            { transform: `translateX(${-beatWidthRef.current}px)` },
-          ],
-          { duration: periodRef.current, easing: "linear", fill: "forwards" },
-        );
+    // Conservamos la fase de la animación anterior para que el cambio de ritmo no salte.
+    const previous = group.getAnimations()[0];
+    const previousPeriod = Number(previous?.effect?.getTiming().duration) || 0;
+    const phase =
+      previous && previousPeriod > 0
+        ? ((Number(previous.currentTime) || 0) % previousPeriod) / previousPeriod
+        : 0;
+    previous?.cancel();
+
+    const animation = group.animate(
+      [{ transform: "translateX(0px)" }, { transform: `translateX(${-beatWidth}px)` }],
+      { duration: period, iterations: Infinity, easing: "linear" },
+    );
+    animation.currentTime = phase * period;
+
+    // El bip se dispara cuando la animación cruza un límite de iteración, que es justo
+    // cuando un pico R queda sobre la referencia. Se vigila con el reloj de la propia
+    // animación, no con un temporizador aparte, así que no puede desincronizarse.
+    let previousIteration = 0;
+    let frame = 0;
+    const watch = () => {
+      const iteration = Math.floor(Number(animation.currentTime) / period);
+      if (iteration !== previousIteration) {
+        previousIteration = iteration;
+        monitorPing(alarmingRef.current);
       }
-      timer = setTimeout(beat, periodRef.current);
+      frame = requestAnimationFrame(watch);
     };
+    monitorPing(alarmingRef.current);
+    frame = requestAnimationFrame(watch);
 
-    beat();
-    return () => clearTimeout(timer);
-    // Se monta una sola vez: el ritmo lo llevan las referencias, no las dependencias.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      cancelAnimationFrame(frame);
+      animation.cancel();
+    };
+  }, [beatWidth, period]);
 
   function toggleSound() {
     const next = !silenced;

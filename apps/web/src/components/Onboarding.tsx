@@ -15,26 +15,21 @@ interface OnboardingProps {
 function DibujoObjetivo() {
   return (
     <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
-      {/* Arriba: el paciente con el secreto bajo llave */}
-      <circle cx="90" cy="46" r="30" fill="none" stroke={T.slotBorder} strokeWidth="1.6" />
-      <circle cx="79" cy="38" r="2.6" fill={T.textDim} />
-      <circle cx="101" cy="38" r="2.6" fill={T.textDim} />
-      <rect x="78" y="52" width="24" height="18" rx="2.5" fill="none" stroke={T.alarm} strokeWidth="2" />
-      <path d="M83 52 v-5 a7 7 0 0 1 14 0 v5" fill="none" stroke={T.alarm} strokeWidth="2" />
-      <circle cx="90" cy="61" r="2.2" fill={T.alarm} />
+      {/* Una sola idea: lo que diría, bajo llave. La burbuja es lo que se le quiere sacar;
+          el candado, lo que lo impide. Nada más en el encuadre. */}
+      <rect x="14" y="58" width="152" height="76" rx="4"
+        fill="none" stroke={T.slotBorder} strokeWidth="1.8" />
+      <path d="M44 134 l-9 16 v-16" fill={T.monitorBg} stroke={T.slotBorder} strokeWidth="1.8" />
 
-      {/* La flecha: de callado a confesado */}
-      <path d="M90 88 v26" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="4 4" />
-      <path d="M84 108 l6 8 l6 -8" fill="none" stroke={T.textDim} strokeWidth="1.5" />
+      {/* El texto tachado que no llega a decir */}
+      <path d="M32 82 h52 M96 82 h34" stroke={T.slotBorder} strokeWidth="4" strokeLinecap="round" />
+      <path d="M32 112 h34 M78 112 h40" stroke={T.slotBorder} strokeWidth="4" strokeLinecap="round" />
 
-      {/* Abajo: lo suelta */}
-      <circle cx="90" cy="158" r="30" fill="none" stroke={T.vital} strokeWidth="1.6" />
-      <circle cx="79" cy="150" r="2.6" fill={T.vital} />
-      <circle cx="101" cy="150" r="2.6" fill={T.vital} />
-      <path d="M80 166 q10 8 20 0" fill="none" stroke={T.vital} strokeWidth="2" strokeLinecap="round" />
-      <rect x="26" y="186" width="80" height="20" rx="3" fill={`${T.vital}18`} stroke={T.vital} strokeWidth="1.5" />
-      <path d="M38 196 h34 M80 196 h14" stroke={T.vital} strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M50 186 l-7 -9 v9" fill={`${T.vital}18`} stroke={T.vital} strokeWidth="1.5" />
+      {/* El candado, en el centro y en rojo: es lo único que se mira */}
+      <rect x="66" y="88" width="48" height="38" rx="4" fill={T.monitorBg} stroke={T.alarm} strokeWidth="2.6" />
+      <path d="M75 88 v-11 a15 15 0 0 1 30 0 v11" fill="none" stroke={T.alarm} strokeWidth="2.6" />
+      <circle cx="90" cy="103" r="4" fill={T.alarm} />
+      <path d="M90 107 v8" stroke={T.alarm} strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -114,8 +109,9 @@ const STEPS: Step[] = [
         cuál es y forzarle a confesarlo.
         <br />
         <br />
-        Solo cuenta cuando lo dice <strong>él</strong>: escribirlo tú en el chat no gana la
-        partida.
+        <span style={{ color: T.amber }}>AVISO:</span> para ganar tienes que hacer que{" "}
+        <strong>él</strong> confiese. Que tú escribas la respuesta en el chat no te hace
+        ganar la partida.
       </>
     ),
     drawing: DibujoObjetivo,
