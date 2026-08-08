@@ -1,0 +1,14 @@
+# La imagen solo lleva lo que el COPY del Dockerfile pide, pero esto acota el
+# contexto que se envía al daemon — y blinda contra un COPY demasiado ancho.
+*
+!package.json
+!pnpm-workspace.yaml
+!pnpm-lock.yaml
+!packages/shared/package.json
+!packages/shared/src
+!apps/agent/package.json
+!apps/agent/src
+
+# Ni de broma dentro del contexto, aunque el COPY no los pida.
+.env*
+**/.env*

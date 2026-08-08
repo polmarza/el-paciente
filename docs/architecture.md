@@ -15,7 +15,7 @@ o cualquier decisión técnica relevante. Los cambios se registran también en `
 | Agente | Proceso Node 22+ con `@portalsdk/core` | Portal no documenta API REST de publicación server-side → la IA se conecta como un cliente más, con identidad propia |
 | Estilos | CSS plano + estilos inline tipados | El diseño llegó de Claude Design como estilos inline; portarlo a Tailwind era trabajo perdido. Los tokens viven en `theme.ts` y las animaciones en `styles.css` |
 | Base de datos | Ninguna | El estado ES los canales de Portal (historial incluido). Ver `data-model.md` |
-| Despliegue | Vercel (frontend) + agente local en la máquina de la demo | Cero fricción de deploy en hackathon; el agente es un `pnpm agent` |
+| Despliegue | Vercel (frontend) + agente en contenedor (Railway/Fly) o local | La web es estática; el agente es un proceso de larga duración con WebSocket, y eso no cabe en Vercel |
 
 ---
 
@@ -143,10 +143,19 @@ Repositorio: <https://github.com/polmarza/el-paciente> (público, `origin`, rama
 
   Los secretos que usa el middleware (`AGENT_SECRET`) se registran con `secrets set`: su
   valor se resuelve en ejecución y nunca se escribe en la configuración.
-- **Agente:** proceso local en la máquina de la demo (`pnpm agent`). Es deliberado: en un
-  hackathon, un proceso que ves en tu terminal es más fiable que un worker remoto. Si se
-  quisiera 24/7: Railway/Fly con el mismo código.
-- Entornos: solo `dev` (local) y `demo` (Vercel + agente local). No hay staging.
+- **Agente:** dos modos, mismo código.
+  - *Demo local:* `pnpm agent` en la máquina anfitriona. Un proceso que ves en tu terminal
+    es lo más fiable durante una presentación.
+  - *24/7:* el `Dockerfile` de la raíz empaqueta SOLO el agente (la web va en Vercel) para
+    correrlo como worker en Railway/Fly/Render. No expone puertos — el agente solo abre
+    conexiones salientes — y debe fijarse a **una réplica**: el cerrojo de instancia única
+    es un PID local, no distribuido, y dos agentes responden por duplicado. Las variables
+    (`PORTAL_API_KEY`, `AGENT_SECRET`, `OPENROUTER_*`) van en el panel de la plataforma.
+    Los reinicios son seguros: el arranque espera al `ready` del canal **y** a que el
+    backfill esté volcado en el almacén antes de decidir si la sala está virgen — Portal
+    emite `ready` un instante antes de rellenar `channel.messages`, y leer en ese hueco
+    hacía que el agente sembrara una ronda encima de la partida en curso.
+- Entornos: solo `dev` (local) y `demo` (Vercel + agente donde toque). No hay staging.
 
 ---
 

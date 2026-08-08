@@ -33,6 +33,8 @@ const COALESCE_MS = 1200;
  * sembraba una ronda nueva encima de una partida en curso.
  */
 const BOOT_TIMEOUT_MS = 8000;
+/** Cuánto se espera, ya en "ready", a que el backfill aparezca en el almacén. */
+const BACKFILL_TIMEOUT_MS = 5000;
 /**
  * Frenos para las peticiones de paciente nuevo. Cualquiera puede pedirla desde la
  * cabecera, así que el agente es quien decide: no atiende si la ronda acaba de empezar
@@ -80,6 +82,12 @@ async function main() {
   // Sin esto, un backfill lento vale como sala virgen: sembraría una ronda encima de
   // una partida ya en marcha, que es justo el bug que dejó este comentario aquí.
   await waitReady(brain);
+  // Y esto tampoco sobra: `ready` llega ANTES de que el backfill esté volcado en el
+  // almacén. Se comprobó en vivo: leer justo en `ready` daba 0 mensajes en una sala con
+  // partida en curso (el navegador no lo sufre porque repinta cuando los mensajes llegan;
+  // aquí se lee una sola vez). Así que tras `ready` se espera además a que aparezca algún
+  // mensaje, con un techo corto: si de verdad no hay nada, la sala es virgen y se siembra.
+  await waitBackfill(brain);
   await bootstrap();
 
   console.log("Escuchando. Ctrl+C para dormirlo.");
@@ -358,6 +366,20 @@ function waitReady(channel: ChannelHandle<unknown>): Promise<void> {
       resolve();
     });
   });
+}
+
+/**
+ * Tras `ready`, espera a que el backfill esté de verdad en el almacén. Sondeo y no
+ * evento porque los mensajes de backfill no pasan por `on("message")` — aparecen en
+ * `channel.messages` sin avisar. Techo corto: una sala virgen de verdad paga esta
+ * espera una única vez en su vida y a cambio ningún reinicio pisa una partida.
+ */
+async function waitBackfill(channel: ChannelHandle<unknown>): Promise<void> {
+  const POLL_MS = 200;
+  const deadline = Date.now() + BACKFILL_TIMEOUT_MS;
+  while (channel.messages.length === 0 && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+  }
 }
 
 function describe(error: unknown): string {
