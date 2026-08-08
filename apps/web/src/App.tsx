@@ -11,10 +11,18 @@ import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
 import { Toast } from "./components/Toast";
 import { RoundOverlay } from "./components/RoundOverlay";
+import { PasilloPane } from "./components/PasilloPane";
+import { Onboarding } from "./components/Onboarding";
 import { useBrain } from "./hooks/useBrain";
 import { useChat } from "./hooks/useChat";
+import { usePasillo } from "./hooks/usePasillo";
 import { useNow } from "./hooks/useNow";
-import { loadIdentity, saveIdentity } from "./lib/identity";
+import {
+  hasSeenOnboarding,
+  loadIdentity,
+  markOnboardingSeen,
+  saveIdentity,
+} from "./lib/identity";
 import { T } from "./theme";
 
 const TOAST_MS = 4200;
@@ -28,6 +36,9 @@ export default function App() {
 
   const brain = useBrain(identity);
   const chat = useChat(identity);
+  const pasillo = usePasillo(identity);
+
+  const [onboarding, setOnboarding] = useState(() => !hasSeenOnboarding());
 
   const showToast = useCallback((reason: string) => {
     setToast(reason);
@@ -111,11 +122,13 @@ export default function App() {
         online={online}
         sessionSeconds={sessionSeconds}
         expediente={brain.expediente}
+        onShowHelp={() => setOnboarding(true)}
       />
 
       {disconnected && <Flatline />}
 
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
+        <PasilloPane entries={pasillo.entries} identity={identity} onSend={pasillo.send} />
         <ChatPane
           entries={visibleEntries}
           identity={identity}
@@ -146,6 +159,16 @@ export default function App() {
           roundEnd={heldEnd}
           now={now}
           onClose={() => setDismissedKey(endKey(heldEnd))}
+        />
+      )}
+      {onboarding && (
+        <Onboarding
+          nickname={identity.nickname}
+          onFinish={(nombre) => {
+            rename(nombre);
+            markOnboardingSeen();
+            setOnboarding(false);
+          }}
         />
       )}
       {toast && <Toast text={toast} />}

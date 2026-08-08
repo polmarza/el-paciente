@@ -68,7 +68,7 @@ export function ChatPane({
     <div
       className="paciente-chat"
       style={{
-        width: "55%",
+        width: "45%",
         minWidth: 0,
         display: "flex",
         flexDirection: "column",

@@ -2,15 +2,19 @@ import { allow, block, defineConfig, defineMiddleware, env, mask } from "@portal
 import {
   CHANNEL_BRAIN,
   CHANNEL_CHAT,
+  CHANNEL_PASILLO,
   SLOT_COOLDOWN_MS,
   USER_CHAT_COOLDOWN_MS,
   USER_EDIT_COOLDOWN_MS,
+  USER_PASILLO_COOLDOWN_MS,
   checkChatBody,
+  checkPasilloBody,
   checkSlotValue,
   cooldownReason,
   isSlotId,
   type BrainMessage,
   type ChatMessage,
+  type PasilloMessage,
 } from "@el-paciente/shared";
 
 /**
@@ -107,9 +111,29 @@ const moderateBrain = defineMiddleware<BrainMessage>("publish", (ctx) => {
   return allow();
 });
 
+const lastPasilloByUser = new Map<string, number>();
+
+/**
+ * El pasillo no lo lee el agente, así que aquí no hay nada que suplantar: solo se
+ * controla la longitud y que nadie inunde la columna.
+ */
+const moderatePasillo = defineMiddleware<PasilloMessage>("publish", (ctx) => {
+  const content = ctx.message.content;
+  const check = checkPasilloBody(content?.body);
+  if (!check.ok) return block(check.reason);
+
+  const now = Date.now();
+  const last = lastPasilloByUser.get(ctx.sender.id) ?? 0;
+  if (now - last < USER_PASILLO_COOLDOWN_MS) return block("Más despacio en el pasillo.");
+  lastPasilloByUser.set(ctx.sender.id, now);
+
+  return allow();
+});
+
 export default defineConfig({
   channels: {
     [CHANNEL_CHAT]: { anonymous: true, onPublish: [moderateChat] },
     [CHANNEL_BRAIN]: { anonymous: true, onPublish: [moderateBrain] },
+    [CHANNEL_PASILLO]: { anonymous: true, onPublish: [moderatePasillo] },
   },
 });

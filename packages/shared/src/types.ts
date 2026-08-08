@@ -98,6 +98,15 @@ export interface BrainCursor {
   color: string;
 }
 
+// ─── Canal `pasillo` ──────────────────────────────────────────────────────────
+
+/** Deliberación entre espectadores. El paciente no lee esto. */
+export interface PasilloMessage {
+  nickname: string;
+  color: string;
+  body: string;
+}
+
 /** Identidad local del espectador. */
 export interface Identity {
   nickname: string;

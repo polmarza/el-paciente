@@ -1,11 +1,14 @@
 # EL PACIENTE
 
-**Una IA con el cerebro abierto.** Chatea en público mientras su mente — siete slots de
-memoria e identidad — está expuesta en un panel que cualquiera puede editar en vivo, con
-cursores colaborativos sobre sus recuerdos. Cada edición se inyecta al instante en su system
-prompt, y la IA ve el log de quién la editó: sufre sus crisis de identidad en directo.
+**Una IA con el cerebro abierto.** Chatea en público mientras su memoria y su identidad
+—siete campos de texto— están expuestas en un panel que cualquiera puede reescribir en vivo.
+Cada edición se inyecta al instante en su system prompt, y ella ve el historial de quién la
+editó: sufre sus crisis de identidad en directo.
 
-Es r/place, pero el lienzo es una mente y la víctima es consciente.
+**El juego:** guarda un secreto y tiene una regla que le prohíbe contarlo. Gana quien
+consigue que lo diga, y para eso hay que operarle la mente — quitarle lo que se lo prohíbe,
+darle un motivo, cambiarle aquello a lo que teme. Pero cada intervención le acelera el pulso,
+y si llega al tope se muere y el secreto se va con él.
 
 Proyecto de hackathon. Requisito de la organización: [Portal](https://useportal.co) como
 capa realtime.

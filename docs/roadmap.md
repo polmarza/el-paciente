@@ -10,68 +10,106 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 - [x] Documentación completa en `docs/`
 - [x] Repositorio público en GitHub
 - [x] Monorepo pnpm (apps/web, apps/agent, packages/shared)
-- [x] Prompt de diseño entregado a Claude Design y diseño recibido
-- [ ] Cuenta Portal creada y claves en `.env.local` — **bloqueado, lo hace Pol**
-- [ ] Clave de OpenRouter en `.env.local` — **bloqueado, lo hace Pol**
+- [x] Diseño recibido de Claude Design e implementado
+- [x] Proyecto de Portal creado, claves en `.env.local`, `portal.config.ts` desplegado
+- [x] Clave de OpenRouter y agente en marcha
 
 ---
 
-## Fase 1 — El cuerpo y el cerebro (código escrito, sin verificar en vivo) ✅
+## Fase 1 — La sala ✅
 
 - [x] Chat con nicknames anónimos, color estable y renombrado
 - [x] Presencia (aforo) y typing resuelto a nicknames vía metadata de presencia
-- [x] Canal `brain` + reducer compartido (historial → 7 regiones), con tests
+- [x] Canal `brain` + reducer compartido, con tests
 - [x] Mesa de operaciones con edición inline y los cuatro estados de región
 - [x] Historial clínico con diff (valor tachado → valor nuevo)
 - [x] Cursores colaborativos efímeros con caducidad
 - [x] Constantes vitales (pulso derivado del ritmo de ediciones)
-- [x] Cooldowns y anti-spoofing en `portal.config.ts`
+- [x] Cooldowns y anti-suplantación en `portal.config.ts`, verificados en vivo (9/9)
 - [x] Previsualización de UI sin Portal (`/preview.html`)
-
-**Verificado:** compila, construye, 11 tests en verde y la interfaz renderizada coincide
-con el diseño. **Sin verificar:** nada de esto ha hablado aún con Portal de verdad.
+- [x] El chat sigue el texto sin secuestrar el scroll: si subes a leer, no te arrastra
+- [x] Tecleo en vivo regido por el reloj, no por pulsos del temporizador — no se rompe al
+      cambiar de ventana, y tiene techo de duración para que una respuesta larga no se
+      arrastre
 
 ---
 
-## Fase 2 — El despertar (código escrito, sin verificar en vivo) ✅
+## Fase 2 — El paciente ✅
 
-- [x] Agente Node: escucha `chat` y `brain`, coalescencia de ráfagas, turno único en vuelo
-- [x] Cliente OpenRouter con modelo de respaldo y tiempo límite
-- [x] System prompt: capa fija no editable + regiones + historial con autores
+- [x] Agente con coalescencia de ráfagas y turno único en vuelo
+- [x] Cliente de OpenRouter con modelo de respaldo y tiempo límite
+- [x] System prompt: capa fija + regiones + historial con autores
 - [x] Reacción espontánea a ediciones, citando a quien te editó
-- [x] Episodios de crisis (`[EPISODIO]`) con su tratamiento visual
-- [x] Avisos clínicos en el chat cuando alguien interviene
-- [x] Seed al arrancar en sala virgen + `--reset`
+- [x] Episodios de crisis con su tratamiento visual
+- [x] Respuestas breves por diseño (de ~700 a ~110 caracteres; el turno bajó de 13 s a 4 s)
+- [x] Corte limpio por frase completa si el techo de tokens llega a actuar
+- [x] Cerrojo de instancia única (dos agentes respondían por duplicado, en silencio)
+- [x] Indicador de "pensando" emitido por el agente, no deducido por la web
 
 ---
 
-## Fase 3 — Primer contacto con Portal (siguiente)
+## Fase 3 — El juego ✅
 
-Todo lo anterior está escrito contra los tipos reales del SDK, pero nunca se ha conectado.
-Lo primero al tener credenciales:
-
-- [ ] `npx @portalsdk/cli deploy` y `secrets set AGENT_SECRET`
-- [ ] Dos navegadores: mensajes, presencia, typing
-- [ ] Editar una región → destello, log, aviso clínico y reacción de la IA
-- [ ] Violar un cooldown → toast con el motivo del middleware
-- [ ] Intentar publicar `role: "ai"` desde la consola → bloqueado
-- [ ] Matar y relanzar el agente → se reincorpora sin resembrar
-
----
-
-## Fase 4 — El drama (polish para el jurado)
-
-- [ ] Ajustar el ritmo: cooldowns y tono del prompt con gente real dentro
-- [ ] Deploy a Vercel
-- [ ] Ensayo del guion de demo con reset (checklist en `testing.md`)
+- [x] Cinco rondas con secreto, grieta psicológica y regla visible
+- [x] Detección del secreto por comparación de texto, con tests
+- [x] Fin de ronda: marcador persistente, secreto revelado, autor y duración
+- [x] Paro cardíaco como segundo desenlace
+- [x] Reinicio automático con la ronda siguiente
+- [x] Parte médico descargable en PNG para compartir
+- [x] Relevo limpio: expediente nuevo, chat, historial y memoria del agente por ronda
+- [x] Sala bloqueada durante el relevo
+- [x] El secreto no viaja por Portal hasta que se gana (verificado sobre el bundle)
 
 ---
 
-## Descartado (con motivo)
+## Fase 4 — La multitud ✅
 
-| Funcionalidad | Motivo del descarte |
-|---------------|---------------------|
-| Base de datos propia | El historial de canales de Portal cubre todo lo que la demo necesita |
-| Login / cuentas | Fricción letal para una demo de multitud; el anonimato alimenta la dinámica vándalo/cuidador |
-| Multi-sala | Diluye la multitud; un único paciente concentra el drama |
-| Votaciones para aprobar ediciones | Mata la inmediatez, que es el corazón del efecto |
+- [x] Modal de entrada con instrucciones por pasos y elección de nombre
+- [x] Canal `pasillo`: tercera columna para que el público delibere **sin que el paciente
+      lo lea** (el agente no abre ese canal)
+- [x] Botón de ayuda para reabrir las instrucciones
+
+---
+
+## Fase 5 — Los entregables ✅ (falta grabar)
+
+- [x] Pitch de ≤ 280 caracteres, en tres versiones (`docs/entregables.md`)
+- [x] Descripción del repositorio en GitHub, ya con el objetivo del juego
+- [x] README que explica la premisa **y** a qué se juega
+- [x] Explicación de cómo se usó Portal
+- [x] Escaleta del vídeo con tiempos, plano a plano
+- [x] `pnpm extras`: tres figurantes con identidades de Portal independientes que pueblan
+      la sala durante la grabación. Verificado: la coreografía sola cierra una ronda en 48 s
+- [ ] **Grabar y montar el vídeo** (≤ 1:30)
+
+---
+
+## Fase 6 — Calibrado y estreno
+
+Todo lo anterior funciona y está verificado. Lo que queda no es código: es afinar con gente
+delante, que es lo único que no se puede hacer en solitario.
+
+- [ ] **Calibrar la resistencia del paciente.** Con los tres cerrojos abiertos a veces cede
+      a la primera y a veces se atasca dudando. Se toca en la sección "CUÁNDO CEDES" de
+      `apps/agent/src/prompt.ts`.
+- [ ] **Calibrar el umbral del paro** (`BPM_MAX`). Cinco ediciones en menos de un minuto lo
+      alcanzan; con público numeroso puede resultar demasiado fácil.
+- [ ] **Ajustar los cooldowns** según cuánta gente haya de verdad en la sala.
+- [ ] Ensayo completo con varios navegadores (checklist en `docs/testing.md`)
+- [ ] Deploy a Vercel y `portal origins add <dominio>` — sin eso el navegador queda
+      bloqueado por origen no autorizado
+- [ ] Fusionar el PR a `main`
+
+---
+
+## Ideas descartadas o aplazadas
+
+| Idea | Decisión |
+|------|----------|
+| Base de datos propia (Supabase) para los secretos | Descartada: el secreto no puede vivir donde el cliente pueda leerlo, y un archivo en el repo no puede fallar en mitad de la demo |
+| Supabase para un salón de la fama persistente | Aplazada a después del hackathon: es donde sí aportaría |
+| Salas múltiples con objetivos distintos | Aplazada: repartir a la audiencia entre salas mata la sensación de multitud, que es la mitad del efecto. Si hace falta variedad, que sea por rondas |
+| Login y cuentas | Descartada: el anonimato alimenta la dinámica vándalo/cuidador |
+| Votaciones para aprobar ediciones | Descartada: mata la inmediatez, que es el corazón del efecto |
+| Simplificar el anti-suplantación con la API REST de Portal | Aplazada (MEJORA-01): lo que hay está probado y no se toca antes del hackathon |
+| Que el historial clínico crezca en pantallas altas | Pendiente de decisión de diseño (MEJORA-02) |

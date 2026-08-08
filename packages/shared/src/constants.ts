@@ -1,15 +1,24 @@
-/** Identificadores de los dos canales de Portal. El estado del proyecto vive aquí. */
+/** Identificadores de los canales de Portal. El estado del proyecto vive aquí. */
 export const CHANNEL_CHAT = "chat";
 export const CHANNEL_BRAIN = "brain";
+/**
+ * El pasillo: donde el público delibera entre sí. El agente NO se suscribe a este
+ * canal, así que EL PACIENTE no oye lo que se dice de él aquí. Es deliberado: si
+ * leyera la estrategia, no habría estrategia.
+ */
+export const CHANNEL_PASILLO = "pasillo";
 
 /** Límites de longitud. Los aplica el middleware, no solo la UI. */
 export const MAX_SLOT_CHARS = 140;
 export const MAX_CHAT_CHARS = 280;
+export const MAX_PASILLO_CHARS = 280;
 
 /** Cooldowns en milisegundos. Son la mitigación contra la degeneración en incoherencia. */
 export const SLOT_COOLDOWN_MS = 25_000;
 export const USER_EDIT_COOLDOWN_MS = 10_000;
 export const USER_CHAT_COOLDOWN_MS = 3_000;
+/** En el pasillo se conspira rápido: cooldown corto, solo anti-inundación. */
+export const USER_PASILLO_COOLDOWN_MS = 1_000;
 
 /** Cuánto dura el destello ámbar de "recién editado" antes de pasar a bloqueado. */
 export const FLASH_MS = 4_000;

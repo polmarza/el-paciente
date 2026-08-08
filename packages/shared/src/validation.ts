@@ -1,4 +1,4 @@
-import { MAX_CHAT_CHARS, MAX_SLOT_CHARS } from "./constants.ts";
+import { MAX_CHAT_CHARS, MAX_PASILLO_CHARS, MAX_SLOT_CHARS } from "./constants.ts";
 
 export type Check = { ok: true } | { ok: false; reason: string };
 
@@ -24,6 +24,16 @@ export function checkChatBody(body: unknown): Check {
   if (!trimmed) return { ok: false, reason: "El mensaje está vacío." };
   if (trimmed.length > MAX_CHAT_CHARS) {
     return { ok: false, reason: `Máximo ${MAX_CHAT_CHARS} caracteres por mensaje.` };
+  }
+  return OK;
+}
+
+export function checkPasilloBody(body: unknown): Check {
+  if (typeof body !== "string") return { ok: false, reason: "El mensaje no es texto." };
+  const trimmed = body.trim();
+  if (!trimmed) return { ok: false, reason: "El mensaje está vacío." };
+  if (trimmed.length > MAX_PASILLO_CHARS) {
+    return { ok: false, reason: `Máximo ${MAX_PASILLO_CHARS} caracteres.` };
   }
   return OK;
 }

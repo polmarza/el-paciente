@@ -97,7 +97,20 @@ a:hover {
   border-color: #3d5a66;
 }
 
-/* El split-screen es para proyector. En pantallas estrechas se apila. */
+/* Tres columnas para proyector. El pasillo es lo primero que sobra al estrecharse:
+   es conversación entre el público, no la pieza. */
+@media (max-width: 1250px) {
+  .paciente-pasillo {
+    display: none !important;
+  }
+  .paciente-chat {
+    width: 55% !important;
+  }
+  .paciente-brain {
+    width: 45% !important;
+  }
+}
+
 @media (max-width: 900px) {
   .paciente-body {
     flex-direction: column;

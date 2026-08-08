@@ -101,7 +101,13 @@ function App() {
         overflow: "hidden",
       }}
     >
-      <Monitor bpm={108} online={23} sessionSeconds={3127} expediente="001-A" />
+      <Monitor
+        bpm={108}
+        online={23}
+        sessionSeconds={3127}
+        expediente="001-A"
+        onShowHelp={() => {}}
+      />
       {params.has("fin") && (
         <RoundOverlay
           roundEnd={{

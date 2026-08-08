@@ -7,10 +7,17 @@ interface MonitorProps {
   sessionSeconds: number;
   /** Cambia con cada ronda: cada paciente tiene su propio expediente. */
   expediente: string;
+  onShowHelp: () => void;
 }
 
 /** La cabecera del monitor: identidad del paciente, pulso, reloj de sesión y aforo. */
-export function Monitor({ bpm, online, sessionSeconds, expediente }: MonitorProps) {
+export function Monitor({
+  bpm,
+  online,
+  sessionSeconds,
+  expediente,
+  onShowHelp,
+}: MonitorProps) {
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
 
   return (
@@ -62,6 +69,26 @@ export function Monitor({ bpm, online, sessionSeconds, expediente }: MonitorProp
       <div style={{ flex: 1 }} />
       <span style={{ color: T.textDim }}>SESIÓN {formatClock(sessionSeconds)}</span>
       <span style={{ color: T.online }}>● {online} DENTRO</span>
+      <button
+        type="button"
+        onClick={onShowHelp}
+        title="Cómo funciona esto"
+        aria-label="Cómo funciona esto"
+        style={{
+          fontFamily: FONT.mono,
+          fontSize: 12,
+          color: T.textDim,
+          background: "transparent",
+          border: `1px solid ${T.monitorBorder}`,
+          borderRadius: 2,
+          width: 22,
+          height: 22,
+          cursor: "pointer",
+          padding: 0,
+        }}
+      >
+        ?
+      </button>
     </div>
   );
 }

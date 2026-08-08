@@ -42,6 +42,25 @@ export function saveIdentity(identity: Identity): void {
   }
 }
 
+const ONBOARDING_KEY = "el-paciente:onboarding-visto";
+
+/** Si ya ha pasado por las instrucciones, no se le vuelven a poner delante. */
+export function hasSeenOnboarding(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markOnboardingSeen(): void {
+  try {
+    localStorage.setItem(ONBOARDING_KEY, "1");
+  } catch {
+    // Sin persistencia se las verá cada vez. Molesto, pero no roto.
+  }
+}
+
 /** Identificador de pestaña. Sirve para descartar los ecos de nuestros propios cursores. */
 export const SESSION_ID: string =
   globalThis.crypto?.randomUUID?.() ?? `s${Math.random().toString(36).slice(2)}`;

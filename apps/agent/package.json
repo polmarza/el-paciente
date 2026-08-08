@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/index.ts",
-    "seed": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/index.ts --reset"
+    "seed": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/index.ts --reset",
+    "extras": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/extras.ts"
   },
   "dependencies": {
     "@el-paciente/shared": "workspace:*",

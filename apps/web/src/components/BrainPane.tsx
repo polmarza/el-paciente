@@ -58,7 +58,7 @@ export function BrainPane({
     <div
       className="paciente-brain"
       style={{
-        width: "45%",
+        width: "35%",
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
