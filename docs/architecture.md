@@ -154,14 +154,19 @@ Repositorio: <https://github.com/polmarza/el-paciente> (público, `origin`, rama
 
 ### 2026-08-08 — La IA es un cliente Portal, no un backend con API
 
-**Contexto:** Portal no documenta publicación server-side vía REST; el SDK core es un
-cliente WebSocket.
-**Opciones:** (a) agente como cliente Portal en Node; (b) intentar publicar desde
-middleware `onPublish`; (c) que el navegador del host ejecute la IA.
-**Decisión:** (a). El middleware no está pensado para originar mensajes y (c) pone la
-clave de OpenRouter en un navegador.
-**Consecuencias:** el agente necesita un proceso corriendo durante la demo; la identidad
-"IA" se protege con el patrón secret+mask en middleware.
+**Contexto:** el agente tiene que escuchar los dos canales y además hablar.
+**Opciones:** (a) agente como cliente Portal en Node; (b) publicar desde el middleware
+`onPublish`; (c) que el navegador del host ejecute la IA.
+**Decisión:** (a). El middleware no está pensado para originar mensajes y (c) pone la clave
+de OpenRouter en un navegador.
+**Corrección (verificada el 2026-08-08):** una versión anterior de esta decisión afirmaba
+que "Portal no expone una API REST para publicar desde un servidor". **Es falso**: existe
+`POST https://api.useportal.co/v1/channels/{channelId}/messages`, autenticada con
+`Authorization: Bearer <sk_>` y con `senderId` en el cuerpo. Se usó para la prueba de humo
+de esta sesión. La decisión (a) sigue siendo la correcta igualmente, porque escuchar exige
+el WebSocket de todas formas y el agente ya lo tiene abierto — pero abre una simplificación
+posible del anti-suplantación, anotada en `mejoras/backlog.md`.
+**Consecuencias:** el agente necesita un proceso corriendo durante la demo.
 
 ### 2026-08-08 — Estado = canales de Portal, sin base de datos
 
@@ -177,11 +182,16 @@ de Portal (suficiente para una demo; el cerebro semilla se puede re-publicar con
 **Decisión:** `onPublish` en `portal.config.ts` rechaza ediciones que violen cooldown por
 región o por usuario. El motivo viaja en `BlockedError.reason` — texto que Portal define
 explícitamente como visible para el usuario final — y la UI lo muestra tal cual en un toast.
-**Consecuencia y límite honesto:** Portal no documenta almacenamiento persistente para el
+**Consecuencia y límite conocido:** Portal no documenta almacenamiento persistente para el
 middleware, así que el registro de tiempos vive en memoria del proceso que ejecuta los
-callbacks. Con una sola sala y una demo de una hora basta; si Portal reparte las
-invocaciones entre instancias, algún cooldown se colará. Las reglas que sí son de seguridad
-(el secreto del agente y los límites de longitud) no dependen de ningún estado.
+callbacks. Si Portal repartiera las invocaciones entre varias instancias, algún cooldown se
+colaría. Las reglas que sí son de seguridad (el secreto del agente y los límites de
+longitud) no dependen de ningún estado.
+**Verificado en vivo el 2026-08-08** contra el despliegue real: el cooldown de región
+bloquea la segunda edición seguida con su motivo legible, y las nueve comprobaciones de la
+sonda de middleware (suplantación de la IA sin secreto y con secreto falso, `system` y
+`seed` falsificados, exceso de longitud, región inexistente, uso legítimo y cooldown)
+dieron el resultado esperado.
 
 ### 2026-08-08 — La IA no transmite carácter a carácter
 
