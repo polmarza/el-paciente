@@ -24,6 +24,12 @@ function charsPerStep(length: number): number {
  *
  * Solo se anima lo que llega después de montar: el historial de backfill aparece
  * completo, sin teatro.
+ *
+ * El efecto depende ÚNICAMENTE del id del mensaje, nunca del objeto. Cualquier
+ * actualización del canal (presencia, actividad, otro que teclea) recrea ese objeto, y
+ * si estuviera en las dependencias el efecto se relanzaría, limpiaría el temporizador y
+ * la guarda impediría rearrancarlo: el mensaje se quedaba congelado a medio escribir
+ * para siempre.
  */
 export function useAiReveal(entries: readonly ChatEntry[]): {
   revealedId: string | null;
@@ -32,35 +38,53 @@ export function useAiReveal(entries: readonly ChatEntry[]): {
   const mountedAt = useRef(Date.now());
   const [revealedId, setRevealedId] = useState<string | null>(null);
   const [revealedText, setRevealedText] = useState("");
-  const animatedIds = useRef(new Set<string>());
 
   const last = entries[entries.length - 1];
   const lastId = last?.id ?? null;
 
-  useEffect(() => {
-    if (!last || last.message.role !== "ai") return;
-    if (last.at < mountedAt.current) return;
-    if (animatedIds.current.has(last.id)) return;
+  // El efecto lee el mensaje de aquí en vez de recibirlo por dependencias.
+  const lastRef = useRef(last);
+  lastRef.current = last;
 
-    animatedIds.current.add(last.id);
-    const full = last.message.body;
-    setRevealedId(last.id);
+  useEffect(() => {
+    const message = lastRef.current;
+    if (!message || message.message.role !== "ai") return;
+    if (message.at < mountedAt.current) return;
+
+    const full = message.message.body;
+    setRevealedId(message.id);
     setRevealedText("");
 
     const step = charsPerStep(full.length);
-    let shown = 0;
-    const timer = setInterval(() => {
-      shown = Math.min(full.length, shown + step);
+    const startedAt = Date.now();
+
+    // Se revela según el RELOJ, no según cuántas veces haya corrido el temporizador.
+    // El navegador estrangula los `setInterval` de las pestañas en segundo plano, así que
+    // contar pulsos hacía que el mensaje se quedara a medias mientras mirabas otra ventana
+    // y siguiera a rastras al volver. Con el reloj, cada pulso pone el texto donde debería
+    // estar y al volver aparece ya completo.
+    const tick = () => {
+      const shown = Math.min(full.length, Math.ceil((Date.now() - startedAt) / STEP_MS) * step);
       setRevealedText(full.slice(0, shown));
       if (shown >= full.length) {
         clearInterval(timer);
+        document.removeEventListener("visibilitychange", tick);
         setRevealedId(null);
       }
-    }, STEP_MS);
+    };
 
-    return () => clearInterval(timer);
-    // Solo nos interesa reaccionar cuando cambia el último mensaje.
-  }, [lastId, last]);
+    const timer = setInterval(tick, STEP_MS);
+    // Al volver a la pestaña, ponernos al día sin esperar al siguiente pulso.
+    document.addEventListener("visibilitychange", tick);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+      // Si el turno se interrumpe (llega otro mensaje), el anterior se muestra entero:
+      // nunca dejamos una frase a medias en pantalla.
+      setRevealedId((current) => (current === message.id ? null : current));
+    };
+  }, [lastId]);
 
   return { revealedId, revealedText };
 }
