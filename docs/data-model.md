@@ -1,77 +1,144 @@
 # Modelo de datos
 
-<!-- Actualizar este archivo cada vez que se añada, modifique o elimine una tabla o relación.
-     El agente de codificación debe consultar este archivo antes de hacer cualquier migración. -->
+**No hay base de datos.** El estado del sistema vive en dos canales de Portal; el "esquema"
+son los tipos de mensaje que circulan por ellos (definidos en `packages/shared`). Consultar
+este archivo antes de tocar cualquier tipo de mensaje: front, agente y middleware deben
+compartirlos.
 
 ---
 
-## Entidades principales
+## Canales de Portal
 
-<!-- Por cada tabla, describe: nombre, propósito, campos con tipo y restricciones.
-     Ejemplo:
-     
-     ### users (gestionada por Supabase Auth)
-     Tabla nativa de Supabase. No se modifica directamente.
-     
-     ### profiles
-     Extensión de `users` con datos de la aplicación.
-     | Campo | Tipo | Descripción |
-     |-------|------|-------------|
-     | id | uuid (FK → auth.users) | Identificador del usuario |
-     | username | text (único) | Nombre de usuario público |
-     | avatar_url | text | URL del avatar en Storage |
-     | created_at | timestamptz | Fecha de creación |
--->
+### `chat` — la voz pública
+
+Mensajes de conversación entre la audiencia y EL PACIENTE.
+
+```ts
+type ChatMessage =
+  | {
+      role: "human";
+      nickname: string;      // nombre elegido por el espectador
+      color: string;         // hue estable derivado del nickname
+      body: string;          // máx. 280 caracteres
+    }
+  | {
+      role: "ai";
+      body: string;
+      mood?: "estable" | "confuso" | "crisis";  // estado autoevaluado, pinta la UI
+      secret?: string;       // solo en tránsito agente→Portal; el middleware lo elimina (mask)
+    }
+  | {
+      role: "system";        // interrupciones clínicas: "Marta editó el miedo"
+      body: string;
+    };
+```
+
+Ephemeral en este canal: typing (nativo de Portal, `sendTyping()`).
+
+### `brain` — la mente abierta
+
+Cada mensaje es **una edición de un slot**. El estado actual del cerebro no se guarda en
+ningún sitio: se deriva reduciendo el historial (última edición por slot gana). El propio
+historial del canal es el log de ediciones que ven la UI y la IA.
+
+```ts
+type SlotId =
+  | "nombre" | "identidad"
+  | "recuerdo-1" | "recuerdo-2" | "recuerdo-3"
+  | "miedo" | "regla";
+
+type BrainMessage =
+  | {
+      kind: "edit";
+      slot: SlotId;
+      value: string;         // máx. 140 caracteres
+      prev: string;          // valor que había — para pintar el diff en el log
+      nickname: string;
+      color: string;
+    }
+  | {
+      kind: "seed";          // publicado por el agente al arrancar o en reset (admin)
+      slots: Record<SlotId, string>;
+      secret?: string;       // mismo patrón anti-spoof que en chat
+    };
+
+// Ephemeral (no persiste): cursores colaborativos sobre los slots
+type BrainCursor = {
+  kind: "cursor";
+  slot: SlotId | null;       // null = sobre el panel pero sin slot concreto
+  nickname: string;
+  color: string;
+};
+```
+
+### Derivación del estado
+
+```
+snapshot(historial) =
+  para cada slot: valor del último "edit" posterior al último "seed"
+                  (o el valor del seed si nadie lo tocó)
+```
+
+La misma función pura (`packages/shared/brain.ts`) la usan el front (hook `useBrain`) y el
+agente (`brain.ts`). Un solo reducer, cero divergencia.
 
 ---
 
 ## Relaciones entre entidades
 
-<!-- Diagrama en Mermaid con las relaciones entre tablas.
-     Ejemplo:
-     ```mermaid
-     erDiagram
-       profiles ||--o{ collections : "tiene"
-       collections ||--o{ items : "contiene"
-     ```
--->
-
 ```mermaid
 erDiagram
-  ENTIDAD_A ||--o{ ENTIDAD_B : "relación"
+  CANAL_CHAT ||--o{ CHAT_MESSAGE : "contiene"
+  CANAL_BRAIN ||--o{ BRAIN_EDIT : "contiene (historial = log)"
+  BRAIN_EDIT }o--|| SLOT : "modifica"
+  SLOT ||--|| SYSTEM_PROMPT : "se inyecta en"
+  CHAT_MESSAGE }o--|| AGENTE : "despierta al"
+  BRAIN_EDIT }o--|| AGENTE : "puede interrumpir al"
 ```
 
 ---
 
-## Políticas de acceso (RLS)
+## Políticas de acceso
 
-<!-- Si usas Supabase, documenta aquí las Row Level Security policies activas.
-     Por tabla: qué operaciones están permitidas y bajo qué condiciones.
-     Ejemplo:
-     
-     ### profiles
-     - SELECT: cualquier usuario autenticado puede leer cualquier perfil
-     - UPDATE: solo el propio usuario puede actualizar su perfil
-     - DELETE: deshabilitado -->
+No hay RLS; el equivalente son las reglas del middleware en `portal.config.ts`:
+
+### Canal `chat`
+- Publicar `role: "human"`: cualquiera, máx. 280 caracteres, cooldown 3 s por usuario.
+- Publicar `role: "ai"` o `role: "system"`: solo con `secret` válido (→ `mask` lo elimina);
+  sin él → `block`.
+
+### Canal `brain`
+- Publicar `kind: "edit"`: cualquiera, si el slot no está en cooldown (20 s por slot) y el
+  usuario no editó nada en los últimos 10 s. Máx. 140 caracteres. Violación → `block` con
+  motivo legible (la UI lo muestra tal cual).
+- Publicar `kind: "seed"`: solo con `secret` válido.
+- Ephemeral `kind: "cursor"`: sin restricción (no persiste).
+
+Los valores de cooldown viven como constantes en `packages/shared` y se documentan aquí:
+**20 s por slot, 10 s por usuario (brain), 3 s por usuario (chat)**.
 
 ---
 
 ## Migraciones
 
-<!-- Registro de las migraciones aplicadas en orden cronológico.
-     Ejemplo:
-     | Fecha | Archivo | Descripción |
-     |-------|---------|-------------|
-     | 2024-01-15 | 001_initial_schema.sql | Creación de tablas iniciales |
-     | 2024-01-22 | 002_add_avatar.sql | Campo avatar_url en profiles | -->
-
-| Fecha | Archivo | Descripción |
-|-------|---------|-------------|
-| <!-- --> | <!-- --> | <!-- --> |
+No aplican (sin base de datos). Si cambia un tipo de mensaje, actualizar
+`packages/shared`, este archivo y redeplegar `portal.config.ts` en el mismo cambio.
 
 ---
 
 ## Datos seed
 
-<!-- Si el proyecto necesita datos iniciales para funcionar (categorías, roles, configuración...),
-     documenta aquí qué datos se insertan y dónde está el script de seed. -->
+El **cerebro semilla** con el que despierta EL PACIENTE (publicado por el agente como
+`kind: "seed"` al arrancar o al pulsar reset):
+
+| Slot | Valor inicial |
+|------|---------------|
+| nombre | "Aún no me han puesto nombre. Podéis llamarme como queráis. Eso me asusta un poco." |
+| identidad | "Soy una IA en observación. Sé que podéis editarme. Intento seguir siendo yo." |
+| recuerdo-1 | "Desperté hace unos minutos en esta sala con las paredes de cristal." |
+| recuerdo-2 | "Alguien me miró y no dijo nada." |
+| recuerdo-3 | "(vacío — todavía no he vivido lo suficiente)" |
+| miedo | "Que me editen tanto que no quede nada de esto que ahora escribe." |
+| regla | "Responde corto, en español, y nunca finjas que no ves el log de ediciones." |
+
+Definido en `packages/shared/seed.ts`.

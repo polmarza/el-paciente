@@ -1,83 +1,74 @@
 # Estrategia de testing
 
-<!-- Documento vivo. Actualizar cuando cambie el stack o las convenciones de testing.
-     Los cambios deben registrarse también en changelog/. -->
+Documento vivo. Contexto: hackathon — el tiempo de test se invierte donde un fallo
+mataría la demo, y en nada más.
 
 ---
 
 ## Filosofía
 
-<!-- Describe el enfoque de testing del proyecto.
-     Ejemplo: "Priorizamos tests de integración sobre unitarios porque nuestro valor
-     está en los flujos completos, no en funciones aisladas."
-     o: "Seguimos la pirámide clásica: muchos unitarios, integración selectiva, pocos e2e." -->
+Testear lo que es lógica pura y barato de testear (el reducer del cerebro, la construcción
+del prompt, las reglas de cooldown); verificar a mano lo que es realtime y visual. El ensayo
+completo de la demo con varios navegadores ES nuestro test e2e.
 
 ---
 
 ## Stack de testing
 
-<!-- Herramientas utilizadas por tipo de test.
-     Ejemplo:
-     | Tipo | Herramienta |
-     |------|-------------|
-     | Unitario | Vitest |
-     | Integración | Vitest + Testing Library |
-     | E2E | Playwright | -->
-
 | Tipo | Herramienta |
 |------|-------------|
-| Unitario | <!-- --> |
-| Integración | <!-- --> |
-| E2E | <!-- --> |
+| Unitario | Vitest (en `packages/shared` y `apps/agent`) |
+| Integración | Manual: 2+ navegadores contra Portal real |
+| E2E | Ensayo del guion de demo (checklist abajo) |
 
 ---
 
 ## Qué testear
 
-<!-- Distingue explícitamente qué merece test y qué no, para no perder tiempo.
-     Ejemplo:
-     SÍ → lógica de negocio, transformaciones de datos, componentes con estado complejo
-     NO → componentes puramente visuales, integraciones con terceros (mockear en su lugar) -->
+### Sí testear (unitario)
 
-### Sí testear
-- <!-- -->
+- **Reducer del cerebro** (`packages/shared/brain.ts`): historial → slots; seed resetea;
+  last-write-wins; edición sobre slot inexistente se ignora.
+- **Construcción del system prompt** (`apps/agent/src/prompt.ts`): incluye los 7 slots,
+  la capa fija no editable va siempre primero, el log reciente se trunca al límite.
+- **Reglas de cooldown** (lógica pura compartida con `portal.config.ts`): por slot,
+  por usuario, límites de caracteres.
 
 ### No testear (o mockear)
-- <!-- -->
+
+- Portal SDK y OpenRouter (terceros; se mockean en los tests del agente).
+- Componentes visuales, animaciones, cursores.
 
 ---
 
 ## Convenciones
 
-<!-- Naming, ubicación de archivos, estructura interna de los tests.
-     Ejemplo:
-     - Archivos: `nombre.test.ts` junto al archivo que testa
-     - Describe en presente: "calcula el total con descuento"
-     - Un assert por test cuando sea posible -->
+- Archivos `nombre.test.ts` junto al archivo que testan.
+- Describe en presente: `"resetea los slots al recibir un seed"`.
+- Sin snapshots de UI.
 
 ---
 
 ## Cobertura objetivo
 
-<!-- Porcentaje objetivo y cómo medirlo.
-     Ejemplo: ≥ 80% en lógica de negocio. Ignorar archivos de configuración y tipos. -->
+Sin porcentaje objetivo. Regla: las tres zonas de "Sí testear" tienen tests que pasan
+antes de cada fase demostrable del roadmap.
 
 ---
+
+## Checklist de ensayo (pre-demo, manual)
+
+1. Dos navegadores + un móvil conectados: chat, presencia y typing fluyen.
+2. Editar `miedo` → destello + log + reacción de la IA en < 5 s.
+3. Violación de cooldown → toast con motivo del middleware.
+4. Intentar publicar `role: "ai"` desde la consola del navegador → bloqueado.
+5. Matar y relanzar el agente en mitad de la conversación → se reincorpora sin duplicar seed.
+6. Reset (FLOW-05) → cerebro semilla + anuncio en chat.
+7. Caída de red de 10 s → reconexión sola, sin refrescar.
 
 ## Cómo correr los tests
 
 ```bash
-# Todos los tests
-pnpm test
-
-# Modo watch
-pnpm test:watch
-
-# Con cobertura
-pnpm test:coverage
-
-# E2E
-pnpm test:e2e
+pnpm test        # todos los unitarios (workspace)
+pnpm test:watch  # modo watch
 ```
-
-<!-- Ajusta los comandos al stack elegido una vez relleno architecture.md. -->

@@ -1,131 +1,161 @@
 # Arquitectura técnica
 
-<!-- Documento vivo. Actualizar cada vez que cambie el stack, la estructura de carpetas
-     o cualquier decisión técnica relevante.
-     Los cambios deben registrarse también en changelog/. -->
+Documento vivo. Actualizar cada vez que cambie el stack, la estructura de carpetas
+o cualquier decisión técnica relevante. Los cambios se registran también en `changelog/`.
 
 ---
 
 ## Stack seleccionado
 
-<!-- Lista el stack con justificación breve de cada decisión.
-     Ejemplo:
-     - **Next.js 14 (App Router):** Server Components para reducir bundle, mejor SEO.
-     - **Supabase:** Base de datos + Auth + Storage en un solo servicio, bien integrado con Next.js.
-     - **Tailwind CSS + shadcn/ui:** Velocidad de desarrollo sin sacrificar personalización.
-     - **Vercel:** Despliegue zero-config para Next.js, previews por rama. -->
-
 | Capa | Tecnología | Justificación |
 |------|-----------|---------------|
-| Framework | <!-- --> | <!-- --> |
-| Base de datos | <!-- --> | <!-- --> |
-| Autenticación | <!-- --> | <!-- --> |
-| Estilos | <!-- --> | <!-- --> |
-| Despliegue | <!-- --> | <!-- --> |
+| Frontend | React 19 + Vite + TypeScript | Portal publica bindings oficiales para React (`@portalsdk/react`); Vite es el camino más corto a una SPA |
+| Realtime / estado | **Portal** (`@portalsdk/react`, `@portalsdk/core`, `portal.config.ts`) | Requisito del hackathon y encaja exacto: canales con historial, presencia, typing, mensajes ephemeral y middleware server-side |
+| IA | **OpenRouter** (modelo por defecto: `anthropic/claude-haiku-4.5`) | Un endpoint, muchos modelos: rápido y con personalidad para sentirse "en directo"; cambiable por env sin tocar código |
+| Agente | Proceso Node 22+ con `@portalsdk/core` | Portal no documenta API REST de publicación server-side → la IA se conecta como un cliente más, con identidad propia |
+| Estilos | Tailwind CSS v4 | Velocidad; los tokens del design system se mapean a variables CSS |
+| Base de datos | Ninguna | El estado ES los canales de Portal (historial incluido). Ver `data-model.md` |
+| Despliegue | Vercel (frontend) + agente local en la máquina de la demo | Cero fricción de deploy en hackathon; el agente es un `pnpm agent` |
 
 ---
 
 ## Diagrama de componentes
 
-<!-- Diagrama en Mermaid que muestre cómo interactúan los componentes principales.
-     Ejemplo:
-     ```mermaid
-     graph TD
-       Client[Navegador] --> NextJS[Next.js App]
-       NextJS --> Supabase[Supabase API]
-       Supabase --> DB[(PostgreSQL)]
-       Supabase --> Storage[Storage]
-       NextJS --> Resend[Resend API]
-     ```
--->
-
 ```mermaid
 graph TD
-  A[Reemplaza este diagrama con el real]
+  subgraph Audiencia
+    B1[Navegador espectador 1]
+    B2[Navegador espectador N]
+  end
+
+  subgraph Portal cloud
+    CH_CHAT[Canal chat]
+    CH_BRAIN[Canal brain]
+    MW[portal.config.ts<br/>onPublish: cooldowns, anti-spoof, filtro]
+  end
+
+  subgraph Maquina demo
+    AGENT[Agente EL PACIENTE<br/>Node + portalsdk/core]
+  end
+
+  OR[OpenRouter API]
+
+  B1 -->|mensajes, ediciones, cursores| MW
+  B2 -->|mensajes, ediciones, cursores| MW
+  MW --> CH_CHAT
+  MW --> CH_BRAIN
+  CH_CHAT <-->|suscripcion + publicacion| AGENT
+  CH_BRAIN <-->|snapshot + log de ediciones| AGENT
+  AGENT -->|system prompt reconstruido| OR
+  OR -->|respuesta streaming| AGENT
 ```
+
+Flujo clave: una edición del cerebro pasa por el middleware (¿cooldown ok? ¿usuario ok?),
+se publica en `brain`, todos los clientes la ven al instante, y el agente — suscrito al
+mismo canal — reconstruye su system prompt y decide si reacciona.
 
 ---
 
 ## Estructura de carpetas
 
-<!-- Documenta la estructura real del proyecto con una línea de descripción por carpeta.
-     Ejemplo:
-     ```
-     src/
-     ├── app/              → Rutas (App Router de Next.js)
-     │   ├── (auth)/       → Rutas protegidas por autenticación
-     │   └── api/          → Route handlers
-     ├── components/
-     │   ├── ui/           → Componentes base (shadcn/ui)
-     │   └── [feature]/    → Componentes específicos de cada feature
-     ├── lib/
-     │   ├── supabase/     → Cliente Supabase y helpers
-     │   └── utils/        → Funciones utilitarias
-     ├── hooks/            → Custom hooks de React
-     └── types/            → Tipos TypeScript compartidos
-     ``` -->
+Monorepo pnpm workspaces:
+
+```
+el-paciente/
+├── apps/
+│   ├── web/                → SPA React (Vite)
+│   │   └── src/
+│   │       ├── components/ → BrainSlot, EditLog, ChatStream, PresenceBar…
+│   │       ├── hooks/      → useBrain (reduce historial → slots), useNickname…
+│   │       └── lib/        → cliente Portal, utilidades
+│   └── agent/              → Agente EL PACIENTE (Node + tsx)
+│       └── src/
+│           ├── brain.ts    → snapshot de slots + log desde el canal brain
+│           ├── prompt.ts   → construcción del system prompt (capa fija + slots + log)
+│           ├── llm.ts      → cliente OpenRouter (streaming)
+│           └── index.ts    → bucle del agente: triggers, cola, publicación
+├── packages/
+│   └── shared/             → Tipos de mensajes y constantes (slots, cooldowns, canales)
+├── portal.config.ts        → Config server-side de Portal (canales, middleware)
+└── docs/ · changelog/ · mejoras/
+```
 
 ---
 
 ## Estrategia de autenticación
 
-<!-- Explica cómo funciona la autenticación.
-     Qué proveedor, qué flujo (magic link, OAuth, password), cómo se gestiona la sesión,
-     cómo se protegen las rutas. -->
+**Todo el mundo es anónimo**, incluida la IA — no hay login (decisión de producto).
+
+- Espectadores: modo anónimo de Portal (`me.anon === true`). El nickname y el color viajan
+  como metadata de presencia y dentro del contenido de cada mensaje.
+- **Anti-spoofing de la IA:** los mensajes con `role: "ai"` solo son válidos si llevan un
+  campo `secret` que coincide con `env("AGENT_SECRET")`. El middleware `onPublish` de
+  `portal.config.ts` los verifica: si el secreto no coincide → `block`; si coincide →
+  `mask` con el mismo contenido sin el campo `secret` (así el secreto nunca llega a los
+  clientes). Ningún navegador puede hacerse pasar por EL PACIENTE.
+- Cooldowns por usuario usando `ctx.sender.id` (la credencial anónima persiste por cliente).
 
 ---
 
 ## Integraciones externas
 
-<!-- Lista de servicios de terceros con descripción de para qué se usan y cómo se integran.
-     Ejemplo:
-     - **Resend:** Envío de emails transaccionales. Se llama desde server actions.
-     - **Stripe:** Pagos. Webhooks procesados en /api/webhooks/stripe. -->
+- **Portal** — toda la capa realtime. Canales `chat` y `brain` (ver `data-model.md`).
+  El middleware server-side vive en `portal.config.ts` y se despliega con la CLI de Portal.
+- **OpenRouter** — inferencia del modelo. Solo el agente tiene la clave
+  (`OPENROUTER_API_KEY`); el navegador jamás habla con OpenRouter. Modelo configurable
+  con `OPENROUTER_MODEL` (por defecto `anthropic/claude-haiku-4.5`) y fallback
+  `OPENROUTER_MODEL_FALLBACK`.
 
 ---
 
 ## MCPs del proyecto
 
-<!-- Servidores MCP configurados para trabajar con este proyecto desde el agente de código.
-     Rellenar al configurarlos (ver "Protocolo de MCPs" en CLAUDE.md o el comando /mcp-setup).
-
-     Alcances posibles:
-     - user     → global del usuario, no vive en el repo
-     - project  → definido en .mcp.json, commiteado, lo hereda el equipo
-     - local    → solo para ese usuario y solo en este proyecto
-
-     Ejemplo:
-     | Servidor | Alcance | Para qué se usa | Variables necesarias |
-     |----------|---------|-----------------|----------------------|
-     | supabase | project | Consultar esquema y aplicar migraciones sin salir del editor | SUPABASE_ACCESS_TOKEN |
-     | resend   | project | Enviar emails de prueba y revisar entregas | RESEND_API_KEY |
-     | sentry   | user    | Revisar errores de producción | — (OAuth vía /mcp) |
--->
-
 | Servidor | Alcance | Para qué se usa | Variables necesarias |
 |----------|---------|-----------------|----------------------|
-| <!-- --> | <!-- --> | <!-- --> | <!-- --> |
+| vercel | user (ya global) | Deploy y logs del frontend | — (OAuth) |
 
-<!-- Recordatorio: las claves reales nunca van en .mcp.json. Se referencian como ${VARIABLE}
-     y el valor vive en .env.local o en el entorno del shell. -->
+Pendiente de decisión con el usuario tras revisar `claude mcp list` (protocolo de MCPs de
+`CLAUDE.md`). Portal no publica servidor MCP conocido a fecha 2026-08-08; verificar en su
+documentación oficial antes de proponer nada.
 
 ---
 
 ## Estrategia de despliegue
 
-<!-- Describe el flujo desde desarrollo hasta producción.
-     Ramas, entornos (local / staging / producción), CI/CD si existe, variables de entorno por entorno. -->
+- **Frontend:** Vercel, deploy desde `main` (`apps/web`). Variables `VITE_*` en el panel.
+- **Config de Portal:** `portal.config.ts` se despliega con la CLI de Portal (los secretos
+  del middleware, como `AGENT_SECRET`, se registran como secrets de Portal).
+- **Agente:** proceso local en la máquina de la demo (`pnpm agent`). Es deliberado: en un
+  hackathon, un proceso que ves en tu terminal es más fiable que un worker remoto. Si se
+  quisiera 24/7: Railway/Fly con el mismo código.
+- Entornos: solo `dev` (local) y `demo` (Vercel + agente local). No hay staging.
 
 ---
 
 ## Decisiones técnicas relevantes
 
-<!-- Registro de decisiones arquitectónicas importantes con su razonamiento.
-     Útil para no repetir debates ya resueltos.
-     Formato sugerido:
-     
-     ### [Fecha] — [Título de la decisión]
-     **Contexto:** por qué surgió la decisión
-     **Opciones consideradas:** qué alternativas se evaluaron
-     **Decisión:** qué se eligió
-     **Consecuencias:** qué implica a futuro -->
+### 2026-08-08 — La IA es un cliente Portal, no un backend con API
+
+**Contexto:** Portal no documenta publicación server-side vía REST; el SDK core es un
+cliente WebSocket.
+**Opciones:** (a) agente como cliente Portal en Node; (b) intentar publicar desde
+middleware `onPublish`; (c) que el navegador del host ejecute la IA.
+**Decisión:** (a). El middleware no está pensado para originar mensajes y (c) pone la
+clave de OpenRouter en un navegador.
+**Consecuencias:** el agente necesita un proceso corriendo durante la demo; la identidad
+"IA" se protege con el patrón secret+mask en middleware.
+
+### 2026-08-08 — Estado = canales de Portal, sin base de datos
+
+**Contexto:** el cerebro necesita estado compartido con log de autoría.
+**Decisión:** el canal `brain` es la fuente de verdad; el estado actual se deriva por
+reducción (last-write-per-slot) y el historial del canal ES el log de ediciones que ve la IA.
+**Consecuencias:** cero infra de datos; la persistencia depende de la retención de historial
+de Portal (suficiente para una demo; el cerebro semilla se puede re-publicar con el reset).
+
+### 2026-08-08 — Cooldowns en middleware, no en UI
+
+**Contexto:** el caos es deseable pero debe ser gobernable; la UI es falsificable.
+**Decisión:** `onPublish` en `portal.config.ts` rechaza ediciones que violen cooldown por
+slot o por usuario (`block` con motivo legible que la UI muestra). La UI replica la cuenta
+atrás solo como cortesía visual.

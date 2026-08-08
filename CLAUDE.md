@@ -3,86 +3,27 @@
 Archivo de referencia para cualquier agente de codificación que trabaje en este proyecto.
 Lee este archivo completo antes de hacer cualquier cambio.
 
-## Estado del proyecto y arranque
+## Arranque de sesión
 
-Antes de hacer cualquier cosa, comprueba el estado del repositorio:
+Antes de hacer cualquier cosa:
 
-1. Lee todos los archivos de `docs/`
-2. Comprueba si existe la carpeta `.template/`. Si existe, este repo sigue siendo la plantilla
-   sin inicializar: hay andamiaje, todavía no hay proyecto.
-3. Si los documentos están vacíos o incompletos (solo tienen comentarios, sin contenido real):
-   - No escribas código
-   - No rellenes nada todavía
-   - Empieza con esta pregunta: "¿Qué quieres construir y para quién?"
-   - A partir de la respuesta, haz las preguntas necesarias para completar 
-     los documentos de docs/ en este orden: prd.md → business.md → 
-     design-system.md → architecture.md → data-model.md → roadmap.md → user-flows.md
-   - Confirma con el usuario antes de pasar al siguiente documento
-   - Cuando todos estén rellenos, ejecuta la **inicialización del proyecto** (sección
-     siguiente) y solo después pregunta: "¿Empezamos a construir?"
-
-4. Si los documentos ya tienen contenido: lee todo lo que haya en `docs/` antes de actuar.
-   Si además `.template/` sigue existiendo, la inicialización quedó a medias: avisa al usuario
-   y ofrécete a completarla antes de seguir.
-
----
-
-## Inicialización del proyecto (una sola vez)
-
-Esta plantilla se distribuye con documentación que habla **de la plantilla**, no del proyecto.
-En cuanto los documentos de `docs/` estén rellenos, conviértela en el repo de *este* proyecto.
-Hazlo por iniciativa propia, sin esperar a que el usuario lo pida.
-
-Puedes lanzar el proceso completo con `/init-proyecto`.
-
-**Checklist de inicialización:**
-
-1. **`README.md`** — reescríbelo entero para el proyecto, a partir de lo que hay en `docs/`.
-   Debe explicar el producto, no la plantilla. Estructura sugerida: nombre y descripción de
-   una línea, qué problema resuelve, requisitos previos, variables de entorno (referencia a
-   `.env.example`), instalación y desarrollo (`pnpm install`, `pnpm dev`), estructura de
-   carpetas, cómo contribuir (referencia a `CLAUDE.md` y al protocolo) y estado del proyecto.
-2. **`CLAUDE.md`** — rellena los placeholders de este mismo archivo: nombre, descripción,
-   estado, stack tecnológico, estructura de carpetas, convenciones de código y "Qué NO hacer".
-   Borra los comentarios `<!-- ... -->` que ya no apliquen, esta sección de inicialización
-   (deja de tener sentido una vez hecha), el comando `.claude/commands/init-proyecto.md` y las
-   referencias a `.template/` del arranque y del protocolo de changelog. El "Protocolo de MCPs"
-   se queda: sigue aplicando cada vez que entre una integración nueva.
-3. **`LICENSE`** — sustituye `[YEAR]` y `[AUTHOR]` por los valores reales. Pregunta el nombre
-   del autor si no lo sabes.
-4. **`.env.example`** — deja solo las variables que el stack elegido necesita de verdad.
-5. **MCPs** — con el stack ya decidido, pregunta al usuario qué servidores MCP quiere y con qué
-   alcance, siguiendo el "Protocolo de MCPs" (o lanza `/mcp-setup`).
-6. **`changelog/`** — debe quedar sin entradas heredadas. Crea la primera entrada real del
-   proyecto (tipo: Configuración) describiendo la inicialización, y quita de
-   `changelog/README.md` la referencia a la plantilla (o borra el archivo).
-7. **`mejoras/backlog.md`** — borra el ejemplo comentado y déjalo listo para entradas reales.
-8. **`.template/`** — bórrala entera (`rm -rf .template`). Es el historial de la plantilla, no
-   del proyecto.
-9. **Verificación final** — busca referencias sobrantes:
-   `grep -ril "plantilla\|template" . --exclude-dir=.git --exclude-dir=node_modules`.
-   Revisa cada resultado y corrígelo si habla de la plantilla en lugar del proyecto.
-
-**Regla general:** después de la inicialización, ningún archivo del repo debe describirse a sí
-mismo como plantilla ni explicar cómo usar la plantilla. Toda la documentación habla del
-producto que se está construyendo. Si más adelante encuentras un resto de la plantilla en
-cualquier archivo, corrígelo en esa misma sesión.
+1. Lee todos los archivos de `docs/`. Son la fuente de verdad del producto y la arquitectura.
+2. Si algún documento está incompleto o contradice el código, pregunta al usuario antes de
+   asumir.
 
 ---
 
 ## Protocolo de MCPs
 
-Muchos servicios del stack (Supabase, Resend, Stripe, Vercel, Sentry, Figma, Linear…) publican un
-servidor MCP que te deja operarlos directamente en vez de trabajar a ciegas. Configurarlos es
-decisión del usuario, no tuya: **pregunta, no instales por tu cuenta**.
+Muchos servicios del stack publican un servidor MCP que te deja operarlos directamente en vez
+de trabajar a ciegas. Configurarlos es decisión del usuario, no tuya: **pregunta, no instales
+por tu cuenta**.
 
 ### Cuándo preguntar
 
-- Al terminar `docs/architecture.md`, cuando el stack ya está decidido (forma parte de la
-  inicialización del proyecto).
-- Cada vez que se añada una integración nueva al stack más adelante.
+- Cada vez que se añada una integración nueva al stack.
 
-Fuera de esos dos momentos, no saques el tema.
+Fuera de ese momento, no saques el tema.
 
 ### Cómo preguntar
 
@@ -110,10 +51,9 @@ Fuera de esos dos momentos, no saques el tema.
    Si el mismo servidor está definido en varios sitios, gana el de mayor precedencia:
    local → proyecto → usuario. Avísale si eso puede pisar algo que ya tenga.
 
-4. **Pide las credenciales una a una, por su nombre exacto** (`RESEND_API_KEY`,
-   `SUPABASE_ACCESS_TOKEN`…) y solo las del servidor que se vaya a configurar. Muchos servidores
-   remotos usan OAuth y no piden clave: en ese caso añádelos y dile que ejecute `/mcp` para
-   autenticarse.
+4. **Pide las credenciales una a una, por su nombre exacto** (`OPENROUTER_API_KEY`…) y solo las
+   del servidor que se vaya a configurar. Muchos servidores remotos usan OAuth y no piden clave:
+   en ese caso añádelos y dile que ejecute `/mcp` para autenticarse.
 
 ### Cómo configurarlo
 
@@ -166,97 +106,80 @@ es el comportamiento esperado, no un fallo.
 
 ## Descripción del proyecto
 
-<!-- Escribe aquí 3-4 líneas que expliquen qué es este proyecto, qué problema resuelve y para quién.
-     Ejemplo:
-     "Plataforma web para que coleccionistas de vinilos cataloguen y compartan sus colecciones.
-     Usuario objetivo: adultos 25-45 con colecciones físicas que quieren digitalizar su catálogo.
-     Stack principal: Next.js + Supabase + Vercel." -->
-
-**Nombre:** <!-- nombre-del-proyecto -->
-**Descripción:** <!-- una frase -->
-**Estado actual:** <!-- En desarrollo / Beta / Producción -->
+**Nombre:** EL PACIENTE
+**Descripción:** Una IA que chatea en público mientras la audiencia edita en vivo su memoria e
+identidad — y ella ve el log de quién la editó.
+**Estado actual:** En desarrollo (hackathon, fase de infraestructura)
 
 ---
 
 ## Documentación de referencia
 
-Lee todo lo que haya en `docs/` antes de empezar a trabajar. Si algún archivo está vacío
-(solo tiene comentarios) o incompleto, pregunta al usuario para rellenarlo antes de actuar.
+Lee todo lo que haya en `docs/` antes de empezar a trabajar. Mapa rápido:
 
-Si un archivo de `docs/` no existe todavía, pregunta antes de asumir.
+- `prd.md` — qué es y qué entra/no entra
+- `architecture.md` — stack, canales de Portal, agente, decisiones técnicas
+- `data-model.md` — tipos de mensajes, slots, cooldowns, seed (¡no hay base de datos!)
+- `design-system.md` — dirección visual (pendiente del diseño de Claude Design)
+- `roadmap.md` — fases del hackathon
+- `user-flows.md` — flujos con diagramas (FLOW-01…05)
+- `testing.md` — qué se testea y qué no
+- `business.md` — contexto de hackathon y riesgos
 
 ---
 
 ## Stack tecnológico
 
-<!-- Completa esto con el stack real del proyecto.
-     Ejemplo:
-     - Framework: Next.js 14 (App Router)
-     - Base de datos: Supabase (PostgreSQL + Auth + Storage)
-     - Estilos: Tailwind CSS + shadcn/ui
-     - Despliegue: Vercel
-     - Pagos: Stripe
-     - Email: Resend -->
-
-- Framework: <!-- ... -->
-- Base de datos: <!-- ... -->
-- Estilos: <!-- ... -->
-- Despliegue: <!-- ... -->
-- Otras integraciones: <!-- ... -->
+- Framework: React 19 + Vite + TypeScript (SPA en `apps/web`)
+- Realtime/estado: **Portal** (`@portalsdk/react`, `@portalsdk/core`, `portal.config.ts`).
+  Requisito del hackathon. No hay base de datos: los canales son el estado.
+- IA: OpenRouter desde el agente Node (`apps/agent`). Modelo por env (`OPENROUTER_MODEL`).
+- Estilos: Tailwind CSS v4
+- Despliegue: Vercel (frontend); el agente corre local en la máquina de la demo
+- Monorepo: pnpm workspaces (`apps/*`, `packages/shared`)
 
 ---
 
 ## Estructura de carpetas
 
-<!-- Documenta aquí la estructura real del proyecto una vez inicializado.
-     Ejemplo:
-     src/
-     ├── app/          → rutas (App Router)
-     ├── components/   → componentes reutilizables
-     ├── lib/          → utilidades, clientes de servicios externos
-     ├── hooks/        → custom hooks
-     └── types/        → tipos TypeScript compartidos
-     
-     docs/             → documentación del proyecto (ver sección anterior)
-     changelog/        → registro de cambios (ver protocolo más abajo)
-     mejoras/          → ideas futuras no implementadas -->
+```
+apps/web          → SPA React: chat + panel cerebro + cursores
+apps/agent        → Agente EL PACIENTE: Portal core + OpenRouter + system prompt
+packages/shared   → Tipos de mensajes, reducer del cerebro, seed, constantes de cooldown
+portal.config.ts  → Canales `chat` y `brain` + middleware (cooldowns, anti-spoof, filtro)
+docs/             → Documentación viva
+changelog/        → Registro de cambios
+mejoras/          → Backlog de ideas
+```
 
 ---
 
 ## Convenciones de código
 
-<!-- Define aquí las reglas de estilo específicas del proyecto.
-     Ejemplo:
-     - TypeScript estricto. No usar `any`.
-     - Componentes en PascalCase, archivos en kebab-case.
-     - Toda función async debe manejar errores explícitamente.
-     - No usar `console.log` en producción.
-     - Comentarios en español. -->
-
 - Gestor de paquetes: pnpm v11. No usar npm ni yarn.
-- Idioma de comentarios y variables: <!-- español / inglés -->
-- Nombrado de componentes: <!-- PascalCase -->
-- Nombrado de archivos: <!-- kebab-case -->
-- <!-- Añade más reglas según el proyecto -->
+- Idioma: código e identificadores en inglés; comentarios, UI y voz de la IA en español.
+- Nombrado de componentes: PascalCase (`BrainSlot.tsx`).
+- Nombrado de archivos no-componente: kebab-case.
+- Los tipos de mensajes de Portal viven SOLO en `packages/shared` y los importan front,
+  agente y `portal.config.ts`. Si cambias uno, actualiza `docs/data-model.md` en la misma
+  sesión y redepliega la config de Portal.
+- Respuestas de la IA cortas por diseño (es un chat en directo, no un ensayo).
 
 ---
 
 ## Qué NO hacer
 
-<!-- Lista de antipatrones específicos de este proyecto.
-     Ejemplo:
-     - No modificar el esquema de Supabase directamente desde el cliente; usar migraciones.
-     - No almacenar tokens en localStorage; usar cookies httpOnly.
-     - No crear componentes nuevos sin consultar docs/design-system.md primero.
-     - No hacer fetch directo a APIs externas desde componentes; usar server actions o route handlers. -->
-
 - No usar `npm` ni `yarn`. Siempre `pnpm` (v11).
-- No escribir claves ni tokens reales en `.mcp.json`: el archivo se commitea. Usa `${VARIABLE}` y
-  guarda el valor en `.env.local` o en el entorno del shell.
+- No escribir claves ni tokens reales en `.mcp.json` ni en ningún archivo commiteado. Usa
+  `${VARIABLE}` y guarda el valor en `.env.local` o en el entorno del shell.
+- No exponer `OPENROUTER_API_KEY` ni `AGENT_SECRET` al frontend (nada de `VITE_` para ellos).
+  El navegador jamás llama a OpenRouter.
+- No añadir base de datos, login ni cuentas: decisiones de producto cerradas (ver PRD).
+- No aplicar reglas de cooldown solo en UI: la fuente de verdad es el middleware de
+  `portal.config.ts`.
 - No instalar servidores MCP por tu cuenta: pregunta antes, según el "Protocolo de MCPs".
 - No ejecutar un `claude mcp add` copiado de una fuente que no sea el proveedor oficial, ni sin
   haberle enseñado antes el comando al usuario.
-- <!-- ... -->
 
 ---
 
@@ -287,55 +210,60 @@ Usa `/changelog` para crear la entrada siguiendo el formato del proyecto.
 [Contexto o motivación del cambio]
 ```
 
-Si la carpeta `changelog/` no existe, créala antes de escribir el archivo.
-
-Mientras el repo siga siendo la plantilla sin inicializar (existe `.template/`), los cambios
-sobre el andamiaje se registran en `.template/changelog/`, no en `changelog/`. Así quien use la
-plantilla arranca con el changelog limpio.
-
 ### 2. Actualizar la documentación afectada
 
-Si el cambio afecta algo que está documentado en `docs/`, actualiza ese archivo en la misma sesión. No dejes documentación desincronizada.
+Si el cambio afecta algo que está documentado en `docs/`, actualiza ese archivo en la misma
+sesión. No dejes documentación desincronizada.
 
 Ejemplos:
-- Nueva tabla en Supabase → actualizar `docs/data-model.md`
+- Cambio en tipos de mensajes o cooldowns → actualizar `docs/data-model.md`
 - Nuevo componente o patrón visual → actualizar `docs/design-system.md`
-- Cambio en la arquitectura de carpetas → actualizar `docs/architecture.md`
+- Cambio en la arquitectura o carpetas → actualizar `docs/architecture.md`
 - Nueva funcionalidad en scope → actualizar `docs/prd.md` y `docs/roadmap.md`
-- Nuevo servidor MCP configurado → actualizar `docs/architecture.md` (sección "MCPs del proyecto")
+- Nuevo servidor MCP configurado → actualizar `docs/architecture.md` ("MCPs del proyecto")
 
 ### 3. Actualizar README.md si aplica
 
 Si el cambio afecta cómo se instala, inicializa o usa el proyecto, actualizar `README.md`.
-
-El `README.md` describe siempre el proyecto en su estado actual. Si encuentras en él (o en
-cualquier doc) restos de la plantilla, reescríbelos en esta misma sesión.
+El `README.md` describe siempre el proyecto en su estado actual.
 
 ### 4. Revisión de seguridad
 
 Antes de mergear a producción, o cuando el usuario lo pida, ejecuta `/security-review`.
-Analiza los cambios en busca de vulnerabilidades, credenciales expuestas y problemas de seguridad.
+Analiza los cambios en busca de vulnerabilidades, credenciales expuestas y problemas de
+seguridad. En este proyecto, atención especial a: fugas de `AGENT_SECRET` u
+`OPENROUTER_API_KEY` hacia el bundle, y a que el patrón anti-spoofing del middleware siga
+intacto.
 
 ---
 
 ## Protocolo de pull requests
 
-**El agente es quien debe crear los PRs**, no el usuario. Así la plantilla llega rellena y el checklist verificado. Para abrir un PR, dile al agente:
+**El agente es quien debe crear los PRs**, no el usuario. Así la plantilla de PR llega rellena
+y el checklist verificado. Para abrir un PR, dile al agente:
 
 > "Abre un PR con estos cambios" o usa `/autopilot` para el flujo completo.
 
-Si por algún motivo abres el PR manualmente desde GitHub, tendrás que rellenar la plantilla a mano — es el comportamiento esperado de GitHub, no un error del flujo.
+Si por algún motivo abres el PR manualmente desde GitHub, tendrás que rellenar la plantilla de
+PR a mano — es el comportamiento esperado de GitHub, no un error del flujo.
 
 ---
 
-Cuando el agente crea un PR, debe rellenar la plantilla de `.github/pull_request_template.md` completa antes de enviarlo:
+Cuando el agente crea un PR, debe rellenar la plantilla de `.github/pull_request_template.md`
+completa antes de enviarlo:
 
-1. Rellena las secciones `¿Qué se hizo?` y `Motivación` con el contexto real del cambio (no dejarlo en blanco ni con el placeholder).
-2. Marca con `[x]` la casilla correcta en `Tipo de cambio`. Usa las mismas categorías que el changelog: Feature, Fix, Refactor, Migración, Documentación o Configuración.
-3. Repasa el checklist y marca con `[x]` **solo lo que hayas verificado de verdad**. Si no has hecho algo, déjalo sin marcar.
-4. Si un punto del checklist no aplica (por ejemplo, no hay nada que probar en local para un cambio puramente de markdown), indícalo explícitamente en la descripción del PR en lugar de marcarlo a ciegas o dejarlo en silencio.
+1. Rellena las secciones `¿Qué se hizo?` y `Motivación` con el contexto real del cambio (no
+   dejarlo en blanco ni con el placeholder).
+2. Marca con `[x]` la casilla correcta en `Tipo de cambio`. Usa las mismas categorías que el
+   changelog: Feature, Fix, Refactor, Migración, Documentación o Configuración.
+3. Repasa el checklist y marca con `[x]` **solo lo que hayas verificado de verdad**. Si no has
+   hecho algo, déjalo sin marcar.
+4. Si un punto del checklist no aplica (por ejemplo, no hay nada que probar en local para un
+   cambio puramente de markdown), indícalo explícitamente en la descripción del PR en lugar de
+   marcarlo a ciegas o dejarlo en silencio.
 
-El checklist no es burocracia: es el último filtro para que documentación, changelog, pruebas y revisión de seguridad no se queden a medias cuando hay prisa por mergear.
+El checklist no es burocracia: es el último filtro para que documentación, changelog, pruebas y
+revisión de seguridad no se queden a medias cuando hay prisa por mergear.
 
 ---
 
@@ -345,14 +273,13 @@ Las ideas de mejora que no entran en el sprint actual se anotan en `mejoras/`.
 
 Usa `/mejora` para añadir una entrada al backlog sin interrumpir el flujo de trabajo.
 
-**Formato sugerido:** un archivo Markdown por área temática o un único `mejoras/backlog.md`.
-**Contenido mínimo por idea:** título, descripción breve, motivación, prioridad estimada.
-
-Si la carpeta `mejoras/` no existe, créala.
+**Formato:** un único `mejoras/backlog.md` con el formato descrito en ese archivo.
 
 ---
 
 ## Notas adicionales
 
-<!-- Cualquier otra instrucción específica del proyecto que no encaje en las secciones anteriores.
-     Ejemplos: credenciales de entorno necesarias, comandos de desarrollo, quirks conocidos del stack. -->
+- La capa fija del system prompt del agente (la parte NO editable por la audiencia) es la
+  única defensa de coherencia de la IA: cualquier cambio ahí se revisa con el usuario.
+- El guion de la demo importa tanto como el código: antes de tocar features en la recta
+  final, repasa el checklist de ensayo de `docs/testing.md`.
