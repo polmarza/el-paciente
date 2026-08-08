@@ -1,0 +1,120 @@
+import type { BrainMessage, BrainSnapshot, SlotId, SlotState, SlotValue } from "./types.js";
+import { isSlotId } from "./slots.js";
+import { seedSnapshot } from "./seed.js";
+import {
+  BPM_MAX,
+  BPM_PER_EDIT,
+  BPM_RESTING,
+  FLASH_MS,
+  SLOT_COOLDOWN_MS,
+} from "./constants.js";
+
+/**
+ * Una entrada del historial de un canal, independiente de la forma exacta que tenga
+ * un `Message` de Portal. Web y agente adaptan sus mensajes a esto antes de reducir,
+ * de modo que la lógica del cerebro sea pura y testeable sin tocar la red.
+ */
+export interface HistoryEntry<T> {
+  id: string;
+  content: T;
+  /** Epoch ms en que se publicó. */
+  at: number;
+}
+
+/** Una línea del historial clínico: quién cambió qué y desde qué valor. */
+export interface LogEntry {
+  id: string;
+  at: number;
+  slot: SlotId;
+  nickname: string;
+  color: string;
+  prev: string;
+  next: string;
+}
+
+export interface BrainState {
+  snapshot: BrainSnapshot;
+  /** Historial clínico, del más reciente al más antiguo. */
+  log: LogEntry[];
+}
+
+/**
+ * Deriva el estado del cerebro a partir del historial del canal `brain`.
+ *
+ * Reglas: gana la última edición de cada región, y un `seed` posterior borra
+ * cualquier edición anterior (es el botón de reset de la demo). El historial de
+ * ediciones se conserva íntegro aunque haya habido reset: las cicatrices se ven.
+ */
+export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): BrainState {
+  const ordered = [...entries].sort((a, b) => a.at - b.at);
+
+  let snapshot = seedSnapshot();
+  const log: LogEntry[] = [];
+
+  for (const entry of ordered) {
+    const msg = entry.content;
+
+    if (msg.kind === "seed") {
+      snapshot = seedSnapshot();
+      for (const [id, content] of Object.entries(msg.slots)) {
+        if (isSlotId(id)) snapshot[id] = { content, editor: "", editorColor: "", editedAt: 0 };
+      }
+      continue;
+    }
+
+    if (msg.kind !== "edit" || !isSlotId(msg.slot)) continue;
+
+    const previous = snapshot[msg.slot];
+    snapshot[msg.slot] = {
+      content: msg.value,
+      editor: msg.nickname,
+      editorColor: msg.color,
+      editedAt: entry.at,
+    };
+    log.push({
+      id: entry.id,
+      at: entry.at,
+      slot: msg.slot,
+      nickname: msg.nickname,
+      color: msg.color,
+      // El `prev` del mensaje es lo que el editor veía; si falta, usamos el valor
+      // que teníamos derivado, que es la verdad del canal.
+      prev: msg.prev || previous.content,
+      next: msg.value,
+    });
+  }
+
+  log.reverse();
+  return { snapshot, log };
+}
+
+/**
+ * Estado visual de una región según cuánto hace que la editaron.
+ * `editing` no se deriva de aquí: llega por los cursores efímeros.
+ */
+export function slotStateAt(value: SlotValue, now: number): SlotState {
+  if (!value.editedAt) return "idle";
+  const elapsed = now - value.editedAt;
+  if (elapsed < FLASH_MS) return "flash";
+  if (elapsed < FLASH_MS + SLOT_COOLDOWN_MS) return "cooldown";
+  return "idle";
+}
+
+/** Segundos que le quedan a una región para volver a ser editable. */
+export function cooldownSecondsLeft(value: SlotValue, now: number): number {
+  if (!value.editedAt) return 0;
+  const until = value.editedAt + FLASH_MS + SLOT_COOLDOWN_MS;
+  return Math.max(0, Math.ceil((until - now) / 1000));
+}
+
+/** Pulso derivado del ritmo de ediciones: sube con cada corte, decae hacia el reposo. */
+export function bpmFromLog(log: readonly LogEntry[], now: number): number {
+  let bpm = BPM_RESTING;
+  for (const entry of log) {
+    const elapsed = (now - entry.at) / 1000;
+    if (elapsed < 0 || elapsed > 60) continue;
+    // Cada edición aporta un salto que se desvanece en un minuto.
+    bpm += BPM_PER_EDIT * (1 - elapsed / 60);
+  }
+  return Math.min(BPM_MAX, Math.round(bpm));
+}

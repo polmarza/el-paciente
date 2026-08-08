@@ -1,0 +1,17 @@
+{
+  "name": "@el-paciente/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/index.ts",
+    "seed": "node --env-file-if-exists=../../.env.local --experimental-strip-types src/index.ts --reset"
+  },
+  "dependencies": {
+    "@el-paciente/shared": "workspace:*",
+    "@portalsdk/core": "^0.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0"
+  }
+}
