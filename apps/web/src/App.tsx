@@ -82,6 +82,11 @@ export default function App() {
 
   const showOverlay = heldEnd !== null && endKey(heldEnd) !== dismissedKey;
 
+  // El título de la pestaña acompaña al expediente en curso.
+  useEffect(() => {
+    document.title = `EL PACIENTE — expediente nº ${brain.expediente}`;
+  }, [brain.expediente]);
+
   const bpm = useMemo(() => bpmFromLog(brain.log, now), [brain.log, now]);
   const online = Math.max(brain.presenceCount, chat.presenceCount, 1);
   const disconnected = isDown(brain.status) || isDown(chat.status);

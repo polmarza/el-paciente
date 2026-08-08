@@ -35,8 +35,12 @@ export const BPM_MAX = 142;
 /** Por encima de este pulso el monitor se pone en rojo. */
 export const BPM_ALARM = 95;
 
-/** Expediente del paciente antes de que ninguna ronda declare el suyo. */
-export const DEFAULT_EXPEDIENTE = "001-A";
+/**
+ * Expediente mientras no haya ronda declarada (sala recién creada, o el agente aún no ha
+ * sembrado). Deliberadamente no se parece a ninguno real: si ves esto en la cabecera, es
+ * que no hay paciente.
+ */
+export const DEFAULT_EXPEDIENTE = "———";
 
 /** Cuánto dura el marcador entre una ronda y la siguiente. */
 export const ROUND_INTERMISSION_MS = 18_000;
