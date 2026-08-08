@@ -1,8 +1,14 @@
 import { env } from "./env.ts";
+import { trimToLastSentence } from "./text.ts";
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 /** Si un turno tarda más que esto, la demo ya se ha roto: mejor cortar y reintentar. */
 const TIMEOUT_MS = 15_000;
+/**
+ * Con dos frases sobra. Cada carácter que sobra son 14 ms más de tecleo en el navegador,
+ * así que la longitud de la respuesta, y no la red, es lo que marca el ritmo del directo.
+ */
+const MAX_TOKENS = 100;
 
 export interface ChatTurn {
   role: "system" | "user" | "assistant";
@@ -39,8 +45,9 @@ async function callModel(model: string, messages: ChatTurn[]): Promise<string> {
       body: JSON.stringify({
         model,
         messages,
-        // Respuestas cortas por diseño: esto es un directo, no un ensayo.
-        max_tokens: 220,
+        // Respuestas cortas por diseño: esto es un directo, no un ensayo. El control real
+        // es la instrucción del prompt; este techo es solo la red por si divaga.
+        max_tokens: MAX_TOKENS,
         temperature: 0.9,
       }),
     });
@@ -50,11 +57,15 @@ async function callModel(model: string, messages: ChatTurn[]): Promise<string> {
     }
 
     const payload = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
+      choices?: { message?: { content?: string }; finish_reason?: string }[];
     };
-    const text = payload.choices?.[0]?.message?.content?.trim();
+    const choice = payload.choices?.[0];
+    const text = choice?.message?.content?.trim();
     if (!text) throw new Error("Respuesta vacía del modelo");
-    return text;
+
+    // Si el techo cortó la respuesta, la dejamos en la última frase completa: mejor que
+    // EL PACIENTE termine antes de tiempo a que se le vea el corte a media palabra.
+    return choice?.finish_reason === "length" ? trimToLastSentence(text) : text;
   } finally {
     clearTimeout(timer);
   }
