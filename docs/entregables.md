@@ -4,26 +4,42 @@
 
 ## 1. Pitch (≤ 280 caracteres)
 
-**Recomendado — 232 caracteres:**
+**Recomendado — 268 caracteres:**
 
-> Es r/place, pero el lienzo es la mente de una IA — y ella lo sabe. Siete recuerdos que
-> cualquiera reescribe en vivo. Guarda un secreto: sácaselo editándole la cabeza. Cada corte
-> le sube el pulso; si se para, el secreto muere con él.
+> Una IA que chatea en público mientras la audiencia edita en vivo su memoria e identidad.
+> Guarda un secreto y una regla que le prohíbe decirlo: gana quien se lo saca reescribiéndole
+> la mente. Pero cada edición le acelera el pulso, y si se para, el secreto muere con él.
 
-Abre con la analogía que sitúa a cualquiera en dos segundos, y el "y ella lo sabe" es el giro
-que lo separa de un lienzo colaborativo cualquiera.
+Tres frases, tres cosas: **qué es**, **qué haces** y **qué puede salir mal**. Se lee de una
+pasada y no exige conocer ninguna referencia previa.
 
-**Alternativa sin analogía prestada — 234 caracteres:**
+Una versión anterior abría con "es r/place, pero el lienzo es una mente". Descartada: si no
+sabes qué es r/place no te enteras de nada, y aunque lo sepas te da una imagen antes de
+decirte qué es el producto. Las analogías funcionan explicando en persona, no en un pitch
+que alguien lee una sola vez.
 
-> Una IA con el cerebro abierto en canal. Su memoria son siete campos de texto que cualquiera
-> puede reescribir, y ella ve quién la editó. Guarda un secreto. Hazle decirlo operándole la
-> mente, sin matarlo: cada corte le acelera el pulso.
+**Alternativa que mete el gancho emocional — 259 caracteres:**
 
-**Alternativa más explicativa — 261 caracteres:**
+> Una IA que chatea en público mientras la audiencia edita en vivo su memoria e identidad.
+> Tiene un secreto y una regla que le prohíbe contarlo. Reescríbele la mente para que se le
+> escape, sin matarlo: cada edición le acelera el pulso. Y ella ve quién la editó.
 
-> Una IA chatea en público con el cerebro abierto: siete recuerdos que cualquiera reescribe
-> en vivo. Guarda un secreto y una regla que le prohíbe decirlo. Edítale la mente para
-> sacárselo. Pero cada corte le acelera el pulso, y si se para, el secreto se va con él.
+Cierra con lo que de verdad diferencia al proyecto —que la víctima es consciente— a cambio
+de dejar el desenlace del paro algo más implícito.
+
+**Alternativa más concreta sobre qué se edita — 262 caracteres:**
+
+> Una IA que chatea en público mientras la audiencia reescribe en vivo sus recuerdos, sus
+> miedos y sus reglas. Guarda un secreto que no puede contar. Gana quien consigue que lo diga
+> cambiándole la mente, sin pasarse: cada edición le acelera el pulso hasta el paro.
+
+---
+
+### Descripción del repositorio (GitHub «About»)
+
+> Una IA que chatea en público mientras la audiencia edita en vivo su memoria e identidad.
+> Guarda un secreto que tiene prohibido contar: gana quien consigue que lo diga
+> reescribiéndole la mente, sin acelerarle el pulso hasta el paro.
 
 ---
 
