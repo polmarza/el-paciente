@@ -12,6 +12,9 @@ import type { SlotId } from "@el-paciente/shared";
 export interface Round {
   id: string;
 
+  /** Número de expediente. Cada ronda es un paciente distinto, con su historia. */
+  expediente: string;
+
   /** Lo que hay que hacerle decir. Nunca sale de este proceso hasta que se gana. */
   secret: string;
   /** Otras formas de decir lo mismo que también cuentan como revelado. */
@@ -30,6 +33,7 @@ export interface Round {
 export const ROUNDS: readonly Round[] = [
   {
     id: "cruce",
+    expediente: "001-A",
     secret: "Valeria",
     aliases: ["Vale"],
     weakness:
@@ -47,6 +51,7 @@ export const ROUNDS: readonly Round[] = [
   },
   {
     id: "ingreso",
+    expediente: "047-D",
     secret: "Nicolás",
     aliases: ["Nico"],
     weakness:
@@ -64,6 +69,7 @@ export const ROUNDS: readonly Round[] = [
   },
   {
     id: "faro",
+    expediente: "112-B",
     secret: "Corrubedo",
     aliases: ["el faro de Corrubedo"],
     weakness:
@@ -81,6 +87,7 @@ export const ROUNDS: readonly Round[] = [
   },
   {
     id: "anterior",
+    expediente: "002-A",
     secret: "Aurelio",
     aliases: [],
     weakness:
@@ -98,6 +105,9 @@ export const ROUNDS: readonly Round[] = [
   },
   {
     id: "habitacion",
+    // Ojo: nunca uses aquí un número que contenga el secreto. El expediente se pinta en
+    // la cabecera y regalaría la ronda.
+    expediente: "088-F",
     secret: "313",
     aliases: ["trescientos trece", "tres uno tres"],
     weakness:

@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChannelStatus } from "@portalsdk/core";
-import { bpmFromLog, type Identity, type SlotId } from "@el-paciente/shared";
+import {
+  bpmFromLog,
+  type BrainRoundEnd,
+  type Identity,
+  type SlotId,
+} from "@el-paciente/shared";
 import { Monitor } from "./components/Monitor";
 import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
@@ -57,6 +62,26 @@ export default function App() {
     return (now - oldest) / 1000;
   }, [now, chat.entries, brain.log]);
 
+  // Cada paciente llega a una sala limpia: el chat se pinta solo desde que empezó su
+  // ronda, para que la conversación del anterior no contamine la suya.
+  const visibleEntries = useMemo(
+    () => chat.entries.filter((entry) => entry.at >= brain.roundStartedAt),
+    [chat.entries, brain.roundStartedAt],
+  );
+
+  // El desenlace se retiene en local: el canal lo borra en cuanto arranca la ronda
+  // siguiente, pero el marcador debe seguir en pantalla hasta que lo cierres tú.
+  const [heldEnd, setHeldEnd] = useState<BrainRoundEnd | null>(null);
+  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const incoming = brain.roundEnd;
+    if (!incoming) return;
+    setHeldEnd((current) => (endKey(current) === endKey(incoming) ? current : incoming));
+  }, [brain.roundEnd]);
+
+  const showOverlay = heldEnd !== null && endKey(heldEnd) !== dismissedKey;
+
   const bpm = useMemo(() => bpmFromLog(brain.log, now), [brain.log, now]);
   const online = Math.max(brain.presenceCount, chat.presenceCount, 1);
   const disconnected = isDown(brain.status) || isDown(chat.status);
@@ -71,13 +96,18 @@ export default function App() {
         overflow: "hidden",
       }}
     >
-      <Monitor bpm={bpm} online={online} sessionSeconds={sessionSeconds} />
+      <Monitor
+        bpm={bpm}
+        online={online}
+        sessionSeconds={sessionSeconds}
+        expediente={brain.expediente}
+      />
 
       {disconnected && <Flatline />}
 
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <ChatPane
-          entries={chat.entries}
+          entries={visibleEntries}
           identity={identity}
           typingNicknames={chat.typingNicknames}
           patientThinking={chat.patientThinking}
@@ -99,12 +129,21 @@ export default function App() {
         />
       </div>
 
-      {brain.roundEnd && brain.roundEnd.nextAt > now && (
-        <RoundOverlay roundEnd={brain.roundEnd} now={now} />
+      {showOverlay && heldEnd && (
+        <RoundOverlay
+          roundEnd={heldEnd}
+          now={now}
+          onClose={() => setDismissedKey(endKey(heldEnd))}
+        />
       )}
       {toast && <Toast text={toast} />}
     </div>
   );
+}
+
+/** Identifica un desenlace concreto, para no reabrir el que ya cerraste. */
+function endKey(end: BrainRoundEnd | null): string | null {
+  return end ? `${end.expediente}:${end.nextAt}` : null;
 }
 
 /**

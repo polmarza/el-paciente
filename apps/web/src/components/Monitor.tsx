@@ -5,10 +5,12 @@ interface MonitorProps {
   bpm: number;
   online: number;
   sessionSeconds: number;
+  /** Cambia con cada ronda: cada paciente tiene su propio expediente. */
+  expediente: string;
 }
 
 /** La cabecera del monitor: identidad del paciente, pulso, reloj de sesión y aforo. */
-export function Monitor({ bpm, online, sessionSeconds }: MonitorProps) {
+export function Monitor({ bpm, online, sessionSeconds, expediente }: MonitorProps) {
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
 
   return (
@@ -39,7 +41,7 @@ export function Monitor({ bpm, online, sessionSeconds }: MonitorProps) {
           }}
         />
         <span style={{ color: T.textBright, fontWeight: 600 }}>EL PACIENTE</span>
-        <span style={{ color: T.textDim }}>EXPEDIENTE Nº 001-A</span>
+        <span style={{ color: T.textDim }}>EXPEDIENTE Nº {expediente}</span>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

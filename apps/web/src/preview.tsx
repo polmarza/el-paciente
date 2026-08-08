@@ -50,6 +50,8 @@ const brain: BrainState = {
     },
   },
   round: "cruce",
+  expediente: "001-A",
+  roundStartedAt: now - 600_000,
   roundEnd: null,
   log: [
     entry("l1", now - 2_000, "r2", "rafa", "#8fb8e8", "—", "Gané un concurso de tortillas en Ourense, 2019"),
@@ -96,18 +98,20 @@ function App() {
         overflow: "hidden",
       }}
     >
-      <Monitor bpm={108} online={23} sessionSeconds={3127} />
+      <Monitor bpm={108} online={23} sessionSeconds={3127} expediente="001-A" />
       {new URLSearchParams(location.search).has("fin") && (
         <RoundOverlay
           roundEnd={{
             kind: "round-end",
             outcome: "revelado",
             secret: "Valeria",
+            expediente: "001-A",
             by: "marta",
             lasted: 214_000,
             nextAt: now + 12_000,
           }}
           now={now}
+          onClose={() => location.assign(location.pathname)}
         />
       )}
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>

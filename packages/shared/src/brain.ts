@@ -14,6 +14,7 @@ import {
   BPM_RESTING,
   FLASH_MS,
   SLOT_COOLDOWN_MS,
+  DEFAULT_EXPEDIENTE,
 } from "./constants.ts";
 
 /**
@@ -45,6 +46,13 @@ export interface BrainState {
   log: LogEntry[];
   /** Identificador de la ronda en curso, si el seed lo declaró. */
   round: string | null;
+  /** Expediente del paciente actual. Cambia con cada ronda. */
+  expediente: string;
+  /**
+   * Cuándo empezó la ronda actual. El chat se pinta solo desde aquí: cada paciente
+   * llega a una sala limpia, sin la conversación del anterior.
+   */
+  roundStartedAt: number;
   /**
    * Desenlace de la ronda, mientras siga siendo el último acontecimiento. Un `seed`
    * posterior lo borra, así que el aviso en pantalla desaparece solo cuando empieza la
@@ -66,6 +74,8 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
   let snapshot = seedSnapshot();
   const log: LogEntry[] = [];
   let round: string | null = null;
+  let expediente = DEFAULT_EXPEDIENTE;
+  let roundStartedAt = 0;
   let roundEnd: BrainRoundEnd | null = null;
 
   for (const entry of ordered) {
@@ -77,6 +87,8 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
         if (isSlotId(id)) snapshot[id] = { content, editor: "", editorColor: "", editedAt: 0 };
       }
       round = msg.round ?? null;
+      expediente = msg.expediente ?? DEFAULT_EXPEDIENTE;
+      roundStartedAt = entry.at;
       // Empieza ronda nueva: el desenlace anterior deja de estar en pantalla.
       roundEnd = null;
       continue;
@@ -110,7 +122,7 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
   }
 
   log.reverse();
-  return { snapshot, log, round, roundEnd };
+  return { snapshot, log, round, expediente, roundStartedAt, roundEnd };
 }
 
 /**

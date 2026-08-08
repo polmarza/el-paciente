@@ -99,7 +99,12 @@ async function startRound(index: number) {
   humanSpoke = false;
 
   await brain.send({
-    content: signed({ kind: "seed", slots: round.seed, round: round.id }),
+    content: signed({
+      kind: "seed",
+      slots: round.seed,
+      round: round.id,
+      expediente: round.expediente,
+    }),
   });
   console.log(`\n── Ronda "${round.id}" · secreto: ${round.secret} ──`);
 }
@@ -117,6 +122,7 @@ async function endRound(outcome: "revelado" | "paro", by?: string) {
       kind: "round-end",
       outcome,
       secret: round.secret,
+      expediente: round.expediente,
       by,
       lasted: Date.now() - roundStartedAt,
       nextAt,

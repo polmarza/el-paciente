@@ -63,6 +63,8 @@ export interface BrainSeed {
   slots: Record<SlotId, string>;
   /** Identificador de la ronda que arranca. El secreto NUNCA viaja aquí. */
   round?: string;
+  /** Número de expediente de este paciente. Cambia en cada ronda. */
+  expediente?: string;
   auth?: string;
 }
 
@@ -75,6 +77,8 @@ export interface BrainRoundEnd {
   outcome: "revelado" | "paro";
   /** El secreto, ya sin valor: la ronda ha terminado. */
   secret: string;
+  /** Expediente del paciente que se lleva (o no) el secreto. */
+  expediente: string;
   /** Quién se lo arrancó. Ausente si murió. */
   by?: string;
   /** Cuánto duró la ronda, en milisegundos. */
