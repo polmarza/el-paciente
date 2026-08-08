@@ -12,6 +12,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    // El agente ejecuta TypeScript directamente con el despojado de tipos de Node, que
+    // resuelve las rutas literalmente. Por eso los imports internos llevan .ts real.
+    "allowImportingTsExtensions": true
   }
 }

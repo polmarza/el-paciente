@@ -1,5 +1,5 @@
-import type { BrainSnapshot, SlotId } from "./types.js";
-import { SLOT_IDS } from "./slots.js";
+import type { BrainSnapshot, SlotId } from "./types.ts";
+import { SLOT_IDS } from "./slots.ts";
 
 /** Marca de "esta región nunca se ha rellenado". Se pinta tal cual en la UI. */
 export const EMPTY_SLOT = "—";

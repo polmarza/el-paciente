@@ -1,13 +1,13 @@
-import type { BrainMessage, BrainSnapshot, SlotId, SlotState, SlotValue } from "./types.js";
-import { isSlotId } from "./slots.js";
-import { seedSnapshot } from "./seed.js";
+import type { BrainMessage, BrainSnapshot, SlotId, SlotState, SlotValue } from "./types.ts";
+import { isSlotId } from "./slots.ts";
+import { seedSnapshot } from "./seed.ts";
 import {
   BPM_MAX,
   BPM_PER_EDIT,
   BPM_RESTING,
   FLASH_MS,
   SLOT_COOLDOWN_MS,
-} from "./constants.js";
+} from "./constants.ts";
 
 /**
  * Una entrada del historial de un canal, independiente de la forma exacta que tenga

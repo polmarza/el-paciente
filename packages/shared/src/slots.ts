@@ -1,4 +1,4 @@
-import type { SlotId } from "./types.js";
+import type { SlotId } from "./types.ts";
 
 export interface SlotDef {
   id: SlotId;

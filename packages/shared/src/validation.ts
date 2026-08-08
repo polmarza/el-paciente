@@ -1,4 +1,4 @@
-import { MAX_CHAT_CHARS, MAX_SLOT_CHARS } from "./constants.js";
+import { MAX_CHAT_CHARS, MAX_SLOT_CHARS } from "./constants.ts";
 
 export type Check = { ok: true } | { ok: false; reason: string };
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { cooldownSecondsLeft, reduceBrain, slotStateAt, type HistoryEntry } from "./brain.js";
-import { SEED_SLOTS } from "./seed.js";
-import { FLASH_MS, SLOT_COOLDOWN_MS } from "./constants.js";
-import type { BrainMessage } from "./types.js";
+import { cooldownSecondsLeft, reduceBrain, slotStateAt, type HistoryEntry } from "./brain.ts";
+import { SEED_SLOTS } from "./seed.ts";
+import { FLASH_MS, SLOT_COOLDOWN_MS } from "./constants.ts";
+import type { BrainMessage } from "./types.ts";
 
 const edit = (
   id: string,
