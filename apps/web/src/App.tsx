@@ -27,6 +27,7 @@ import {
 } from "./lib/identity";
 import { T } from "./theme";
 import { monitorPing } from "./lib/sound";
+import { hintsDisabled } from "./lib/hints";
 
 const TOAST_MS = 4200;
 
@@ -139,7 +140,7 @@ export default function App() {
   // señala el cerrojo que nadie ha tocado. Calla durante el onboarding y el relevo.
   useEffect(() => {
     const id = setInterval(() => {
-      if (onboarding || brain.roundEnd) return;
+      if (onboarding || brain.roundEnd || hintsDisabled()) return;
       const nowMs = Date.now();
       if (nowMs - lastActionRef.current < HINT_AFTER_MS) return;
       if (nowMs - lastHintRef.current < HINT_GAP_MS) return;

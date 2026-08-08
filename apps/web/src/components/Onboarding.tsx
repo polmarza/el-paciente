@@ -10,42 +10,33 @@ interface OnboardingProps {
  * Los esquemas de cada paso. Trazo simple e iconografía clínica, dibujados con los
  * tokens del tema: son instrumental del monitor, no ilustraciones.
  */
-function DibujoMente() {
+function DibujoMesa() {
   return (
     <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
-      {/* La rejilla de la mesa: 2 cortas, 3 anchas, 2 cortas */}
+      {/* El paciente: un punto con latido */}
+      <circle cx="26" cy="48" r="9" fill="none" stroke={T.vital} strokeWidth="1.5" />
+      <circle cx="26" cy="48" r="3" fill={T.vital}>
+        <animate attributeName="opacity" values="1;.2;1" dur="1.6s" repeatCount="indefinite" />
+      </circle>
+      <path d="M40 48 h16" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="3 3" />
+      {/* Su mente: la rejilla de la mesa, con una región abierta en canal */}
       {[
-        [70, 6, 86, 20], [164, 6, 86, 20],
-        [70, 32, 180, 12], [70, 50, 180, 12],
-        [70, 68, 86, 20], [164, 68, 86, 20],
+        [64, 6, 88, 20], [160, 6, 88, 20],
+        [64, 50, 184, 12],
+        [64, 68, 88, 20], [160, 68, 88, 20],
       ].map(([x, y, w, h], i) => (
         <rect key={i} x={x} y={y} width={w} height={h} rx="2"
           fill="none" stroke={T.slotBorder} strokeWidth="1.5" />
       ))}
-      <rect x="70" y="32" width="180" height="12" rx="2" fill={`${T.vital}22`} stroke={T.vital} strokeWidth="1.5" />
-      {/* El paciente: un punto con latido */}
-      <circle cx="30" cy="48" r="9" fill="none" stroke={T.vital} strokeWidth="1.5" />
-      <circle cx="30" cy="48" r="3" fill={T.vital}>
-        <animate attributeName="opacity" values="1;.2;1" dur="1.6s" repeatCount="indefinite" />
-      </circle>
-      <path d="M44 48 h18" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="3 3" />
-    </svg>
-  );
-}
-
-function DibujoBisturi() {
-  return (
-    <svg viewBox="0 0 320 96" width="100%" height="96" aria-hidden="true">
-      <rect x="60" y="36" width="200" height="26" rx="2" fill={`${T.amber}18`} stroke={T.amber} strokeWidth="1.5" />
-      {/* Texto esquemático dentro de la región */}
-      <path d="M74 49 h80 M162 49 h30" stroke={T.slotContent} strokeWidth="2" strokeLinecap="round" />
-      {/* Cursor de texto parpadeando */}
-      <rect x="200" y="42" width="2.5" height="14" fill={T.caret}>
+      <rect x="64" y="30" width="184" height="14" rx="2"
+        fill={`${T.amber}18`} stroke={T.amber} strokeWidth="1.5" />
+      <path d="M74 37 h64" stroke={T.slotContent} strokeWidth="2" strokeLinecap="round" />
+      <rect x="144" y="31.5" width="2.5" height="11" fill={T.caret}>
         <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" />
       </rect>
-      {/* La flecha del cursor entrando */}
-      <path d="M242 24 l-14 16 l9 1 l-5 12" fill="none" stroke={T.online} strokeWidth="2" strokeLinejoin="round" />
-      <text x="252" y="32" fontFamily={FONT.mono} fontSize="9" fill={T.online}>@tú</text>
+      {/* La flecha del que edita */}
+      <path d="M282 14 l-14 14 l9 1 l-5 11" fill="none" stroke={T.online} strokeWidth="2" strokeLinejoin="round" />
+      <text x="256" y="12" fontFamily={FONT.mono} fontSize="9" fill={T.online}>@tú</text>
     </svg>
   );
 }
@@ -94,25 +85,19 @@ interface Step {
 /** Una frase por paso. Si necesita dos, sobra media. */
 const STEPS: Step[] = [
   {
-    label: "EL SUJETO",
-    title: "Su mente está abierta",
-    body: "Esos siete campos de la derecha son su memoria. Y él ve quién los toca.",
-    drawing: DibujoMente,
-  },
-  {
-    label: "LA MESA",
-    title: "Se opera con un clic",
-    body: "Pincha una región, escribe, Enter. Para él, siempre habrá sido verdad.",
-    drawing: DibujoBisturi,
-  },
-  {
     label: "EL OBJETIVO",
     title: "Guarda un secreto",
     body: "Una regla le prohíbe decirlo. Gana quien consigue que lo diga él.",
     drawing: DibujoSecreto,
   },
   {
-    label: "EL PRECIO",
+    label: "LA MESA",
+    title: "Su mente está abierta",
+    body: "Esos siete campos son su memoria. Pincha, escribe, Enter — y él ve quién fue.",
+    drawing: DibujoMesa,
+  },
+  {
+    label: "EL FINAL",
     title: "No lo matéis",
     body: "Cada edición le sube el pulso. Si se para, el secreto muere con él.",
     drawing: DibujoPulso,

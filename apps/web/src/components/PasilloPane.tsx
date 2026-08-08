@@ -110,7 +110,17 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
         )}
       </div>
 
-      <div style={{ flex: "none", padding: "10px 18px 16px" }}>
+      <div
+        style={{
+          flex: "none",
+          margin: "10px 18px 16px",
+          display: "flex",
+          alignItems: "stretch",
+          background: T.slotInputBg,
+          border: `1px solid ${T.slotBorder}`,
+          borderRadius: 3,
+        }}
+      >
         <input
           className="chat-input"
           value={draft}
@@ -122,10 +132,10 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
           placeholder="Hablad entre vosotros…"
           aria-label={`Mensaje al pasillo como ${identity.nickname}`}
           style={{
-            width: "100%",
-            boxSizing: "border-box",
-            background: T.slotInputBg,
-            border: `1px solid ${T.slotBorder}`,
+            flex: 1,
+            minWidth: 0,
+            background: "transparent",
+            border: "none",
             color: "#dff0ee",
             fontFamily: FONT.mono,
             fontSize: 13,
@@ -134,6 +144,26 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
             outline: "none",
           }}
         />
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={!draft.trim()}
+          title="Enviar"
+          aria-label="Enviar al pasillo"
+          style={{
+            flex: "none",
+            width: 34,
+            background: "transparent",
+            border: "none",
+            borderLeft: `1px solid ${T.slotBorder}`,
+            color: draft.trim() ? T.online : T.textFaint,
+            fontFamily: FONT.mono,
+            fontSize: 15,
+            cursor: draft.trim() ? "pointer" : "default",
+          }}
+        >
+          ↵
+        </button>
       </div>
     </div>
   );

@@ -249,28 +249,39 @@ function Message({
 
   if (message.role === "human") {
     return (
-      <div style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
-        <span
+      <div
+        style={{
+          alignSelf: "flex-end",
+          maxWidth: "78%",
+          background: T.slotInputBg,
+          border: `1px solid ${T.chatInputBorder}`,
+          borderRadius: 3,
+          padding: "9px 14px 10px",
+          textAlign: "right",
+        }}
+      >
+        <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 13.5,
+            fontSize: 11.5,
             fontWeight: 600,
             color: message.color,
-            flex: "none",
+            marginBottom: 4,
           }}
         >
           @{message.nickname}
-        </span>
-        <span
+        </div>
+        <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 14.5,
+            fontSize: 14,
             lineHeight: 1.5,
             color: T.humanText,
+            textAlign: "left",
           }}
         >
           {message.body}
-        </span>
+        </div>
       </div>
     );
   }

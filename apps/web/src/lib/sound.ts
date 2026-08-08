@@ -5,12 +5,14 @@
  *  - el tecleo de EL PACIENTE mientras escribe (ruido corto filtrado),
  *  - el ping de monitor de hospital cuando alguien le corta (una edición = un latido).
  *
- * Los navegadores bloquean el audio hasta el primer gesto del usuario; el clic de
- * "ENTRAR AL QUIRÓFANO" del onboarding nos sirve de desbloqueo, y por si acaso se
- * escucha el primer gesto que haya.
+ * Los navegadores bloquean el audio hasta el primer gesto del usuario. Se desbloquea
+ * con cualquier gesto (clic o tecla), y el botón ♪ reproduce un ping al reactivar:
+ * sirve de confirmación de que el audio funciona en este navegador.
  */
 
 const STORAGE_KEY = "el-paciente:silencio";
+
+type AudioContextCtor = typeof AudioContext;
 
 let ctx: AudioContext | null = null;
 let muted = readMuted();
@@ -34,18 +36,30 @@ export function setMuted(value: boolean): void {
   } catch {
     // Sin persistencia, el silencio dura la sesión. Suficiente.
   }
+  // Al reactivar, un ping de confirmación: si no lo oyes, el problema no es el botón.
+  if (!value) monitorPing();
+}
+
+function contextCtor(): AudioContextCtor | null {
+  if (typeof AudioContext !== "undefined") return AudioContext;
+  // Safari antiguo expone la versión con prefijo.
+  const legacy = (globalThis as { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
+  return legacy ?? null;
 }
 
 function audio(): AudioContext | null {
-  if (typeof AudioContext === "undefined") return null;
-  if (!ctx) ctx = new AudioContext();
+  const Ctor = contextCtor();
+  if (!Ctor) return null;
+  if (!ctx) ctx = new Ctor();
   if (ctx.state === "suspended") void ctx.resume();
   return ctx;
 }
 
-// Desbloqueo con el primer gesto, sea cual sea.
+// Desbloqueo con el primer gesto que haya, del tipo que sea.
 if (typeof document !== "undefined") {
-  document.addEventListener("pointerdown", () => void audio(), { once: true });
+  const unlock = () => void audio();
+  document.addEventListener("pointerdown", unlock, { passive: true });
+  document.addEventListener("keydown", unlock, { passive: true });
 }
 
 /**
@@ -73,7 +87,7 @@ export function keyClick(): void {
   filter.Q.value = 1.2;
 
   const gain = context.createGain();
-  gain.gain.value = 0.05 + Math.random() * 0.03;
+  gain.gain.value = 0.11 + Math.random() * 0.05;
 
   source.connect(filter).connect(gain).connect(context.destination);
   source.start();
@@ -95,10 +109,10 @@ export function monitorPing(highRate = false): void {
   const gain = context.createGain();
   const now = context.currentTime;
   gain.gain.setValueAtTime(0.001, now);
-  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.008);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
 
   oscillator.connect(gain).connect(context.destination);
   oscillator.start(now);
-  oscillator.stop(now + 0.25);
+  oscillator.stop(now + 0.3);
 }

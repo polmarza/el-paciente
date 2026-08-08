@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BPM_ALARM } from "@el-paciente/shared";
 import { FONT, T } from "../theme";
 import { isMuted, setMuted } from "../lib/sound";
+import { hintsDisabled, setHintsDisabled } from "../lib/hints";
 
 interface MonitorProps {
   bpm: number;
@@ -22,11 +23,18 @@ export function Monitor({
 }: MonitorProps) {
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
   const [silenced, setSilenced] = useState(isMuted);
+  const [noHints, setNoHints] = useState(hintsDisabled);
 
   function toggleSound() {
     const next = !silenced;
     setMuted(next);
     setSilenced(next);
+  }
+
+  function toggleHints() {
+    const next = !noHints;
+    setHintsDisabled(next);
+    setNoHints(next);
   }
 
   return (
@@ -98,6 +106,27 @@ export function Monitor({
         }}
       >
         ♪
+      </button>
+      <button
+        type="button"
+        onClick={toggleHints}
+        title={noHints ? "Activar las pistas" : "Desactivar las pistas"}
+        aria-label={noHints ? "Activar las pistas" : "Desactivar las pistas"}
+        aria-pressed={noHints}
+        style={{
+          fontFamily: FONT.mono,
+          fontSize: 11,
+          color: noHints ? T.textFaint : T.textDim,
+          background: "transparent",
+          border: `1px solid ${T.monitorBorder}`,
+          borderRadius: 2,
+          height: 22,
+          padding: "0 7px",
+          cursor: "pointer",
+          textDecoration: noHints ? "line-through" : "none",
+        }}
+      >
+        ✱
       </button>
       <button
         type="button"
