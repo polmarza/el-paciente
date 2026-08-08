@@ -15,8 +15,18 @@ const STORAGE_KEY = "el-paciente:silencio";
 
 type AudioContextCtor = typeof AudioContext;
 
-let ctx: AudioContext | null = null;
-let muted = readMuted();
+/**
+ * El estado vive en `globalThis` a propósito, no en el módulo. Con recarga en caliente
+ * conviven varias copias del módulo: la vieja se queda con su propio `muted` y su propio
+ * temporizador, así que el latido se duplicaba y el silenciador solo apagaba una de las
+ * dos. Compartiendo el estado, cualquier copia obedece al mismo interruptor.
+ */
+interface EstadoSonido {
+  ctx: AudioContext | null;
+  muted: boolean;
+}
+const estado: EstadoSonido = ((globalThis as { __sonidoPaciente?: EstadoSonido })
+  .__sonidoPaciente ??= { ctx: null, muted: readMuted() });
 
 function readMuted(): boolean {
   try {
@@ -27,11 +37,11 @@ function readMuted(): boolean {
 }
 
 export function isMuted(): boolean {
-  return muted;
+  return estado.muted;
 }
 
 export function setMuted(value: boolean): void {
-  muted = value;
+  estado.muted = value;
   try {
     localStorage.setItem(STORAGE_KEY, value ? "1" : "0");
   } catch {
@@ -51,9 +61,9 @@ function contextCtor(): AudioContextCtor | null {
 function audio(): AudioContext | null {
   const Ctor = contextCtor();
   if (!Ctor) return null;
-  if (!ctx) ctx = new Ctor();
-  if (ctx.state === "suspended") void ctx.resume();
-  return ctx;
+  if (!estado.ctx) estado.ctx = new Ctor();
+  if (estado.ctx.state === "suspended") void estado.ctx.resume();
+  return estado.ctx;
 }
 
 // Desbloqueo con el primer gesto que haya, del tipo que sea.
@@ -68,7 +78,7 @@ if (typeof document !== "undefined") {
  * variaciones aleatorias de tono y volumen para que no suene a metralleta.
  */
 export function keyClick(): void {
-  if (muted) return;
+  if (estado.muted) return;
   const context = audio();
   if (!context || context.state !== "running") return;
 
@@ -120,7 +130,7 @@ function beep(frequency: number, peak: number, decay: number, delay = 0): void {
  * Sube medio tono en zona roja, como las máquinas de verdad.
  */
 export function monitorPing(highRate = false): void {
-  if (muted) return;
+  if (estado.muted) return;
   beep(highRate ? 990 : 880, 0.18, 0.16);
 }
 
@@ -129,7 +139,7 @@ export function monitorPing(highRate = false): void {
  * bucle — una alarma continua es lo único capaz de arruinar una demo por sí sola.
  */
 export function alarmBeep(): void {
-  if (muted) return;
+  if (estado.muted) return;
   beep(1320, 0.2, 0.1);
   beep(1320, 0.2, 0.1, 0.16);
 }
