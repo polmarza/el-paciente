@@ -27,6 +27,10 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 - [x] Constantes vitales (pulso derivado del ritmo de ediciones)
 - [x] Cooldowns y anti-suplantación en `portal.config.ts`, verificados en vivo (9/9)
 - [x] Previsualización de UI sin Portal (`/preview.html`)
+- [x] El chat sigue el texto sin secuestrar el scroll: si subes a leer, no te arrastra
+- [x] Tecleo en vivo regido por el reloj, no por pulsos del temporizador — no se rompe al
+      cambiar de ventana, y tiene techo de duración para que una respuesta larga no se
+      arrastre
 
 ---
 
@@ -37,7 +41,9 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 - [x] System prompt: capa fija + regiones + historial con autores
 - [x] Reacción espontánea a ediciones, citando a quien te editó
 - [x] Episodios de crisis con su tratamiento visual
-- [x] Cerrojo de instancia única (dos agentes respondían por duplicado)
+- [x] Respuestas breves por diseño (de ~700 a ~110 caracteres; el turno bajó de 13 s a 4 s)
+- [x] Corte limpio por frase completa si el techo de tokens llega a actuar
+- [x] Cerrojo de instancia única (dos agentes respondían por duplicado, en silencio)
 - [x] Indicador de "pensando" emitido por el agente, no deducido por la web
 
 ---
@@ -52,6 +58,7 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 - [x] Parte médico descargable en PNG para compartir
 - [x] Relevo limpio: expediente nuevo, chat, historial y memoria del agente por ronda
 - [x] Sala bloqueada durante el relevo
+- [x] El secreto no viaja por Portal hasta que se gana (verificado sobre el bundle)
 
 ---
 
@@ -64,9 +71,22 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 
 ---
 
-## Fase 5 — Calibrado y estreno (lo que queda)
+## Fase 5 — Los entregables ✅ (falta grabar)
 
-Todo lo anterior funciona y está verificado. Lo que falta no es código: es afinar con gente
+- [x] Pitch de ≤ 280 caracteres, en tres versiones (`docs/entregables.md`)
+- [x] Descripción del repositorio en GitHub, ya con el objetivo del juego
+- [x] README que explica la premisa **y** a qué se juega
+- [x] Explicación de cómo se usó Portal
+- [x] Escaleta del vídeo con tiempos, plano a plano
+- [x] `pnpm extras`: tres figurantes con identidades de Portal independientes que pueblan
+      la sala durante la grabación. Verificado: la coreografía sola cierra una ronda en 48 s
+- [ ] **Grabar y montar el vídeo** (≤ 1:30)
+
+---
+
+## Fase 6 — Calibrado y estreno
+
+Todo lo anterior funciona y está verificado. Lo que queda no es código: es afinar con gente
 delante, que es lo único que no se puede hacer en solitario.
 
 - [ ] **Calibrar la resistencia del paciente.** Con los tres cerrojos abiertos a veces cede
@@ -78,7 +98,7 @@ delante, que es lo único que no se puede hacer en solitario.
 - [ ] Ensayo completo con varios navegadores (checklist en `docs/testing.md`)
 - [ ] Deploy a Vercel y `portal origins add <dominio>` — sin eso el navegador queda
       bloqueado por origen no autorizado
-- [ ] Guion de la demo de 3 minutos
+- [ ] Fusionar el PR a `main`
 
 ---
 
@@ -91,3 +111,5 @@ delante, que es lo único que no se puede hacer en solitario.
 | Salas múltiples con objetivos distintos | Aplazada: repartir a la audiencia entre salas mata la sensación de multitud, que es la mitad del efecto. Si hace falta variedad, que sea por rondas |
 | Login y cuentas | Descartada: el anonimato alimenta la dinámica vándalo/cuidador |
 | Votaciones para aprobar ediciones | Descartada: mata la inmediatez, que es el corazón del efecto |
+| Simplificar el anti-suplantación con la API REST de Portal | Aplazada (MEJORA-01): lo que hay está probado y no se toca antes del hackathon |
+| Que el historial clínico crezca en pantallas altas | Pendiente de decisión de diseño (MEJORA-02) |
