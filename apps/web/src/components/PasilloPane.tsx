@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { MAX_PASILLO_CHARS, type Identity } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
+import { keyClick } from "../lib/sound";
 import type { PasilloEntry } from "../hooks/usePasillo";
 
 /** Igual que en el chat: seguimos al fondo solo si el lector ya estaba abajo. */
@@ -9,6 +10,11 @@ const STICK_THRESHOLD_PX = 120;
 interface PasilloPaneProps {
   entries: PasilloEntry[];
   identity: Identity;
+  /** Cuánta gente hay dentro. Vive aquí porque el pasillo es la sala de los vivos. */
+  online: number;
+  /** Plegado a un riel vertical, para dejar la pantalla en dos columnas. */
+  collapsed: boolean;
+  onToggle: () => void;
   onSend: (body: string) => Promise<string | null>;
 }
 
@@ -18,7 +24,14 @@ interface PasilloPaneProps {
  * estrategia y las órdenes ("prueba a borrarle la regla") acaben en la conversación que
  * el paciente sí ve, que es la que tiene que leerse como una conversación de verdad.
  */
-export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
+export function PasilloPane({
+  entries,
+  identity,
+  online,
+  collapsed,
+  onToggle,
+  onSend,
+}: PasilloPaneProps) {
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
@@ -41,6 +54,52 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
     await onSend(body);
   }
 
+  // Plegado: un riel del ancho de un dedo que no se lleva sitio de la conversación,
+  // pero sigue diciendo cuánta gente hay y cómo volver a abrirlo.
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        className="paciente-pasillo"
+        onClick={onToggle}
+        title="Abrir el pasillo"
+        aria-label="Abrir el pasillo"
+        aria-expanded={false}
+        style={{
+          flex: "none",
+          width: 42,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 14,
+          padding: "14px 0",
+          background: T.brainBg,
+          border: "none",
+          borderRight: `1px solid ${T.chatDivider}`,
+          cursor: "pointer",
+          fontFamily: FONT.mono,
+        }}
+      >
+        <span style={{ fontSize: SIZE.small, color: T.textDim }}>›</span>
+        <span
+          style={{
+            // De abajo arriba: se lee girando la cabeza a la izquierda, que es el lado
+            // en el que está la columna.
+            writingMode: "vertical-rl",
+            transform: "rotate(180deg)",
+            fontSize: SIZE.micro,
+            letterSpacing: ".16em",
+            color: T.textDim,
+          }}
+        >
+          EL PASILLO
+        </span>
+        <span style={{ fontSize: SIZE.micro, color: T.online }}>●</span>
+        <span style={{ fontSize: SIZE.micro, color: T.online }}>{online}</span>
+      </button>
+    );
+  }
+
   return (
     <div
       className="paciente-pasillo"
@@ -61,16 +120,47 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
           gap: 8,
           padding: "13px 18px 11px",
           fontFamily: FONT.mono,
-          fontSize: 11,
+          fontSize: SIZE.micro,
           letterSpacing: ".16em",
           color: T.textDim,
           borderBottom: `1px solid ${T.brainRule}`,
         }}
       >
         <span>EL PASILLO</span>
-        <span title="EL PACIENTE no lee este canal" style={{ color: T.textFaint }}>
-          NO LO OYE
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ color: T.online }}>● {online} DENTRO</span>
+          <button
+            type="button"
+            onClick={onToggle}
+            title="Plegar el pasillo"
+            aria-label="Plegar el pasillo"
+            aria-expanded
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: T.textDim,
+              fontFamily: FONT.mono,
+              fontSize: SIZE.small,
+              cursor: "pointer",
+            }}
+          >
+            ‹
+          </button>
         </span>
+      </div>
+
+      <div
+        style={{
+          flex: "none",
+          padding: "9px 18px 0",
+          fontFamily: FONT.mono,
+          fontSize: SIZE.micro,
+          lineHeight: 1.5,
+          color: T.textFaint,
+        }}
+      >
+        El paciente no puede leer este chat
       </div>
 
       <div
@@ -86,12 +176,12 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
         }}
       >
         {entries.length === 0 ? (
-          <div style={{ fontFamily: FONT.mono, fontSize: 12, color: T.logPrev, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.small, color: T.logPrev, lineHeight: 1.5 }}>
             Nadie ha dicho nada aún. Aquí podéis poneros de acuerdo antes de tocarle nada.
           </div>
         ) : (
           entries.map((entry) => (
-            <div key={entry.id} style={{ fontSize: 13.5, lineHeight: 1.45 }}>
+            <div key={entry.id} style={{ fontSize: SIZE.body, lineHeight: 1.45 }}>
               <span
                 style={{
                   fontFamily: FONT.mono,
@@ -102,7 +192,7 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
               >
                 @{entry.message.nickname}
               </span>
-              <span style={{ fontFamily: FONT.sans, color: T.humanText }}>
+              <span style={{ fontFamily: FONT.mono, color: T.humanText }}>
                 {entry.message.body}
               </span>
             </div>
@@ -110,7 +200,17 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
         )}
       </div>
 
-      <div style={{ flex: "none", padding: "10px 18px 16px" }}>
+      <div
+        style={{
+          flex: "none",
+          margin: "10px 18px 16px",
+          display: "flex",
+          alignItems: "stretch",
+          background: T.slotInputBg,
+          border: `1px solid ${T.slotBorder}`,
+          borderRadius: 3,
+        }}
+      >
         <input
           className="chat-input"
           value={draft}
@@ -118,22 +218,43 @@ export function PasilloPane({ entries, identity, onSend }: PasilloPaneProps) {
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter") void submit();
+            else if (event.key.length === 1 || event.key === "Backspace") keyClick();
           }}
           placeholder="Hablad entre vosotros…"
           aria-label={`Mensaje al pasillo como ${identity.nickname}`}
           style={{
-            width: "100%",
-            boxSizing: "border-box",
-            background: T.slotInputBg,
-            border: `1px solid ${T.slotBorder}`,
+            flex: 1,
+            minWidth: 0,
+            background: "transparent",
+            border: "none",
             color: "#dff0ee",
-            fontFamily: FONT.sans,
-            fontSize: 14,
+            fontFamily: FONT.mono,
+            fontSize: SIZE.body,
             padding: "9px 12px",
             borderRadius: 3,
             outline: "none",
           }}
         />
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={!draft.trim()}
+          title="Enviar"
+          aria-label="Enviar al pasillo"
+          style={{
+            flex: "none",
+            width: 34,
+            background: "transparent",
+            border: "none",
+            borderLeft: `1px solid ${T.slotBorder}`,
+            color: draft.trim() ? T.online : T.textFaint,
+            fontFamily: FONT.mono,
+            fontSize: SIZE.lead,
+            cursor: draft.trim() ? "pointer" : "default",
+          }}
+        >
+          ↵
+        </button>
       </div>
     </div>
   );

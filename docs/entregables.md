@@ -35,11 +35,26 @@ de dejar el desenlace del paro algo más implícito.
 
 ---
 
+### Subtítulo / gancho corto
+
+> Un escape room en el que tienes que descubrir qué esconde el paciente.
+
+No es técnicamente exacto —no hay salas ni puzzles físicos—, pero es la referencia que
+todo el mundo reconoce sin explicación previa, y transmite bien la mecánica central:
+investigar para sacarle algo a alguien que se resiste. Se usa como subtítulo en la propia
+web (`index.html`: meta `description`, `og:description`, `twitter:description`, y el texto
+de `og-image.png`), en el "About" del repositorio y — pendiente — en la descripción corta
+del formulario de entrega del hackathon, si el campo pide algo breve en vez del pitch
+completo de más abajo.
+
 ### Descripción del repositorio (GitHub «About»)
 
 > Una IA que chatea en público mientras la audiencia edita en vivo su memoria e identidad.
 > Guarda un secreto que tiene prohibido contar: gana quien consigue que lo diga
 > reescribiéndole la mente, sin acelerarle el pulso hasta el paro.
+
+(Este texto más largo queda documentado como alternativa si el campo de GitHub admite más
+que una línea; el campo real del repositorio se ha actualizado con el subtítulo de arriba.)
 
 ---
 

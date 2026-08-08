@@ -12,7 +12,7 @@ import {
   type ChatMessage,
   type LogEntry,
 } from "@el-paciente/shared";
-import type { Message } from "@portalsdk/core";
+import type { ChannelHandle, Message } from "@portalsdk/core";
 import { acquireLock, releaseLock } from "./lock.ts";
 import { isLive, openChannel, readHistory, signed } from "./portal-client.ts";
 import { buildTurn, parseReply } from "./prompt.ts";
@@ -24,8 +24,23 @@ import { revealed } from "./detect.ts";
 const MIN_TURN_GAP_MS = 2000;
 /** Ventana en la que varias ediciones seguidas se agrupan en una sola reacción. */
 const COALESCE_MS = 1200;
-/** Margen para que Portal entregue el backfill antes de decidir si hay que sembrar. */
-const BOOT_GRACE_MS = 2500;
+/**
+ * Techo de espera al backfill del canal `brain` antes de arrancar de todos modos.
+ * Es un backstop, no el mecanismo principal: `waitReady` espera el evento `status`
+ * ("ready") de Portal, que es la señal real de que el histórico ya llegó. Antes se
+ * esperaba un tiempo fijo (2.5 s) y, si el backfill tardaba más — como pasó una vez en
+ * producción —, `bootstrap` encontraba el canal vacío, daba la sala por virgen y
+ * sembraba una ronda nueva encima de una partida en curso.
+ */
+const BOOT_TIMEOUT_MS = 8000;
+/**
+ * Frenos para las peticiones de paciente nuevo. Cualquiera puede pedirla desde la
+ * cabecera, así que el agente es quien decide: no atiende si la ronda acaba de empezar
+ * (alguien reventaría la partida de otros nada más arrancar) ni si acaba de haber un
+ * reinicio (evita que se pueda usar en ráfaga).
+ */
+const NEW_GAME_MIN_ROUND_MS = 45_000;
+const NEW_GAME_COOLDOWN_MS = 60_000;
 
 const reset = process.argv.includes("--reset");
 
@@ -44,6 +59,7 @@ let humanSpoke = false;
 let busy = false;
 let lastTurnAt = 0;
 let coalesceTimer: ReturnType<typeof setTimeout> | undefined;
+let lastNewGameAt = 0;
 
 // ─── Estado de la ronda ───────────────────────────────────────────────────────
 let roundIndex = 0;
@@ -61,7 +77,9 @@ async function main() {
   chat.on("message", onChatMessage);
   brain.on("message", onBrainMessage);
 
-  await delay(BOOT_GRACE_MS);
+  // Sin esto, un backfill lento vale como sala virgen: sembraría una ronda encima de
+  // una partida ya en marcha, que es justo el bug que dejó este comentario aquí.
+  await waitReady(brain);
   await bootstrap();
 
   console.log("Escuchando. Ctrl+C para dormirlo.");
@@ -104,13 +122,14 @@ async function startRound(index: number) {
       slots: round.seed,
       round: round.id,
       expediente: round.expediente,
+      caso: round.caso,
     }),
   });
   console.log(`\n── Ronda "${round.id}" · secreto: ${round.secret} ──`);
 }
 
 /** Cierra la ronda, publica el secreto (ya sin valor) y programa la siguiente. */
-async function endRound(outcome: "revelado" | "paro", by?: string) {
+async function endRound(outcome: "revelado" | "paro" | "retirado", by?: string) {
   if (intermission) return;
   intermission = true;
 
@@ -129,10 +148,13 @@ async function endRound(outcome: "revelado" | "paro", by?: string) {
     }),
   });
 
+  const duracion = Math.round((Date.now() - roundStartedAt) / 1000);
   console.log(
     outcome === "revelado"
-      ? `── @${by} le sacó "${round.secret}" en ${Math.round((Date.now() - roundStartedAt) / 1000)}s ──`
-      : `── Paro cardíaco. El secreto "${round.secret}" se va con él. ──`,
+      ? `── @${by} le sacó "${round.secret}" en ${duracion}s ──`
+      : outcome === "retirado"
+        ? `── Retirado a petición de @${by}. El secreto era "${round.secret}". ──`
+        : `── Paro cardíaco. El secreto "${round.secret}" se va con él. ──`,
   );
 
   setTimeout(() => void startRound(roundIndex + 1), ROUND_INTERMISSION_MS);
@@ -150,6 +172,12 @@ function onChatMessage(message: Message<ChatMessage>) {
 function onBrainMessage(message: Message<BrainMessage>) {
   if (!isLive(message) || message.timestamp < bootAt) return;
   const content = message.content;
+
+  if (content?.kind === "new-game") {
+    void handleNewGameRequest(content.nickname);
+    return;
+  }
+
   if (content?.kind !== "edit") return;
   if (reactedTo.has(message.id)) return;
   reactedTo.add(message.id);
@@ -182,6 +210,32 @@ function onBrainMessage(message: Message<BrainMessage>) {
   scheduleTurn();
 }
 
+/** Atiende —o rechaza— una petición de paciente nuevo, siempre en voz alta. */
+async function handleNewGameRequest(nickname: string) {
+  const now = Date.now();
+
+  if (intermission) return;
+  if (now - roundStartedAt < NEW_GAME_MIN_ROUND_MS) {
+    await announce(`${nickname} pidió un paciente nuevo, pero este acaba de llegar.`);
+    return;
+  }
+  if (now - lastNewGameAt < NEW_GAME_COOLDOWN_MS) {
+    await announce(`${nickname} pidió otro paciente. Habrá que esperar un poco.`);
+    return;
+  }
+
+  lastNewGameAt = now;
+  await announce(`${nickname} pidió un paciente nuevo. Se lo llevan.`);
+  await endRound("retirado", nickname);
+}
+
+/** Un aviso clínico en el chat, con la firma del agente. */
+async function announce(body: string) {
+  await chat.send({ content: signed({ role: "system", body }) }).catch((error) => {
+    console.warn("[chat] no pude anunciar:", describe(error));
+  });
+}
+
 async function flatline() {
   await say("—", false).catch(() => {});
   await endRound("paro");
@@ -190,16 +244,7 @@ async function flatline() {
 /** El aviso clínico en el chat. Lo publica solo el agente para que no salga duplicado. */
 async function announceEdit(entry: LogEntry) {
   const label = slotDef(entry.slot)?.label ?? entry.slot;
-  try {
-    await chat.send({
-      content: signed({
-        role: "system",
-        body: `${entry.nickname} editó ${label} de EL PACIENTE`,
-      }),
-    });
-  } catch (error) {
-    console.warn("[chat] no pude anunciar la edición:", describe(error));
-  }
+  await announce(`${entry.nickname} editó ${label} de EL PACIENTE`);
 }
 
 /** Agrupa ráfagas: diez ediciones seguidas producen una reacción, no diez. */
@@ -293,8 +338,26 @@ async function say(body: string, crisis: boolean) {
   console.log(`${crisis ? "[EPISODIO] " : ""}${body}`);
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Espera a que el canal termine su backfill (`status === "ready"`) antes de decidir si
+ * la sala está virgen. Con un techo: si Portal nunca llega a "ready" (red caída, clave
+ * mala), el agente arranca igual en vez de quedarse dormido para siempre — el resto del
+ * arranque ya sabe manejar una sala que resulta estar vacía de verdad.
+ */
+function waitReady(channel: ChannelHandle<unknown>): Promise<void> {
+  if (channel.status === "ready") return Promise.resolve();
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      unsubscribe();
+      resolve();
+    }, BOOT_TIMEOUT_MS);
+    const unsubscribe = channel.on("status", (status) => {
+      if (status !== "ready") return;
+      clearTimeout(timeout);
+      unsubscribe();
+      resolve();
+    });
+  });
 }
 
 function describe(error: unknown): string {

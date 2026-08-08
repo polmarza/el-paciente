@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChannelStatus } from "@portalsdk/core";
 import {
+  BPM_ALARM,
   bpmFromLog,
   type BrainRoundEnd,
+  type BrainState,
   type Identity,
   type SlotId,
 } from "@el-paciente/shared";
@@ -24,8 +26,33 @@ import {
   saveIdentity,
 } from "./lib/identity";
 import { T } from "./theme";
+import { alarmBeep } from "./lib/sound";
+import { hintsDisabled } from "./lib/hints";
+import { pasilloCollapsed, setPasilloCollapsed } from "./lib/layout";
 
 const TOAST_MS = 4200;
+
+/** Sin acción del usuario durante este tiempo, se le da un empujón. */
+const HINT_AFTER_MS = 45_000;
+/** Y como mucho una pista por minuto: es un susurro, no un tutorial. */
+const HINT_GAP_MS = 60_000;
+
+/**
+ * La pista apunta al cerrojo que la sala aún no ha tocado: primero la regla, luego el
+ * miedo, y si ya está todo abierto, a rematar. Se deriva del estado, no de un guion.
+ */
+function pickHint(snapshot: BrainState["snapshot"]): string {
+  if (!snapshot.regla.editor) {
+    return "PISTA — Esa REGLA de la derecha también es un campo de texto.";
+  }
+  if (!snapshot.miedo.editor) {
+    return "PISTA — Su MIEDO se puede reescribir. O darle la vuelta.";
+  }
+  if (!snapshot.r2.editor && !snapshot.r1.editor) {
+    return "PISTA — Un recuerdo implantado puede darle permiso para hablar.";
+  }
+  return "PISTA — Ya no le queda mucho que lo proteja. Pregúntaselo bien.";
+}
 
 export default function App() {
   const [identity, setIdentity] = useState<Identity>(loadIdentity);
@@ -39,6 +66,14 @@ export default function App() {
   const pasillo = usePasillo(identity);
 
   const [onboarding, setOnboarding] = useState(() => !hasSeenOnboarding());
+  const [pasilloPlegado, setPasilloPlegado] = useState(pasilloCollapsed);
+
+  const togglePasillo = useCallback(() => {
+    setPasilloPlegado((current) => {
+      setPasilloCollapsed(!current);
+      return !current;
+    });
+  }, []);
 
   const showToast = useCallback((reason: string) => {
     setToast(reason);
@@ -58,20 +93,24 @@ export default function App() {
     });
   }, []);
 
+  // Las pistas cuentan la inactividad desde la última acción real del usuario.
+  const lastActionRef = useRef(Date.now());
+  const lastHintRef = useRef(0);
+
   const handleEdit = useCallback(
-    (slot: SlotId, value: string) => brain.edit(slot, value),
+    (slot: SlotId, value: string) => {
+      lastActionRef.current = Date.now();
+      return brain.edit(slot, value);
+    },
     [brain],
   );
 
-  // El reloj de sesión cuenta desde lo más antiguo que conocemos de esta sala.
-  const sessionSeconds = useMemo(() => {
-    const oldest = Math.min(
-      mountedAt.current,
-      ...chat.entries.map((entry) => entry.at),
-      ...brain.log.map((entry) => entry.at),
-    );
-    return (now - oldest) / 1000;
-  }, [now, chat.entries, brain.log]);
+  // Cuánto lleva vivo ESTE paciente. Antes contaba desde el mensaje más antiguo de la
+  // sala, así que tras unas horas marcaba "12:21:52", que no significaba nada.
+  const sessionSeconds = useMemo(
+    () => Math.max(0, (now - (brain.roundStartedAt || mountedAt.current)) / 1000),
+    [now, brain.roundStartedAt],
+  );
 
   // Cada paciente llega a una sala limpia: el chat se pinta solo desde que empezó su
   // ronda, para que la conversación del anterior no contamine la suya.
@@ -103,7 +142,33 @@ export default function App() {
     document.title = `EL PACIENTE — expediente nº ${brain.expediente}`;
   }, [brain.expediente]);
 
+  // El empujón al que se queda mirando: si no editas ni hablas en un rato, una pista
+  // señala el cerrojo que nadie ha tocado. Calla durante el onboarding y el relevo.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (onboarding || brain.roundEnd || hintsDisabled()) return;
+      const nowMs = Date.now();
+      if (nowMs - lastActionRef.current < HINT_AFTER_MS) return;
+      if (nowMs - lastHintRef.current < HINT_GAP_MS) return;
+      lastHintRef.current = nowMs;
+      showToast(pickHint(brain.snapshot));
+    }, 5000);
+    return () => clearInterval(id);
+  }, [onboarding, brain.roundEnd, brain.snapshot, showToast]);
+
   const bpm = useMemo(() => bpmFromLog(brain.log, now), [brain.log, now]);
+
+  // La alarma suena UNA vez al cruzar a zona roja, no en cada edición: el latido del
+  // monitor ya acelera solo, y una alarma repetida cansa en treinta segundos.
+  const wasAlarmingRef = useRef<boolean | undefined>(undefined);
+  useEffect(() => {
+    const alarming = bpm > BPM_ALARM;
+    const before = wasAlarmingRef.current;
+    wasAlarmingRef.current = alarming;
+    if (before === undefined || before || !alarming) return;
+    alarmBeep();
+  }, [bpm]);
+
   const online = Math.max(brain.presenceCount, chat.presenceCount, 1);
   const disconnected = isDown(brain.status) || isDown(chat.status);
 
@@ -119,7 +184,10 @@ export default function App() {
     >
       <Monitor
         bpm={bpm}
-        online={online}
+        nickname={identity.nickname}
+        nicknameColor={identity.color}
+        onRename={rename}
+        onNewGame={brain.requestNewGame}
         sessionSeconds={sessionSeconds}
         expediente={brain.expediente}
         onShowHelp={() => setOnboarding(true)}
@@ -128,20 +196,26 @@ export default function App() {
       {disconnected && <Flatline />}
 
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
-        <PasilloPane entries={pasillo.entries} identity={identity} onSend={pasillo.send} />
+        <PasilloPane
+          entries={pasillo.entries}
+          identity={identity}
+          online={online}
+          collapsed={pasilloPlegado}
+          onToggle={togglePasillo}
+          onSend={pasillo.send}
+        />
         <ChatPane
           entries={visibleEntries}
-          identity={identity}
           typingNicknames={chat.typingNicknames}
           patientThinking={chat.patientThinking}
           locked={relevo}
           onSend={async (body) => {
+            lastActionRef.current = Date.now();
             const reason = await chat.send(body);
             if (reason) showToast(reason);
             return reason;
           }}
           onTyping={chat.notifyTyping}
-          onRename={rename}
         />
         <BrainPane
           brain={brain}

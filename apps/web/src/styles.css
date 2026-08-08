@@ -78,6 +78,17 @@ a:hover {
   }
 }
 
+@keyframes toastInRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -90,21 +101,17 @@ a:hover {
 }
 
 /* En el diseño esto venía como style-focus en el propio elemento. */
-.chat-input:focus {
-  border-color: #4a3c2e;
-}
+.chat-input:focus,
 .slot-input:focus {
   border-color: #3d5a66;
 }
 
 /* Tres columnas para proyector. El pasillo es lo primero que sobra al estrecharse:
-   es conversación entre el público, no la pieza. */
+   es conversación entre el público, no la pieza. El chat no lleva ancho fijo — absorbe
+   lo que quede, tanto aquí como cuando el usuario pliega el pasillo a mano. */
 @media (max-width: 1250px) {
   .paciente-pasillo {
     display: none !important;
-  }
-  .paciente-chat {
-    width: 55% !important;
   }
   .paciente-brain {
     width: 45% !important;
@@ -115,16 +122,13 @@ a:hover {
   .paciente-body {
     flex-direction: column;
   }
-  .paciente-chat,
   .paciente-brain {
     width: 100% !important;
+    flex: 1 1 45% !important;
   }
   .paciente-chat {
-    flex: 1 1 55%;
+    flex: 1 1 55% !important;
     border-right: none !important;
-  }
-  .paciente-brain {
-    flex: 1 1 45%;
   }
 }
 

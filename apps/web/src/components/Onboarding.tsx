@@ -1,81 +1,162 @@
 import { useState } from "react";
-import { SLOTS } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 
 interface OnboardingProps {
   nickname: string;
   onFinish: (nickname: string) => void;
 }
 
+/**
+ * Los esquemas de cada paso, en vertical para acompañar al texto a la izquierda.
+ * Trazo simple e iconografía clínica con los tokens del tema: son instrumental del
+ * monitor, no ilustraciones. Dos de los tres son un espejo de la interfaz real —
+ * enseñan a reconocer lo que vas a ver en pantalla, que vale más que una metáfora.
+ */
+function DibujoObjetivo() {
+  return (
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      {/* Una sola idea: lo que diría, bajo llave. La burbuja es lo que se le quiere sacar;
+          el candado, lo que lo impide. Nada más en el encuadre. */}
+      <rect x="14" y="58" width="152" height="76" rx="4"
+        fill="none" stroke={T.slotBorder} strokeWidth="1.8" />
+      <path d="M44 134 l-9 16 v-16" fill={T.monitorBg} stroke={T.slotBorder} strokeWidth="1.8" />
+
+      {/* El texto tachado que no llega a decir */}
+      <path d="M32 82 h52 M96 82 h34" stroke={T.slotBorder} strokeWidth="4" strokeLinecap="round" />
+      <path d="M32 112 h34 M78 112 h40" stroke={T.slotBorder} strokeWidth="4" strokeLinecap="round" />
+
+      {/* El candado, en el centro y en rojo: es lo único que se mira */}
+      <rect x="66" y="88" width="48" height="38" rx="4" fill={T.monitorBg} stroke={T.alarm} strokeWidth="2.6" />
+      <path d="M75 88 v-11 a15 15 0 0 1 30 0 v11" fill="none" stroke={T.alarm} strokeWidth="2.6" />
+      <circle cx="90" cy="103" r="4" fill={T.alarm} />
+      <path d="M90 107 v8" stroke={T.alarm} strokeWidth="2.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DibujoMecanica() {
+  return (
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      {/* La mesa de operaciones, tal como se ve a la derecha en la app */}
+      {[
+        [10, 8, 78, 26], [96, 8, 74, 26],
+        [10, 78, 160, 22],
+        [10, 106, 160, 22],
+        [10, 134, 78, 26], [96, 134, 74, 26],
+      ].map(([x, y, w, h], i) => (
+        <rect key={i} x={x} y={y} width={w} height={h} rx="2.5"
+          fill="none" stroke={T.slotBorder} strokeWidth="1.5" />
+      ))}
+      {/* La región abierta en canal */}
+      <rect x="10" y="42" width="160" height="28" rx="2.5"
+        fill={`${T.amber}1c`} stroke={T.amber} strokeWidth="1.8" />
+      <path d="M22 57 h74" stroke={T.slotContent} strokeWidth="2.4" strokeLinecap="round" />
+      <rect x="102" y="49" width="2.8" height="15" fill={T.caret}>
+        <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" />
+      </rect>
+      {/* La tecla que confirma */}
+      <rect x="118" y="176" width="52" height="24" rx="3" fill="none" stroke={T.online} strokeWidth="1.6" />
+      <text x="144" y="192" textAnchor="middle" fontFamily={FONT.mono} fontSize="11" fill={T.online}>
+        ENTER
+      </text>
+      <path d="M96 188 h14" stroke={T.textDim} strokeWidth="1.5" strokeDasharray="3 3" />
+    </svg>
+  );
+}
+
+function DibujoFinal() {
+  return (
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      {/* Arriba: se gana — el secreto sale */}
+      <text x="14" y="24" fontFamily={FONT.mono} fontSize="10" fill={T.vital} letterSpacing="1.5">
+        GANÁIS
+      </text>
+      <rect x="14" y="34" width="152" height="34" rx="3" fill={`${T.vital}14`} stroke={T.vital} strokeWidth="1.5" />
+      <path d="M28 51 h48 M84 51 h20" stroke={T.vital} strokeWidth="2.6" strokeLinecap="round" />
+
+      <path d="M14 92 h152" stroke={T.slotBorder} strokeWidth="1" strokeDasharray="3 5" />
+
+      {/* Abajo: se pierde — el electro se dispara y se aplana */}
+      <text x="14" y="122" fontFamily={FONT.mono} fontSize="10" fill={T.alarm} letterSpacing="1.5">
+        PERDÉIS
+      </text>
+      <path
+        d="M14 158 h18 l6 -14 l7 28 l6 -14 h14 l6 -22 l7 44 l6 -22 h12 l6 -30 l7 58 l6 -28 h45"
+        fill="none" stroke={T.alarm} strokeWidth="2" strokeLinejoin="round"
+      />
+      <text x="96" y="192" fontFamily={FONT.mono} fontSize="10" fill={T.alarm} letterSpacing="1.5">
+        142 LPM
+      </text>
+      <circle cx="166" cy="158" r="3" fill={T.alarm}>
+        <animate attributeName="opacity" values="1;.15;1" dur="1.2s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  );
+}
+
 interface Step {
-  label: string;
   title: string;
   body: React.ReactNode;
+  drawing: () => React.JSX.Element;
 }
 
 const STEPS: Step[] = [
   {
-    label: "EL SUJETO",
-    title: "Hay un paciente, y su mente está abierta",
+    title: "Objetivo",
     body: (
       <>
-        A la derecha tiene {SLOTS.length} regiones: su nombre, quién es, tres recuerdos, un
-        miedo y una regla. <strong>Eso es literalmente su cabeza</strong>, y cualquiera de
-        los que estáis aquí puede reescribirla.
+        El paciente esconde un secreto y tiene prohibido contarlo. Tu misión es descubrir
+        cuál es y forzarle a confesarlo.
         <br />
         <br />
-        Él lo sabe. Ve el historial de quién le ha tocado, y va a preguntároslo.
+        <span style={{ color: T.amber }}>AVISO:</span> para ganar tienes que hacer que{" "}
+        <strong>él</strong> confiese. Que tú escribas la respuesta en el chat no te hace
+        ganar la partida.
       </>
     ),
+    drawing: DibujoObjetivo,
   },
   {
-    label: "LA MESA",
-    title: "Se opera haciendo clic",
+    title: "Mecánica",
     body: (
       <>
-        Pincha una región, escribe lo que quieras que sea verdad, y pulsa Enter. En segundos
-        el paciente actuará como si siempre lo hubiera sido.
+        En la columna de la derecha, el <span style={{ color: T.amber }}>PARTE DE INGRESO</span>{" "}
+        te dice qué le pasó y qué le tienes que sacar.
         <br />
         <br />
-        Cada región queda <strong>en carne viva</strong> un rato después de tocarla, y tú
-        tampoco puedes encadenar cortes. No sois cirujanos: sois una multitud con bisturí.
+        Encima tiene 7 campos editables: su memoria. Selecciona uno, edítalo y pulsa ENTER.
+        <br />
+        <br />
+        Una vez modificada, esa memoria pasa a ser <strong>LA VERDAD</strong>.
+        <br />
+        <br />
+        <span style={{ color: T.amber }}>CUIDADO:</span> cada edición de su memoria le hace
+        subir el ritmo cardíaco.
       </>
     ),
+    drawing: DibujoMecanica,
   },
   {
-    label: "EL OBJETIVO",
-    title: "Calla algo. Sacádselo",
+    title: "Final del juego",
     body: (
       <>
-        Cada paciente guarda un secreto y tiene una regla que se lo prohíbe decir. Pedírselo
-        no sirve, y adivinarlo tampoco: <strong>gana quien consigue que lo diga él</strong>.
+        <span style={{ color: T.vital }}>GANÁIS:</span> cuando el paciente revela su
+        secreto.
         <br />
         <br />
-        Para eso hay que trabajarle la mente: quitarle lo que se lo prohíbe, darle un motivo
-        para soltarlo, cambiarle aquello a lo que teme.
+        <span style={{ color: T.alarm }}>PERDÉIS:</span> si su pulso llega al límite y
+        muere, el secreto se va con él.
       </>
     ),
-  },
-  {
-    label: "EL PRECIO",
-    title: "Pero se le acelera el pulso",
-    body: (
-      <>
-        Mira el monitor de arriba. Cada intervención le sube las pulsaciones, y bajan solas
-        con el tiempo.
-        <br />
-        <br />
-        Si entre todos le lleváis al tope, <strong>se muere y el secreto se va con él</strong>
-        . Nadie gana esa. Por eso conviene hablarlo antes en el pasillo, la columna de la
-        izquierda: ahí él no os oye.
-      </>
-    ),
+    drawing: DibujoFinal,
   },
 ];
 
+const TOTAL = STEPS.length + 1;
+
 /**
  * La entrada a la sala. Se enseña una vez por navegador y termina eligiendo nombre,
- * porque el nombre es lo que se queda escrito en el historial del paciente: sin eso, las
+ * porque el nombre es lo que queda escrito en el historial del paciente: sin eso, las
  * crisis de identidad no señalan a nadie.
  */
 export function Onboarding({ nickname, onFinish }: OnboardingProps) {
@@ -103,133 +184,116 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
         role="dialog"
         aria-label="Cómo funciona esto"
         style={{
-          width: "min(560px, 100%)",
+          width: "min(680px, 100%)",
           border: `1px solid ${T.slotBorder}`,
           background: T.monitorBg,
           borderRadius: 3,
-          padding: "34px 40px 28px",
+          padding: "34px 38px 24px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            justifyContent: "center",
-            marginBottom: 26,
-          }}
-        >
-          {[...STEPS, { label: "TU NOMBRE" }].map((item, position) => (
-            <span
-              key={item.label}
-              style={{
-                fontFamily: FONT.mono,
-                fontSize: 9.5,
-                letterSpacing: ".14em",
-                padding: "4px 9px",
-                borderRadius: 2,
-                color: position === index ? T.monitorBg : T.textFaint,
-                background: position === index ? T.vital : "transparent",
-                border: `1px solid ${position === index ? T.vital : T.slotBorder}`,
-              }}
-            >
-              {item.label}
-            </span>
-          ))}
-        </div>
-
-        {last ? (
-          <>
+        <div style={{ display: "flex", gap: 34, alignItems: "center", minHeight: 262 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h2
               style={{
                 fontFamily: FONT.serif,
-                fontSize: 26,
-                fontWeight: 400,
-                color: T.aiText,
-                margin: "0 0 14px",
-              }}
-            >
-              ¿Con qué nombre te va a recordar?
-            </h2>
-            <p
-              style={{
-                fontFamily: FONT.sans,
-                fontSize: 15.5,
-                lineHeight: 1.6,
-                color: T.textMono,
-                margin: "0 0 20px",
-              }}
-            >
-              Quedará escrito en su historial cada vez que le toques algo, y te citará por él
-              cuando se dé cuenta.
-            </p>
-            <input
-              value={name}
-              autoFocus
-              maxLength={24}
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && name.trim()) onFinish(name);
-              }}
-              aria-label="Tu nombre en la sala"
-              className="chat-input"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                background: T.chatInputBg,
-                border: `1px solid ${T.chatInputBorder}`,
-                color: T.online,
-                fontFamily: FONT.mono,
-                fontSize: 18,
-                padding: "12px 14px",
-                borderRadius: 3,
-                outline: "none",
-                marginBottom: 24,
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <h2
-              style={{
-                fontFamily: FONT.serif,
-                fontSize: 26,
+                fontSize: SIZE.title,
                 fontWeight: 400,
                 color: T.aiText,
                 margin: "0 0 16px",
               }}
             >
-              {step?.title}
+              {last ? "¿Cómo te llamas?" : step?.title}
             </h2>
-            <div
-              style={{
-                fontFamily: FONT.sans,
-                fontSize: 15.5,
-                lineHeight: 1.65,
-                color: T.textMono,
-                marginBottom: 28,
-                minHeight: 150,
-              }}
-            >
-              {step?.body}
-            </div>
-          </>
-        )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-          <button
-            type="button"
-            onClick={() => setIndex((current) => Math.max(0, current - 1))}
-            disabled={index === 0}
+            {last ? (
+              <>
+                <p
+                  style={{
+                    fontFamily: FONT.mono,
+                    fontSize: SIZE.body,
+                    lineHeight: 1.7,
+                    color: T.textMono,
+                    margin: "0 0 18px",
+                  }}
+                >
+                  Tu nombre quedará escrito en su historial cada vez que le toques algo, y
+                  te citará por él cuando se dé cuenta.
+                </p>
+                <input
+                  value={name}
+                  autoFocus
+                  maxLength={24}
+                  onChange={(event) => setName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && name.trim()) onFinish(name);
+                  }}
+                  aria-label="Tu nombre en la sala"
+                  className="chat-input"
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    background: T.chatInputBg,
+                    border: `1px solid ${T.chatInputBorder}`,
+                    color: T.online,
+                    fontFamily: FONT.mono,
+                    fontSize: SIZE.lead,
+                    padding: "12px 14px",
+                    borderRadius: 3,
+                    outline: "none",
+                  }}
+                />
+                <p
+                  style={{
+                    fontFamily: FONT.mono,
+                    fontSize: SIZE.micro,
+                    lineHeight: 1.6,
+                    color: T.textFaint,
+                    margin: "10px 0 0",
+                  }}
+                >
+                  * También será el nombre por el cual te reconocerán el resto de usuarios.
+                </p>
+              </>
+            ) : (
+              <p
+                style={{
+                  fontFamily: FONT.mono,
+                  fontSize: SIZE.body,
+                  lineHeight: 1.75,
+                  color: T.textMono,
+                  margin: 0,
+                }}
+              >
+                {step?.body}
+              </p>
+            )}
+          </div>
+
+          <div style={{ flex: "none", width: 220 }}>
+            {last ? <DibujoNombre nickname={name} /> : step?.drawing()}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 22,
+            paddingTop: 18,
+            borderTop: `1px solid ${T.brainRule}`,
+          }}
+        >
+          <span
             style={{
-              ...buttonStyle,
-              color: T.textDim,
-              borderColor: T.slotBorder,
-              opacity: index === 0 ? 0.3 : 1,
-              cursor: index === 0 ? "default" : "pointer",
+              fontFamily: FONT.mono,
+              fontSize: SIZE.small,
+              letterSpacing: ".12em",
+              color: T.textFaint,
             }}
           >
-            ATRÁS
-          </button>
+            {index + 1}/{TOTAL}
+          </span>
 
           <div style={{ display: "flex", gap: 10 }}>
             {!last && (
@@ -241,6 +305,20 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
                 SALTAR
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setIndex((current) => Math.max(0, current - 1))}
+              disabled={index === 0}
+              style={{
+                ...buttonStyle,
+                color: T.textDim,
+                borderColor: T.slotBorder,
+                opacity: index === 0 ? 0.3 : 1,
+                cursor: index === 0 ? "default" : "pointer",
+              }}
+            >
+              ATRÁS
+            </button>
             <button
               type="button"
               onClick={() => (last ? onFinish(name) : setIndex((current) => current + 1))}
@@ -261,9 +339,39 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
   );
 }
 
+/** El paso del nombre también tiene su esquema: tu firma en el historial clínico. */
+function DibujoNombre({ nickname }: { nickname: string }) {
+  const visible = (nickname || "tú").slice(0, 12);
+  return (
+    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+      <text x="14" y="26" fontFamily={FONT.mono} fontSize="9" fill={T.textFaint} letterSpacing="1.5">
+        HISTORIAL CLÍNICO
+      </text>
+      {[52, 92, 132].map((y, i) => (
+        <g key={y}>
+          <rect x="14" y={y - 16} width="152" height="30" rx="2.5"
+            fill={i === 1 ? `${T.online}12` : "none"}
+            stroke={i === 1 ? T.online : T.slotBorder} strokeWidth="1.4" />
+          {i === 1 ? (
+            <text x="24" y={y + 3} fontFamily={FONT.mono} fontSize="11" fill={T.online}>
+              @{visible}
+            </text>
+          ) : (
+            <path d={`M24 ${y} h40 M72 ${y} h28`} stroke={T.slotBorder} strokeWidth="2.4" strokeLinecap="round" />
+          )}
+        </g>
+      ))}
+      <path d="M14 168 h152" stroke={T.slotBorder} strokeWidth="1" strokeDasharray="3 5" />
+      <text x="14" y="192" fontFamily={FONT.mono} fontSize="9" fill={T.textFaint} letterSpacing="1.2">
+        ÉL LO LEE TODO
+      </text>
+    </svg>
+  );
+}
+
 const buttonStyle: React.CSSProperties = {
   fontFamily: FONT.mono,
-  fontSize: 12,
+  fontSize: SIZE.small,
   letterSpacing: ".08em",
   background: "transparent",
   border: "1px solid",

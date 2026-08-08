@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { SLOTS, slotStateAt, type BrainState, type SlotId } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 import { BrainSlot } from "./BrainSlot";
-import { EditLog } from "./EditLog";
+import { CaseBrief } from "./CaseBrief";
+import { EditLog, LOG_HANDLE_HEIGHT } from "./EditLog";
 import type { RemoteCursor } from "../hooks/useBrain";
 
 interface BrainPaneProps {
@@ -63,6 +64,8 @@ export function BrainPane({
         display: "flex",
         flexDirection: "column",
         background: T.brainBg,
+        // El historial es un cajón absoluto que sube por encima de la mesa.
+        position: "relative",
       }}
     >
       <div
@@ -72,7 +75,7 @@ export function BrainPane({
           justifyContent: "space-between",
           padding: "13px 22px 11px",
           fontFamily: FONT.mono,
-          fontSize: 11,
+          fontSize: SIZE.micro,
           letterSpacing: ".16em",
           color: T.textDim,
           borderBottom: `1px solid ${T.brainRule}`,
@@ -117,6 +120,12 @@ export function BrainPane({
           );
         })}
       </div>
+
+      <CaseBrief caso={brain.caso} />
+
+      {/* Hueco para la pestaña cerrada del historial, que va en absoluto: sin él taparía
+          el final del parte de ingreso. */}
+      <div style={{ flex: "none", height: LOG_HANDLE_HEIGHT }} />
 
       <EditLog log={brain.log} />
     </div>

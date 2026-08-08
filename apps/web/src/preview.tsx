@@ -54,6 +54,9 @@ const brain: BrainState = {
   },
   round: "cruce",
   expediente: "001-A",
+  caso:
+    "Ingresó tras un accidente en un cruce, de noche y con lluvia. Conducía él, y en el " +
+    "parte figura una mujer cuyo nombre no ha pronunciado ni una sola vez.",
   roundStartedAt: now - 600_000,
   roundEnd: null,
   log: [
@@ -103,7 +106,10 @@ function App() {
     >
       <Monitor
         bpm={108}
-        online={23}
+        nickname={identity.nickname}
+        nicknameColor={identity.color}
+        onRename={() => {}}
+        onNewGame={() => {}}
         sessionSeconds={3127}
         expediente="001-A"
         onShowHelp={() => {}}
@@ -126,13 +132,11 @@ function App() {
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <ChatPane
           entries={chat}
-          identity={identity}
           typingNicknames={["marta"]}
           patientThinking
           locked={relevo}
           onSend={async () => null}
           onTyping={() => {}}
-          onRename={() => {}}
         />
         <BrainPane
           brain={brain}

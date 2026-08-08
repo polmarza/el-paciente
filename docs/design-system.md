@@ -86,11 +86,18 @@ Legibilidad en proyector: el chat no baja de 16px.
 
 ## Espaciado y layout
 
-- Split-screen **55 % chat / 45 % cerebro**. Por debajo de 900px se apila (`styles.css`).
+- Tres columnas: **pasillo (20%) · chat (resto) · cerebro (35%)**. El pasillo se pliega a un
+  riel de 42px a gusto del espectador (persistido en `localStorage`); el chat absorbe el
+  espacio que deja libre en vez de llevar un ancho fijo. Por debajo de 1250px el pasillo
+  desaparece del todo (proyector estrecho); por debajo de 900px se apila (`styles.css`).
 - La mesa de operaciones es una rejilla de 2 columnas. Los tres recuerdos ocupan la fila
   entera (`span 2`); nombre, identidad, miedo y regla ocupan media (`span 1`).
-- El historial clínico vive al fondo del panel cerebro, con 150px de alto que ceden antes
-  que las regiones cuando la pantalla va justa.
+- Debajo de la mesa, el **parte de ingreso** (`CaseBrief`): dos frases fijas del `seed` que
+  dicen qué se investiga sin decir la respuesta. Sin esto la partida no tenía briefing.
+- El historial clínico es un **cajón arrastrable** (`EditLog`) anclado al fondo del panel
+  cerebro, cerrado por defecto. Se abre con un clic o arrastrando su pestaña hacia arriba, y
+  **pasa por encima** de la mesa de operaciones en vez de comprimirla — las regiones son el
+  juego y no deben reordenarse cada vez que alguien consulta el historial.
 
 ---
 
@@ -116,7 +123,7 @@ Todas en `styles.css`. Funcionales, nunca decorativas:
 - `ecg` — el electrocardiograma del monitor.
 - `slotFlash` — el destello de una región recién intervenida.
 - `tagBob` + `blink` — la etiqueta del cursor ajeno y los cursores de texto.
-- `toastIn` — la entrada del aviso de rechazo.
+- `toastInRight` — la entrada del aviso (pista o rechazo), deslizando desde la derecha.
 
 Se respeta `prefers-reduced-motion`.
 
@@ -128,10 +135,11 @@ Se respeta `prefers-reduced-motion`.
 |------------|-----------|
 | `Monitor` | Cabecera: identidad, pulso (ECG + LPM), reloj de sesión, aforo |
 | `ChatPane` | La voz: mensajes de sistema, humanos y de la IA; typing; composer |
-| `BrainPane` | La mesa de operaciones: rejilla de regiones + historial |
+| `BrainPane` | La mesa de operaciones: rejilla de regiones + parte + historial |
 | `BrainSlot` | Una región con todos sus estados |
-| `EditLog` | Historial clínico con diff tachado → valor nuevo |
-| `Toast` | Motivo del rechazo devuelto por el middleware |
+| `CaseBrief` | El parte de ingreso: qué se investiga, sin decir la respuesta |
+| `EditLog` | Historial clínico en cajón arrastrable, diff tachado → valor nuevo |
+| `Toast` | Aviso arriba a la derecha: pista (ámbar) o rechazo del middleware (rojo) |
 
 ---
 

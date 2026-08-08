@@ -87,6 +87,15 @@ const moderateBrain = defineMiddleware<BrainMessage>("publish", (ctx) => {
     return mask<BrainMessage>(clean as BrainMessage);
   }
 
+  // Pedir un paciente nuevo lo puede hacer cualquiera: el freno está en el agente, que
+  // ignora la petición si la ronda acaba de empezar o si ya hubo un reinicio reciente.
+  if (content?.kind === "new-game") {
+    if (typeof content.nickname !== "string" || !content.nickname.trim()) {
+      return block("Falta el nombre de quien lo pide.");
+    }
+    return allow();
+  }
+
   if (content?.kind !== "edit") return block("Tipo de mensaje desconocido.");
   if (!isSlotId(content.slot)) return block("Esa región no existe en esta mente.");
 

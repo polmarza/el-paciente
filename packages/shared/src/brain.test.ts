@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cooldownSecondsLeft, reduceBrain, slotStateAt, type HistoryEntry } from "./brain.ts";
 import { SEED_SLOTS } from "./seed.ts";
-import { FLASH_MS, SLOT_COOLDOWN_MS } from "./constants.ts";
+import { DEFAULT_CASO, FLASH_MS, SLOT_COOLDOWN_MS } from "./constants.ts";
 import type { BrainMessage } from "./types.ts";
 
 const edit = (
@@ -60,9 +60,15 @@ describe("reduceBrain", () => {
     const seed: HistoryEntry<BrainMessage> = {
       id: "seed",
       at: 3000,
-      content: { kind: "seed", slots: SEED_SLOTS, round: "ingreso", expediente: "047-D" },
+      content: {
+        kind: "seed",
+        slots: SEED_SLOTS,
+        round: "ingreso",
+        expediente: "047-D",
+        caso: "Alguien firmó su ingreso y no dice quién.",
+      },
     };
-    const { snapshot, log, round, expediente, roundStartedAt } = reduceBrain([
+    const { snapshot, log, round, expediente, caso, roundStartedAt } = reduceBrain([
       edit("a", 1000, { value: "vandalizado" }),
       seed,
     ]);
@@ -72,7 +78,13 @@ describe("reduceBrain", () => {
     expect(log).toHaveLength(0);
     expect(round).toBe("ingreso");
     expect(expediente).toBe("047-D");
+    expect(caso).toBe("Alguien firmó su ingreso y no dice quién.");
     expect(roundStartedAt).toBe(3000);
+  });
+
+  it("sin seed no hay parte de ingreso: queda el texto de sala vacía", () => {
+    const { caso } = reduceBrain([edit("a", 1000, { value: "algo" })]);
+    expect(caso).toBe(DEFAULT_CASO);
   });
 
   it("el historial posterior al seed sí se conserva", () => {

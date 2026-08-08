@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { BrainRoundEnd } from "@el-paciente/shared";
-import { FONT, T } from "../theme";
+import { FONT, T, SIZE } from "../theme";
 import { downloadBlob, drawDiploma, formatLasted } from "../lib/diploma";
 
 interface RoundOverlayProps {
@@ -20,7 +20,13 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
 
   const secondsLeft = Math.max(0, Math.ceil((roundEnd.nextAt - now) / 1000));
   const won = roundEnd.outcome === "revelado";
-  const accent = won ? T.vital : T.alarm;
+  const withdrawn = roundEnd.outcome === "retirado";
+  const accent = won ? T.vital : withdrawn ? T.textMono : T.alarm;
+  const heading = won
+    ? "● SECRETO REVELADO"
+    : withdrawn
+      ? "● PACIENTE RETIRADO"
+      : "● PARO CARDÍACO";
 
   async function download() {
     setSaving(true);
@@ -75,7 +81,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
             border: "none",
             color: T.textDim,
             fontFamily: FONT.mono,
-            fontSize: 18,
+            fontSize: SIZE.lead,
             cursor: "pointer",
             lineHeight: 1,
             padding: 6,
@@ -87,19 +93,19 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 12,
+            fontSize: SIZE.small,
             letterSpacing: ".26em",
             color: accent,
             marginBottom: 8,
           }}
         >
-          {won ? "● SECRETO REVELADO" : "● PARO CARDÍACO"}
+          {heading}
         </div>
 
         <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 11,
+            fontSize: SIZE.micro,
             letterSpacing: ".18em",
             color: T.textFaint,
             marginBottom: 22,
@@ -111,7 +117,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         <div
           style={{
             fontFamily: FONT.serif,
-            fontSize: 30,
+            fontSize: SIZE.title,
             lineHeight: 1.35,
             color: T.aiText,
             marginBottom: 10,
@@ -121,12 +127,17 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         </div>
 
         <div
-          style={{ fontFamily: FONT.sans, fontSize: 16, color: T.textMono, marginBottom: 26 }}
+          style={{ fontFamily: FONT.mono, fontSize: SIZE.body, color: T.textMono, marginBottom: 26 }}
         >
           {won ? (
             <>
               Se lo arrancó <span style={{ color: T.online }}>@{roundEnd.by ?? "alguien"}</span>{" "}
               tras {formatLasted(roundEnd.lasted)} de intervención.
+            </>
+          ) : withdrawn ? (
+            <>
+              <span style={{ color: T.online }}>@{roundEnd.by ?? "alguien"}</span> pidió un
+              paciente nuevo tras {formatLasted(roundEnd.lasted)}. Se lo llevó sin contarlo.
             </>
           ) : (
             <>Se murió sin decirlo, tras {formatLasted(roundEnd.lasted)}. Nadie gana esta.</>
@@ -140,7 +151,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
             disabled={saving}
             style={{
               fontFamily: FONT.mono,
-              fontSize: 12,
+              fontSize: SIZE.small,
               letterSpacing: ".08em",
               color: accent,
               background: "transparent",
@@ -158,7 +169,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
             onClick={onClose}
             style={{
               fontFamily: FONT.mono,
-              fontSize: 12,
+              fontSize: SIZE.small,
               letterSpacing: ".08em",
               color: T.textMono,
               background: "transparent",
@@ -173,7 +184,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         </div>
 
         {error && (
-          <div style={{ fontFamily: FONT.mono, fontSize: 11, color: T.alarm, marginBottom: 12 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.micro, color: T.alarm, marginBottom: 12 }}>
             {error}
           </div>
         )}
@@ -181,7 +192,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         <div
           style={{
             fontFamily: FONT.mono,
-            fontSize: 11,
+            fontSize: SIZE.micro,
             letterSpacing: ".16em",
             color: T.textDim,
           }}

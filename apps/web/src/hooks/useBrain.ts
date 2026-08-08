@@ -46,6 +46,8 @@ export interface UseBrainResult extends BrainState {
   edit: (slot: SlotId, value: string) => Promise<string | null>;
   /** Anuncia (o retira, con null) nuestro cursor sobre una región. */
   announceCursor: (slot: SlotId | null) => void;
+  /** Pide un paciente nuevo. El agente decide si atiende. */
+  requestNewGame: () => void;
 }
 
 export function useBrain(identity: Identity): UseBrainResult {
@@ -155,9 +157,16 @@ export function useBrain(identity: Identity): UseBrainResult {
     return () => clearInterval(id);
   }, []);
 
+  const requestNewGame = useCallback(() => {
+    void send({ content: { kind: "new-game", nickname: identity.nickname } }).catch(() => {
+      // Si Portal la rechaza, no pasa nada: nadie ha perdido su partida.
+    });
+  }, [send, identity]);
+
   return {
     ...state,
     cursors: liveCursors,
+    requestNewGame,
     presenceCount: presence?.count ?? 0,
     status,
     edit,

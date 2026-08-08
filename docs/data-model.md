@@ -45,10 +45,13 @@ type BrainMessage =
   | { kind: "edit"; slot: SlotId; value: string; prev: string;
       nickname: string; color: string }
   | { kind: "seed"; slots: Record<SlotId, string>; round?: string;
-      expediente?: string; auth?: string }
+      expediente?: string; caso?: string; auth?: string }
   // Desenlace: el ÚNICO momento en que el secreto se hace público.
-  | { kind: "round-end"; outcome: "revelado" | "paro"; secret: string;
-      expediente: string; by?: string; lasted: number; nextAt: number; auth?: string };
+  | { kind: "round-end"; outcome: "revelado" | "paro" | "retirado"; secret: string;
+      expediente: string; by?: string; lasted: number; nextAt: number; auth?: string }
+  // Petición de paciente nuevo. La publica cualquiera; el agente decide si la atiende
+  // (throttle: no antes de 45 s de ronda, no antes de 60 s del último relevo).
+  | { kind: "new-game"; nickname: string };
 
 // Efímero (no persiste, no entra en el reducer):
 type BrainCursor = {
@@ -62,6 +65,12 @@ type BrainCursor = {
 
 Los cursores se reanuncian cada 2 s y caducan a los 5 s de silencio, de modo que cerrar una
 pestaña retira la etiqueta sola.
+
+`caso` es el **parte de ingreso**: dos frases que enmarcan la ronda y dicen qué FORMA tiene
+la respuesta (un nombre, un lugar, un número) sin decirla nunca. Vive en `rounds.ts`
+(agente) junto al secreto — no en `packages/shared` — y viaja en el `seed`. Sin él, siete
+campos de memoria no dicen qué se está investigando; con él, el jugador sabe qué perseguir
+desde el primer segundo. Se pinta en `CaseBrief.tsx`, encima del historial clínico.
 
 ### `pasillo` — la deliberación del público
 
