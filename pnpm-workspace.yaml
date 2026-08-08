@@ -1,0 +1,6 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+# esbuild necesita su script de instalación para enlazar el binario nativo que usa Vite.
+allowBuilds:
+  esbuild: true

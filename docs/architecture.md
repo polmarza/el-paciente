@@ -13,7 +13,7 @@ o cualquier decisión técnica relevante. Los cambios se registran también en `
 | Realtime / estado | **Portal** (`@portalsdk/react`, `@portalsdk/core`, `portal.config.ts`) | Requisito del hackathon y encaja exacto: canales con historial, presencia, typing, mensajes ephemeral y middleware server-side |
 | IA | **OpenRouter** (modelo por defecto: `anthropic/claude-haiku-4.5`) | Un endpoint, muchos modelos: rápido y con personalidad para sentirse "en directo"; cambiable por env sin tocar código |
 | Agente | Proceso Node 22+ con `@portalsdk/core` | Portal no documenta API REST de publicación server-side → la IA se conecta como un cliente más, con identidad propia |
-| Estilos | Tailwind CSS v4 | Velocidad; los tokens del design system se mapean a variables CSS |
+| Estilos | CSS plano + estilos inline tipados | El diseño llegó de Claude Design como estilos inline; portarlo a Tailwind era trabajo perdido. Los tokens viven en `theme.ts` y las animaciones en `styles.css` |
 | Base de datos | Ninguna | El estado ES los canales de Portal (historial incluido). Ver `data-model.md` |
 | Despliegue | Vercel (frontend) + agente local en la máquina de la demo | Cero fricción de deploy en hackathon; el agente es un `pnpm agent` |
 
@@ -63,20 +63,23 @@ Monorepo pnpm workspaces:
 ```
 el-paciente/
 ├── apps/
-│   ├── web/                → SPA React (Vite)
+│   ├── web/                  → SPA React (Vite)
+│   │   ├── index.html        → La aplicación real
+│   │   ├── preview.html      → Previsualización de UI con datos fijos, sin Portal
 │   │   └── src/
-│   │       ├── components/ → BrainSlot, EditLog, ChatStream, PresenceBar…
-│   │       ├── hooks/      → useBrain (reduce historial → slots), useNickname…
-│   │       └── lib/        → cliente Portal, utilidades
-│   └── agent/              → Agente EL PACIENTE (Node + tsx)
+│   │       ├── components/   → Monitor, ChatPane, BrainPane, BrainSlot, EditLog, Toast
+│   │       ├── hooks/        → useBrain, useChat, useAiReveal, useNow
+│   │       ├── lib/          → cliente Portal, adaptador de mensajes, identidad
+│   │       └── theme.ts      → Tokens del diseño
+│   └── agent/                → Agente EL PACIENTE (Node 22+, TS nativo)
 │       └── src/
-│           ├── brain.ts    → snapshot de slots + log desde el canal brain
-│           ├── prompt.ts   → construcción del system prompt (capa fija + slots + log)
-│           ├── llm.ts      → cliente OpenRouter (streaming)
-│           └── index.ts    → bucle del agente: triggers, cola, publicación
+│           ├── portal-client.ts → Cliente Portal y firma de mensajes
+│           ├── prompt.ts        → System prompt (capa fija + regiones + historial)
+│           ├── llm.ts           → Cliente OpenRouter con modelo de respaldo
+│           └── index.ts         → Bucle: disparadores, coalescencia, turnos
 ├── packages/
-│   └── shared/             → Tipos de mensajes y constantes (slots, cooldowns, canales)
-├── portal.config.ts        → Config server-side de Portal (canales, middleware)
+│   └── shared/               → Tipos, reducer del cerebro, seed, colores, cooldowns
+├── portal.config.ts          → Config server-side de Portal (canales, middleware)
 └── docs/ · changelog/ · mejoras/
 ```
 
@@ -151,14 +154,19 @@ Repositorio: <https://github.com/polmarza/el-paciente> (público, `origin`, rama
 
 ### 2026-08-08 — La IA es un cliente Portal, no un backend con API
 
-**Contexto:** Portal no documenta publicación server-side vía REST; el SDK core es un
-cliente WebSocket.
-**Opciones:** (a) agente como cliente Portal en Node; (b) intentar publicar desde
-middleware `onPublish`; (c) que el navegador del host ejecute la IA.
-**Decisión:** (a). El middleware no está pensado para originar mensajes y (c) pone la
-clave de OpenRouter en un navegador.
-**Consecuencias:** el agente necesita un proceso corriendo durante la demo; la identidad
-"IA" se protege con el patrón secret+mask en middleware.
+**Contexto:** el agente tiene que escuchar los dos canales y además hablar.
+**Opciones:** (a) agente como cliente Portal en Node; (b) publicar desde el middleware
+`onPublish`; (c) que el navegador del host ejecute la IA.
+**Decisión:** (a). El middleware no está pensado para originar mensajes y (c) pone la clave
+de OpenRouter en un navegador.
+**Corrección (verificada el 2026-08-08):** una versión anterior de esta decisión afirmaba
+que "Portal no expone una API REST para publicar desde un servidor". **Es falso**: existe
+`POST https://api.useportal.co/v1/channels/{channelId}/messages`, autenticada con
+`Authorization: Bearer <sk_>` y con `senderId` en el cuerpo. Se usó para la prueba de humo
+de esta sesión. La decisión (a) sigue siendo la correcta igualmente, porque escuchar exige
+el WebSocket de todas formas y el agente ya lo tiene abierto — pero abre una simplificación
+posible del anti-suplantación, anotada en `mejoras/backlog.md`.
+**Consecuencias:** el agente necesita un proceso corriendo durante la demo.
 
 ### 2026-08-08 — Estado = canales de Portal, sin base de datos
 
@@ -172,5 +180,36 @@ de Portal (suficiente para una demo; el cerebro semilla se puede re-publicar con
 
 **Contexto:** el caos es deseable pero debe ser gobernable; la UI es falsificable.
 **Decisión:** `onPublish` en `portal.config.ts` rechaza ediciones que violen cooldown por
-slot o por usuario (`block` con motivo legible que la UI muestra). La UI replica la cuenta
-atrás solo como cortesía visual.
+región o por usuario. El motivo viaja en `BlockedError.reason` — texto que Portal define
+explícitamente como visible para el usuario final — y la UI lo muestra tal cual en un toast.
+**Consecuencia y límite conocido:** Portal no documenta almacenamiento persistente para el
+middleware, así que el registro de tiempos vive en memoria del proceso que ejecuta los
+callbacks. Si Portal repartiera las invocaciones entre varias instancias, algún cooldown se
+colaría. Las reglas que sí son de seguridad (el secreto del agente y los límites de
+longitud) no dependen de ningún estado.
+**Verificado en vivo el 2026-08-08** contra el despliegue real: el cooldown de región
+bloquea la segunda edición seguida con su motivo legible, y las nueve comprobaciones de la
+sonda de middleware (suplantación de la IA sin secreto y con secreto falso, `system` y
+`seed` falsificados, exceso de longitud, región inexistente, uso legítimo y cooldown)
+dieron el resultado esperado.
+
+### 2026-08-08 — La IA no transmite carácter a carácter
+
+**Contexto:** el diseño muestra a EL PACIENTE tecleando en vivo.
+**Opciones:** (a) el agente publica un mensaje por fragmento; (b) publica la frase entera y
+el navegador la revela tecleando.
+**Decisión:** (b), en `useAiReveal`. Un mensaje por fragmento multiplicaría por cincuenta el
+tráfico del canal y el coste, para un efecto que el cliente reproduce igual. Solo se anima
+lo que llega después de montar: el historial de backfill aparece completo.
+
+### 2026-08-08 — El contrato de Portal se leyó de sus tipos, no de la documentación
+
+**Contexto:** la documentación pública de Portal no fija el nombre del campo de fecha de un
+mensaje ni la forma de `PortalProvider`.
+**Decisión:** las suposiciones se sustituyeron por lo que declaran los `.d.ts` de
+`@portalsdk/core@0.1.5`. Hechos verificados que el código da por ciertos:
+`Message.timestamp` (epoch ms), `Message.ephemeral` / `.retracted` / `.sender.id`,
+`PortalProvider` recibe `client` (no `apiKey`), `presence.count` existe en las dos formas de
+presencia, `typing` devuelve **ids de usuario** (por eso el nickname viaja en la metadata de
+presencia) y `BlockedError.reason` es copia visible para el usuario.
+**Consecuencia:** si se sube de versión mayor el SDK, revisar esos puntos.

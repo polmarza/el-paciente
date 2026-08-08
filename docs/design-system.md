@@ -2,96 +2,149 @@
 
 Fuente de verdad visual del proyecto.
 
-**Estado:** dirección definida; los tokens finales (paleta exacta, tipografías) los fijará
-el diseño que Pol está produciendo con Claude Design. Al recibirlo, actualizar este archivo
-en la misma sesión. Lo que sigue es la dirección que ese diseño debe respetar y los
-requisitos estructurales que la implementación necesita sí o sí.
+**Origen:** diseño de Claude Design (`El Paciente.dc.html`, proyecto "El Paciente: IA editable
+en vivo"). Los tokens de esta página están extraídos de ese archivo e implementados en
+`apps/web/src/theme.ts` (colores y fuentes) y `apps/web/src/styles.css` (animaciones).
+Si cambia el diseño, se actualizan los tres a la vez.
 
 ---
 
 ## Concepto visual
 
-**Quirófano nocturno / monitor de paciente.** La interfaz es el instrumental médico
-alrededor de una mente abierta. Oscura, clínica, con la tensión de un electrocardiograma:
-calma tensa interrumpida por picos cuando alguien edita.
+**Quirófano nocturno / monitor de paciente.** Dos mundos en una pantalla:
 
-- El **chat** es la voz del paciente: humana, cálida, vulnerable.
-- El **cerebro** es la mesa de operaciones: fría, precisa, cuadriculada.
+- El **chat** es la voz del paciente: fondo cálido, tipografía con serifa, humana y vulnerable.
+- El **cerebro** es la mesa de operaciones: fondo frío, monoespaciada, cuadriculada.
 - El contraste entre ambas mitades ES el mensaje.
 
-Qué NO debe parecer: un dashboard SaaS genérico, un chat de soporte, algo "cyberpunk
-neón" cliché. La referencia emocional es hospital + performance art, no hacker.
+Solemne con humor negro: la interfaz se toma en serio a sí misma — como un expediente
+médico — y por eso las barbaridades que escribe la multitud resultan más cómicas.
+
+Qué NO debe parecer: dashboard SaaS, chat de soporte, cyberpunk neón.
 
 ---
 
 ## Paleta de colores
 
-Provisional hasta recibir el diseño de Claude Design. Roles que el diseño debe cubrir:
+Definida en `apps/web/src/theme.ts` como el objeto `T`. No usar colores sueltos en componentes.
 
-| Rol | Uso | Provisional |
-|-----|-----|-------------|
-| Background | Fondo base, casi negro con temperatura fría | `#0A0E12` |
-| Surface | Cards de slots, burbujas de chat | `#12181F` |
-| Primary / Vital | Color "signo vital": acentos, latido, cursor de la IA | `#3DE8A0` (verde monitor) |
-| Alert | Ediciones recientes, crisis de identidad, cooldown | `#FF4D5E` |
-| Text primary | Texto principal | `#E8EDF2` |
-| Text secondary | Metadatos, timestamps, log | `#7A8794` |
-| Cursores de usuarios | Un color estable por nickname (hash → hue) | HSL rotado, saturación fija |
+### Superficies
+
+| Rol | Token | Hex |
+|-----|-------|-----|
+| Fondo base | `bg` | `#07090b` |
+| Monitor (cabecera) | `monitorBg` | `#0a0e11` |
+| Chat (degradado) | `chatBg` | `#141110` → `#0f0c0b` |
+| Cerebro | `brainBg` | `#060a0d` |
+| Región de memoria | `slotBg` | `#0a1114` |
+| Región bloqueada | `slotBgCooldown` | `#070c0f` |
+
+### Texto
+
+| Rol | Token | Hex |
+|-----|-------|-----|
+| Destacado | `textBright` | `#dce8e6` |
+| Datos monoespaciados | `textMono` | `#7e949c` |
+| Secundario | `textDim` | `#4f636b` |
+| Contenido de región | `slotContent` | `#cfdedd` |
+| Mensaje humano | `humanText` | `#ddd2c4` |
+| Voz de la IA | `aiText` | `#efe4d4` |
+| Voz de la IA en crisis | `aiTextCrisis` | `#f2ddd3` |
+
+### Acentos
+
+| Rol | Token | Hex | Cuándo |
+|-----|-------|-----|--------|
+| Signo vital | `vital` | `#57d9a3` | Pulso normal, valores nuevos en el log |
+| Aforo | `online` | `#9be89b` | Gente conectada; color del propio espectador |
+| Alarma | `alarm` | `#e05c5c` | Pulso > 95 LPM, desconexión, punto del historial |
+| Intervención | `amber` | `#e0a43c` | Destello de región recién editada |
+| Episodio | `aiNameCrisis` | `#e08c7d` | Encabezado de la IA en crisis de identidad |
+
+### Colores de autor
+
+Cada espectador recibe un color estable derivado de su nickname (hash FNV-1a sobre una
+paleta de 10, en `packages/shared/src/colors.ts`). El verde `#9be89b` está **reservado** al
+propio espectador. El color viaja dentro de cada mensaje, para que el historial se pinte
+igual aunque su autor ya no esté conectado.
 
 ---
 
 ## Tipografía
 
-A confirmar con el diseño. Requisitos:
+Tres familias, cargadas desde Google Fonts en `index.html`:
 
-- **Voz de la IA (chat):** una fuente con humanidad — serif o humanist sans. Nunca mono.
-- **Cerebro, log y datos:** monoespaciada (registro clínico, historial médico).
-- Legible en proyector a 3 metros: cuerpo del chat ≥ 16 px, slots ≥ 14 px.
+| Uso | Fuente | Dónde |
+|-----|--------|-------|
+| Voz de la IA | **Lora** (serifa), 19px/1.55 | Mensajes de EL PACIENTE |
+| Voz humana | **Instrument Sans**, 16.5px/1.45 | Mensajes del público, input del chat |
+| Datos clínicos | **IBM Plex Mono**, 10.5–14.5px | Monitor, regiones, historial, nicknames |
 
----
-
-## Espaciado y grid
-
-- Layout principal: **split-screen** ~55 % chat / 45 % cerebro en desktop (≥ 1024 px).
-  En móvil, pestañas o apilado — funcional, sin más.
-- Escala de espaciado base 4 px.
-- El log de ediciones vive con el cerebro (feed compacto bajo los slots).
+Legibilidad en proyector: el chat no baja de 16px.
 
 ---
 
-## Estilo de componentes
+## Espaciado y layout
 
-- **Slot de memoria:** card con etiqueta del slot, contenido, autor de la última edición y
-  su timestamp. Estados: reposo, hover, en edición (por mí), en edición (por otro — mostrar
-  quién), recién editado (destello `Alert` que decae en ~3 s), en cooldown (bloqueado con
-  cuenta atrás visible).
-- **Cursores colaborativos:** etiqueta flotante con nickname + color propio sobre el slot
-  que el usuario está mirando/editando. Movimiento suave, desaparición por inactividad.
-- **Mensajes del chat:** los de la IA claramente distintos (avatar/latido, color Vital).
-  Streaming visible carácter a carácter. Mensajes de sistema ("X editó el miedo de EL
-  PACIENTE") como interrupciones clínicas en el propio chat.
-- **Animación:** funcional, no decorativa. Lo único siempre animado: un latido sutil
-  (la IA "está viva"). Picos de animación solo en ediciones y crisis.
+- Split-screen **55 % chat / 45 % cerebro**. Por debajo de 900px se apila (`styles.css`).
+- La mesa de operaciones es una rejilla de 2 columnas. Los tres recuerdos ocupan la fila
+  entera (`span 2`); nombre, identidad, miedo y regla ocupan media (`span 1`).
+- El historial clínico vive al fondo del panel cerebro, con 150px de alto que ceden antes
+  que las regiones cuando la pantalla va justa.
 
 ---
 
-## Tono visual
+## Estados de una región
 
-Solemne con humor negro. La UI se toma en serio a sí misma — como un expediente médico —
-y por eso las barbaridades que escribe la multitud resultan aún más cómicas. La información
-es la protagonista: cero ornamento que no comunique estado.
+El componente `BrainSlot` los implementa todos. Son el corazón de la interfaz:
+
+| Estado | Borde | Señal | Duración |
+|--------|-------|-------|----------|
+| Reposo | `slotBorder` | — | — |
+| En edición (por otro) | color del editor | Etiqueta flotante `@nick` con cursor parpadeante (`tagBob`) | Mientras dure |
+| En edición (por mí) | — | La cita se sustituye por un input | Mientras dure |
+| Recién editada | `slotBorderFlash` | `▲ EDITADO` + destello ámbar (`slotFlash`) | 4 s |
+| Bloqueada | `slotBorderCooldown` | `BLOQUEADO m:ss` + trama diagonal | 25 s |
+
+---
+
+## Animaciones
+
+Todas en `styles.css`. Funcionales, nunca decorativas:
+
+- `pulseDot` — el latido permanente. Dice "esto está vivo".
+- `ecg` — el electrocardiograma del monitor.
+- `slotFlash` — el destello de una región recién intervenida.
+- `tagBob` + `blink` — la etiqueta del cursor ajeno y los cursores de texto.
+- `toastIn` — la entrada del aviso de rechazo.
+
+Se respeta `prefers-reduced-motion`.
 
 ---
 
 ## Componentes definidos
 
-Se documentarán aquí a medida que se implementen (BrainSlot, EditLog, ChatStream,
-PresenceBar, VitalsMonitor…).
+| Componente | Propósito |
+|------------|-----------|
+| `Monitor` | Cabecera: identidad, pulso (ECG + LPM), reloj de sesión, aforo |
+| `ChatPane` | La voz: mensajes de sistema, humanos y de la IA; typing; composer |
+| `BrainPane` | La mesa de operaciones: rejilla de regiones + historial |
+| `BrainSlot` | Una región con todos sus estados |
+| `EditLog` | Historial clínico con diff tachado → valor nuevo |
+| `Toast` | Motivo del rechazo devuelto por el middleware |
+
+---
+
+## Previsualización sin Portal
+
+`pnpm dev` y abrir **`/preview.html`** renderiza la interfaz con datos fijos que replican el
+estado del diseño (Aurelio, el concurso de tortillas, el cursor de @marta sobre MIEDO).
+Sirve para iterar el aspecto sin gastar cuota ni levantar el agente. No publica ni recibe
+nada: la aplicación real es `/index.html`.
 
 ---
 
 ## Referencias visuales
 
-- Monitores de constantes vitales (Philips IntelliVue) — jerarquía de datos en oscuro.
-- r/place — energía de multitud sobre un lienzo compartido.
-- El diseño final llegará de Claude Design a partir del prompt preparado en esta sesión.
+- Monitores de constantes vitales de hospital — jerarquía de datos en oscuro.
+- Expedientes médicos, r/place, cursores multijugador de Figma.

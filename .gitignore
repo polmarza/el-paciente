@@ -41,6 +41,9 @@ coverage/
 # Nota: .mcp.json SÍ se commitea (las claves van como ${VARIABLE}, nunca el valor real).
 .claude/settings.local.json
 
+# Cerrojo del agente: impide que corran dos EL PACIENTE a la vez.
+.agent.lock
+
 # OS
 .DS_Store
 Thumbs.db

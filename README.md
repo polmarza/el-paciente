@@ -63,6 +63,10 @@ pnpm agent
 `pnpm dev` levanta la SPA (`apps/web`); `pnpm agent` despierta a EL PACIENTE (`apps/agent`)
 — necesita `.env.local` relleno.
 
+Sin credenciales de Portal puedes ver la interfaz igualmente: con `pnpm dev` corriendo, abre
+**`/preview.html`**, que renderiza la mesa de operaciones y el chat con datos fijos. No
+publica ni recibe nada; la aplicación real es `/index.html`.
+
 La config server-side (`portal.config.ts`: canales, cooldowns, anti-spoofing) se despliega
 aparte con el CLI de Portal, que se autentica con `PORTAL_SECRET`:
 
@@ -73,14 +77,17 @@ npx @portalsdk/cli deploy
 ## Estructura de carpetas
 
 ```
-apps/web          → SPA React (Vite): chat + panel cerebro
-apps/agent        → El agente: Portal core + OpenRouter
-packages/shared   → Tipos de mensajes, reducer del cerebro, seed, cooldowns
+apps/web          → SPA React (Vite): monitor + chat + mesa de operaciones
+apps/agent        → El agente: Portal core + OpenRouter + system prompt
+packages/shared   → Tipos, reducer del cerebro, seed, colores, cooldowns
 portal.config.ts  → Canales y middleware server-side de Portal
 docs/             → Documentación viva del proyecto
 changelog/        → Registro de cambios
 mejoras/          → Backlog de ideas
 ```
+
+Comprobaciones: `pnpm test` (unitarios del reducer y los estados de región) y
+`pnpm typecheck` (web, agente y config de Portal).
 
 ## Cómo contribuir
 

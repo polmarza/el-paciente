@@ -1,0 +1,125 @@
+/* Animaciones y reglas globales portadas del diseño de Claude Design. */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #07090b;
+}
+
+a {
+  color: #8fb8e8;
+}
+a:hover {
+  color: #b7d2f0;
+}
+
+/* El destello ámbar de una región recién intervenida. */
+@keyframes slotFlash {
+  0% {
+    background: rgba(224, 164, 60, 0.22);
+    box-shadow:
+      inset 0 0 0 1px rgba(224, 164, 60, 0.85),
+      0 0 28px rgba(224, 164, 60, 0.18);
+  }
+  100% {
+    background: rgba(224, 164, 60, 0);
+    box-shadow: none;
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* El electrocardiograma del monitor. */
+@keyframes ecg {
+  to {
+    stroke-dashoffset: -300;
+  }
+}
+
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* La etiqueta flotante del cursor de otro espectador. */
+@keyframes tagBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #1c262c;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* En el diseño esto venía como style-focus en el propio elemento. */
+.chat-input:focus {
+  border-color: #4a3c2e;
+}
+.slot-input:focus {
+  border-color: #3d5a66;
+}
+
+/* El split-screen es para proyector. En pantallas estrechas se apila. */
+@media (max-width: 900px) {
+  .paciente-body {
+    flex-direction: column;
+  }
+  .paciente-chat,
+  .paciente-brain {
+    width: 100% !important;
+  }
+  .paciente-chat {
+    flex: 1 1 55%;
+    border-right: none !important;
+  }
+  .paciente-brain {
+    flex: 1 1 45%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

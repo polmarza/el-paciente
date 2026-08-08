@@ -5,65 +5,65 @@ puede enseñar si el hackathon terminara ahora? Cada fase deja algo demostrable.
 
 ---
 
-## Fase 0 — Infraestructura ✅ (en curso)
+## Fase 0 — Infraestructura ✅
 
 - [x] Documentación completa en `docs/`
-- [ ] Monorepo pnpm (apps/web, apps/agent, packages/shared)
-- [ ] Cuenta Portal, `portal.config.ts` inicial desplegado, claves en `.env.local`
-- [ ] Clave OpenRouter en el entorno del agente
-- [ ] Prompt de diseño entregado a Claude Design (en paralelo, Pol)
-
-**Demostrable:** dos navegadores conectados al canal `chat` viéndose mensajes.
-
----
-
-## Fase 1 — El cuerpo (chat en vivo)
-
-- [ ] Chat con nicknames anónimos + color estable
-- [ ] Presencia (contador de gente dentro) y typing
-- [ ] Historial al conectar (`history`)
-- [ ] Cooldown de chat (3 s) en middleware
-
-**Demostrable:** sala de chat pública multi-usuario fluida.
+- [x] Repositorio público en GitHub
+- [x] Monorepo pnpm (apps/web, apps/agent, packages/shared)
+- [x] Prompt de diseño entregado a Claude Design y diseño recibido
+- [ ] Cuenta Portal creada y claves en `.env.local` — **bloqueado, lo hace Pol**
+- [ ] Clave de OpenRouter en `.env.local` — **bloqueado, lo hace Pol**
 
 ---
 
-## Fase 2 — El cerebro abierto
+## Fase 1 — El cuerpo y el cerebro (código escrito, sin verificar en vivo) ✅
 
-- [ ] Canal `brain` + reducer compartido (historial → 7 slots)
-- [ ] Panel de slots con edición inline y estados (reposo/editando/recién editado/cooldown)
-- [ ] Log de ediciones visible (quién, qué, diff, cuándo)
-- [ ] Cooldowns por slot y por usuario en `portal.config.ts`
-- [ ] Cursores colaborativos (ephemeral)
+- [x] Chat con nicknames anónimos, color estable y renombrado
+- [x] Presencia (aforo) y typing resuelto a nicknames vía metadata de presencia
+- [x] Canal `brain` + reducer compartido (historial → 7 regiones), con tests
+- [x] Mesa de operaciones con edición inline y los cuatro estados de región
+- [x] Historial clínico con diff (valor tachado → valor nuevo)
+- [x] Cursores colaborativos efímeros con caducidad
+- [x] Constantes vitales (pulso derivado del ritmo de ediciones)
+- [x] Cooldowns y anti-spoofing en `portal.config.ts`
+- [x] Previsualización de UI sin Portal (`/preview.html`)
 
-**Demostrable:** el momento r/place — multitud editando una mente con cursores en vivo
-(la IA aún no habla).
+**Verificado:** compila, construye, 11 tests en verde y la interfaz renderizada coincide
+con el diseño. **Sin verificar:** nada de esto ha hablado aún con Portal de verdad.
 
 ---
 
-## Fase 3 — El despertar (la IA entra)
+## Fase 2 — El despertar (código escrito, sin verificar en vivo) ✅
 
-- [ ] Agente Node: suscripción a `chat` + `brain`, cola de turnos, publicación firmada
-- [ ] Cliente OpenRouter con streaming y modelo por env
-- [ ] Construcción del system prompt: capa fija no editable + snapshot de slots + log reciente
-- [ ] Reacción a mensajes del chat
-- [ ] Reacción espontánea a ediciones del cerebro (con cita del autor por nickname)
-- [ ] Anti-spoofing (patrón secret + mask) verificado
-- [ ] Seed del cerebro al arrancar + comando reset
+- [x] Agente Node: escucha `chat` y `brain`, coalescencia de ráfagas, turno único en vuelo
+- [x] Cliente OpenRouter con modelo de respaldo y tiempo límite
+- [x] System prompt: capa fija no editable + regiones + historial con autores
+- [x] Reacción espontánea a ediciones, citando a quien te editó
+- [x] Episodios de crisis (`[EPISODIO]`) con su tratamiento visual
+- [x] Avisos clínicos en el chat cuando alguien interviene
+- [x] Seed al arrancar en sala virgen + `--reset`
 
-**Demostrable:** LA demo completa — editas el miedo y EL PACIENTE reacciona en segundos.
+---
+
+## Fase 3 — Primer contacto con Portal (siguiente)
+
+Todo lo anterior está escrito contra los tipos reales del SDK, pero nunca se ha conectado.
+Lo primero al tener credenciales:
+
+- [ ] `npx @portalsdk/cli deploy` y `secrets set AGENT_SECRET`
+- [ ] Dos navegadores: mensajes, presencia, typing
+- [ ] Editar una región → destello, log, aviso clínico y reacción de la IA
+- [ ] Violar un cooldown → toast con el motivo del middleware
+- [ ] Intentar publicar `role: "ai"` desde la consola → bloqueado
+- [ ] Matar y relanzar el agente → se reincorpora sin resembrar
 
 ---
 
 ## Fase 4 — El drama (polish para el jurado)
 
-- [ ] Aplicar el diseño de Claude Design (tokens → `design-system.md` → Tailwind)
-- [ ] Estados de ánimo visibles (`mood`) y momento "crisis de identidad"
-- [ ] Mensajes de sistema en el chat cuando editan el cerebro
-- [ ] Constantes vitales (COULD — solo si sobra tiempo)
-- [ ] Deploy a Vercel + ensayo del guion de demo con reset
-
-**Demostrable:** demo de 3 minutos ensayada para pantalla grande.
+- [ ] Ajustar el ritmo: cooldowns y tono del prompt con gente real dentro
+- [ ] Deploy a Vercel
+- [ ] Ensayo del guion de demo con reset (checklist en `testing.md`)
 
 ---
 
