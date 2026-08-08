@@ -39,8 +39,9 @@ Copia `.env.example` como `.env.local` y rellena los valores. Resumen:
 
 | Variable | Dónde se usa |
 |----------|--------------|
-| `VITE_PORTAL_API_KEY` | Frontend — publishable key de Portal |
+| `VITE_PORTAL_API_KEY` | Frontend — publishable key de Portal (`pk_…`) |
 | `PORTAL_API_KEY` | Agente — misma publishable key |
+| `PORTAL_SECRET` | CLI de Portal — secret key del proyecto (`sk_…`), solo para desplegar |
 | `AGENT_SECRET` | Agente + secrets de Portal — firma los mensajes de la IA |
 | `OPENROUTER_API_KEY` | Agente — inferencia |
 | `OPENROUTER_MODEL` / `OPENROUTER_MODEL_FALLBACK` | Agente — modelo principal y de respaldo |
@@ -60,8 +61,14 @@ pnpm agent
 ```
 
 `pnpm dev` levanta la SPA (`apps/web`); `pnpm agent` despierta a EL PACIENTE (`apps/agent`)
-— necesita `.env.local` relleno. La config server-side (`portal.config.ts`) se despliega
-con la CLI de Portal.
+— necesita `.env.local` relleno.
+
+La config server-side (`portal.config.ts`: canales, cooldowns, anti-spoofing) se despliega
+aparte con el CLI de Portal, que se autentica con `PORTAL_SECRET`:
+
+```bash
+npx @portalsdk/cli deploy
+```
 
 ## Estructura de carpetas
 

@@ -110,21 +110,36 @@ el-paciente/
 
 ## MCPs del proyecto
 
+Ninguno configurado a nivel de proyecto (`claude mcp list` → vacío, 2026-08-08).
+
 | Servidor | Alcance | Para qué se usa | Variables necesarias |
 |----------|---------|-----------------|----------------------|
-| vercel | user (ya global) | Deploy y logs del frontend | — (OAuth) |
+| vercel | user (app de escritorio) | Deploy y logs del frontend | — (OAuth) |
 
-Pendiente de decisión con el usuario tras revisar `claude mcp list` (protocolo de MCPs de
-`CLAUDE.md`). Portal no publica servidor MCP conocido a fecha 2026-08-08; verificar en su
-documentación oficial antes de proponer nada.
+Revisado el 2026-08-08: **Portal no publica servidor MCP oficial** (no aparece en
+docs.useportal.co) y OpenRouter tampoco es necesario como MCP — el agente habla con su API
+directamente. Si más adelante Portal publica uno, seguir el "Protocolo de MCPs" de
+`CLAUDE.md` antes de instalarlo.
 
 ---
 
 ## Estrategia de despliegue
 
+Repositorio: <https://github.com/polmarza/el-paciente> (público, `origin`, rama `main`).
+
 - **Frontend:** Vercel, deploy desde `main` (`apps/web`). Variables `VITE_*` en el panel.
-- **Config de Portal:** `portal.config.ts` se despliega con la CLI de Portal (los secretos
-  del middleware, como `AGENT_SECRET`, se registran como secrets de Portal).
+- **Config de Portal:** `portal.config.ts` se despliega con `@portalsdk/cli`. El CLI no
+  tiene login interactivo: se autentica con la secret key del proyecto en el entorno.
+  El deploy es atómico (si hay errores, no se aplica nada).
+
+  ```bash
+  export PORTAL_SECRET=sk_...        # secret key del proyecto (vive en .env.local)
+  npx @portalsdk/cli deploy          # despliega portal.config.ts del directorio actual
+  npx @portalsdk/cli secrets set AGENT_SECRET   # secretos que el middleware lee con env()
+  ```
+
+  Los secretos que usa el middleware (`AGENT_SECRET`) se registran con `secrets set`: su
+  valor se resuelve en ejecución y nunca se escribe en la configuración.
 - **Agente:** proceso local en la máquina de la demo (`pnpm agent`). Es deliberado: en un
   hackathon, un proceso que ves en tu terminal es más fiable que un worker remoto. Si se
   quisiera 24/7: Railway/Fly con el mismo código.
