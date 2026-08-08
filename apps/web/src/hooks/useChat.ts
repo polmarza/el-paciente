@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useChannel } from "@portalsdk/react";
 import type { ChannelStatus, Message } from "@portalsdk/core";
 import {
+  ACTIVITY_THINKING,
   CHANNEL_CHAT,
   checkChatBody,
   type ChatMessage,
@@ -21,12 +22,14 @@ export interface UseChatResult {
   status: ChannelStatus;
   /** Nicknames de quien está escribiendo, ya resueltos desde la presencia. */
   typingNicknames: string[];
+  /** EL PACIENTE está pensando de verdad: lo anuncia él, no lo deducimos. */
+  patientThinking: boolean;
   send: (body: string) => Promise<string | null>;
   notifyTyping: () => void;
 }
 
 export function useChat(identity: Identity): UseChatResult {
-  const { messages, presence, status, typing, send, sendTyping, setMetadata, me } =
+  const { messages, presence, status, typing, activity, send, sendTyping, setMetadata, me } =
     useChannel<ChatMessage>({
       channelId: CHANNEL_CHAT,
       history: 60,
@@ -93,11 +96,18 @@ export function useChat(identity: Identity): UseChatResult {
     [send, identity],
   );
 
+  // Solo el agente emite "thinking"; el público emite "typing". Basta con el tipo.
+  const patientThinking = useMemo(
+    () => activity.some((entry) => entry.kind === ACTIVITY_THINKING),
+    [activity],
+  );
+
   return {
     entries,
     presenceCount: presence?.count ?? 0,
     status,
     typingNicknames,
+    patientThinking,
     send: publish,
     notifyTyping: sendTyping,
   };

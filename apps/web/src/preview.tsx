@@ -99,6 +99,7 @@ function App() {
           entries={chat}
           identity={identity}
           typingNicknames={["marta"]}
+          patientThinking
           onSend={async () => null}
           onTyping={() => {}}
           onRename={() => {}}

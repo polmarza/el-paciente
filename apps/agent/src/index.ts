@@ -1,7 +1,9 @@
 import {
+  ACTIVITY_THINKING,
   CHANNEL_BRAIN,
   CHANNEL_CHAT,
   SEED_SLOTS,
+  THINKING_HEARTBEAT_MS,
   reduceBrain,
   slotDef,
   type BrainMessage,
@@ -122,6 +124,7 @@ async function runTurn() {
   }
 
   busy = true;
+  const stopThinking = announceThinking();
   const triggers = pendingTriggers;
   pendingTriggers = [];
   humanSpoke = false;
@@ -142,10 +145,22 @@ async function runTurn() {
     // Que no se congele la demo: un silencio clínico es mejor que una pantalla muerta.
     await say("…", false).catch(() => {});
   } finally {
+    stopThinking();
     busy = false;
     lastTurnAt = Date.now();
     if (humanSpoke || pendingTriggers.length > 0) scheduleTurn();
   }
+}
+
+/**
+ * Anuncia a la sala que EL PACIENTE está pensando, y lo reanuncia hasta que el turno
+ * termina. Antes esto se deducía en el cliente de que el último mensaje fuera humano y
+ * reciente, lo que mentía alegremente cuando el agente estaba caído.
+ */
+function announceThinking(): () => void {
+  chat.sendActivity(ACTIVITY_THINKING);
+  const timer = setInterval(() => chat.sendActivity(ACTIVITY_THINKING), THINKING_HEARTBEAT_MS);
+  return () => clearInterval(timer);
 }
 
 async function say(body: string, crisis: boolean) {

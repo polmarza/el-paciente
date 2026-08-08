@@ -4,13 +4,11 @@ import { FONT, T } from "../theme";
 import type { ChatEntry } from "../hooks/useChat";
 import { useAiReveal } from "../hooks/useAiReveal";
 
-/** Cuánto tiempo damos por hecho que la IA sigue pensando tras un mensaje humano. */
-const AI_THINKING_WINDOW_MS = 20_000;
-
 interface ChatPaneProps {
   entries: ChatEntry[];
   identity: Identity;
   typingNicknames: string[];
+  patientThinking: boolean;
   onSend: (body: string) => Promise<string | null>;
   onTyping: () => void;
   onRename: (nickname: string) => void;
@@ -21,6 +19,7 @@ export function ChatPane({
   entries,
   identity,
   typingNicknames,
+  patientThinking,
   onSend,
   onTyping,
   onRename,
@@ -38,12 +37,6 @@ export function ChatPane({
     if (distanceFromBottom < 180) element.scrollTop = element.scrollHeight;
   }, [entries, revealedText]);
 
-  // No hay señal de "la IA está pensando" en el canal: la inferimos de que el último
-  // mensaje sea humano y reciente. Con el límite evitamos dejar el aviso colgado si
-  // el agente está caído.
-  const last = entries[entries.length - 1];
-  const aiTyping =
-    last?.message.role === "human" && Date.now() - last.at < AI_THINKING_WINDOW_MS;
   // useChat ya descarta nuestra propia sesión al resolver los nicknames.
   const othersTyping = typingNicknames;
 
@@ -99,9 +92,9 @@ export function ChatPane({
           fontSize: 12,
         }}
       >
-        {aiTyping && (
+        {patientThinking && (
           <span style={{ color: T.typing, animation: "pulseDot 1.1s ease-in-out infinite" }}>
-            EL PACIENTE está escribiendo…
+            EL PACIENTE está pensando…
           </span>
         )}
         {othersTyping.length > 0 && (

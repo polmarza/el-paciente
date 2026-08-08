@@ -79,6 +79,7 @@ export default function App() {
           entries={chat.entries}
           identity={identity}
           typingNicknames={chat.typingNicknames}
+          patientThinking={chat.patientThinking}
           onSend={async (body) => {
             const reason = await chat.send(body);
             if (reason) showToast(reason);
