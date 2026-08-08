@@ -5,10 +5,11 @@ const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 /** Si un turno tarda más que esto, la demo ya se ha roto: mejor cortar y reintentar. */
 const TIMEOUT_MS = 15_000;
 /**
- * Con dos frases sobra. Cada carácter que sobra son 14 ms más de tecleo en el navegador,
- * así que la longitud de la respuesta, y no la red, es lo que marca el ritmo del directo.
+ * Quien controla la longitud es la regla de brevedad del prompt; esto es solo la red por
+ * si divaga. A 100 la red cortaba respuestas normales y el recorte las descartaba en
+ * silencio, así que se ensancha: mejor que casi nunca llegue a actuar.
  */
-const MAX_TOKENS = 100;
+const MAX_TOKENS = 160;
 
 export interface ChatTurn {
   role: "system" | "user" | "assistant";
