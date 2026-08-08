@@ -56,13 +56,17 @@ export async function drawDiploma(roundEnd: BrainRoundEnd): Promise<Blob> {
     384,
   );
 
-  // El secreto, que es lo que se comparte.
-  ctx.fillStyle = won ? T.aiText : T.textMono;
-  const secretSize = roundEnd.secret.length > 16 ? 76 : 108;
-  ctx.font = `400 ${secretSize}px 'Lora', serif`;
-  ctx.fillText(`“${roundEnd.secret}”`, SIZE / 2, 520);
+  // El secreto, que es lo que se comparte — salvo en un retirado: ahí nadie lo ha
+  // ganado, así que ni siquiera llega en `roundEnd` (ver types.ts). Mostrarlo sería un
+  // spoiler gratis, y de una ronda que además puede volver a salir más adelante.
+  if (roundEnd.secret) {
+    ctx.fillStyle = won ? T.aiText : T.textMono;
+    const secretSize = roundEnd.secret.length > 16 ? 76 : 108;
+    ctx.font = `400 ${secretSize}px 'Lora', serif`;
+    ctx.fillText(`“${roundEnd.secret}”`, SIZE / 2, 520);
+  }
 
-  // Quién y cuánto.
+  // Quién y cuánto. Sin el secreto arriba, sube para no dejar un hueco vacío en medio.
   ctx.fillStyle = T.textMono;
   ctx.font = "400 26px 'IBM Plex Mono', monospace";
   const lines = won
@@ -70,7 +74,8 @@ export async function drawDiploma(roundEnd: BrainRoundEnd): Promise<Blob> {
     : withdrawn
       ? [`@${roundEnd.by ?? "alguien"} pidió un paciente nuevo`, `tras ${formatLasted(roundEnd.lasted)}. Se fue sin contarlo.`]
       : ["Se murió sin decirlo,", `tras ${formatLasted(roundEnd.lasted)}. Nadie ganó esta.`];
-  lines.forEach((line, index) => ctx.fillText(line, SIZE / 2, 636 + index * 46));
+  const linesY = roundEnd.secret ? 636 : 500;
+  lines.forEach((line, index) => ctx.fillText(line, SIZE / 2, linesY + index * 46));
 
   // Pie.
   ctx.fillStyle = T.textFaint;

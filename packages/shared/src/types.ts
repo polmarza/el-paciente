@@ -77,15 +77,20 @@ export interface BrainSeed {
 }
 
 /**
- * Fin de ronda. Es el único momento en que el secreto se hace público: hasta aquí ha
+ * Fin de ronda. Es el único momento en que el secreto puede hacerse público: hasta aquí ha
  * vivido solo en el proceso del agente.
  */
 export interface BrainRoundEnd {
   kind: "round-end";
   /** `retirado` es el relevo pedido por la sala: nadie ganó, pero tampoco lo mataron. */
   outcome: "revelado" | "paro" | "retirado";
-  /** El secreto, ya sin valor: la ronda ha terminado. */
-  secret: string;
+  /**
+   * El secreto, presente en `revelado` (se lo ganaron) y en `paro` (se muere con él, y
+   * eso también se cuenta). **Ausente en `retirado`**: nadie lo ha ganado, así que no es
+   * contenido publicable — mostrarlo ahí sería un spoiler gratis, y encima de una ronda
+   * que puede volver a salir más adelante.
+   */
+  secret?: string;
   /** Expediente del paciente que se lleva (o no) el secreto. */
   expediente: string;
   /** Quién se lo arrancó. Ausente si murió. */

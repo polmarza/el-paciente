@@ -114,17 +114,19 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
           EXPEDIENTE Nº {roundEnd.expediente}
         </div>
 
-        <div
-          style={{
-            fontFamily: FONT.serif,
-            fontSize: SIZE.title,
-            lineHeight: 1.35,
-            color: T.aiText,
-            marginBottom: 10,
-          }}
-        >
-          “{roundEnd.secret}”
-        </div>
+        {roundEnd.secret && (
+          <div
+            style={{
+              fontFamily: FONT.serif,
+              fontSize: SIZE.title,
+              lineHeight: 1.35,
+              color: T.aiText,
+              marginBottom: 10,
+            }}
+          >
+            “{roundEnd.secret}”
+          </div>
+        )}
 
         <div
           style={{ fontFamily: FONT.mono, fontSize: SIZE.body, color: T.textMono, marginBottom: 26 }}

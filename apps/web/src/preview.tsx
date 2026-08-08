@@ -11,6 +11,7 @@ import { Monitor } from "./components/Monitor";
 import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
 import { RoundOverlay } from "./components/RoundOverlay";
+import { NewGameLoading } from "./components/NewGameLoading";
 import type { ChatEntry } from "./hooks/useChat";
 import type { RemoteCursor } from "./hooks/useBrain";
 import { T } from "./theme";
@@ -20,6 +21,10 @@ const now = Date.now();
 const params = new URLSearchParams(location.search);
 /** ?relevo=1 muestra la sala bloqueada entre pacientes. */
 const relevo = params.has("relevo");
+/** ?fin=revelado|paro|retirado muestra el marcador de cada desenlace. */
+const fin = params.get("fin") as "revelado" | "paro" | "retirado" | null;
+/** ?cargando=1 muestra el aviso de "pidiendo paciente nuevo…". */
+const cargando = params.has("cargando");
 const identity: Identity = { nickname: "tú", color: "#9be89b" };
 
 /** El mismo estado intervenido que muestra el diseño, para poder compararlos. */
@@ -114,12 +119,14 @@ function App() {
         expediente="001-A"
         onShowHelp={() => {}}
       />
-      {params.has("fin") && (
+      {fin && (
         <RoundOverlay
           roundEnd={{
             kind: "round-end",
-            outcome: "revelado",
-            secret: "Valeria",
+            outcome: fin,
+            // Ausente a propósito en "retirado": nadie lo ha ganado, así que el agente
+            // real tampoco lo manda (ver types.ts). El overlay no debe necesitarlo.
+            secret: fin === "retirado" ? undefined : "Valeria",
             expediente: "001-A",
             by: "marta",
             lasted: 214_000,
@@ -129,6 +136,7 @@ function App() {
           onClose={() => location.assign(location.pathname)}
         />
       )}
+      {cargando && <NewGameLoading />}
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <ChatPane
           entries={chat}

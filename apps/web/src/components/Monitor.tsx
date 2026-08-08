@@ -112,20 +112,35 @@ export function Monitor({
     const group = traceRef.current;
     if (!group) return;
 
-    // Conservamos la fase de la animación anterior para que el cambio de ritmo no salte.
-    const previous = group.getAnimations()[0];
-    const previousPeriod = Number(previous?.effect?.getTiming().duration) || 0;
-    const phase =
-      previous && previousPeriod > 0
-        ? ((Number(previous.currentTime) || 0) % previousPeriod) / previousPeriod
-        : 0;
-    previous?.cancel();
+    /**
+     * Arranca la animación. Con `preservePhase`, retoma justo donde iba la anterior (para
+     * que un cambio de pulso no salte). Sin él, arranca limpia desde el pico.
+     *
+     * El navegador congela `currentTime` en cuanto la pestaña pasa a segundo plano —
+     * verificado en vivo: 27 s con la pestaña oculta y ni un milisegundo de avance—, y dejan
+     * de llegar frames de `requestAnimationFrame`. "Preservar la fase" leyendo ese reloj
+     * congelado al volver no tiene sentido (el tiempo real que pasó no está en ningún
+     * sitio), y era justo lo que producía el salto hacia atrás y el bip espaciado que se
+     * veía al cambiar de pestaña y volver.
+     */
+    function startAnimation(preservePhase: boolean) {
+      const previous = group!.getAnimations()[0];
+      const previousPeriod = Number(previous?.effect?.getTiming().duration) || 0;
+      const phase =
+        preservePhase && previous && previousPeriod > 0
+          ? ((Number(previous.currentTime) || 0) % previousPeriod) / previousPeriod
+          : 0;
+      previous?.cancel();
 
-    const animation = group.animate(
-      [{ transform: "translateX(0px)" }, { transform: `translateX(${-beatWidth}px)` }],
-      { duration: period, iterations: Infinity, easing: "linear" },
-    );
-    animation.currentTime = phase * period;
+      const next = group!.animate(
+        [{ transform: "translateX(0px)" }, { transform: `translateX(${-beatWidth}px)` }],
+        { duration: period, iterations: Infinity, easing: "linear" },
+      );
+      next.currentTime = phase * period;
+      return next;
+    }
+
+    let animation = startAnimation(true);
 
     // El bip se dispara cuando la animación cruza un límite de iteración, que es justo
     // cuando un pico R queda sobre la referencia. Se vigila con el reloj de la propia
@@ -143,7 +158,19 @@ export function Monitor({
     monitorPing(alarmingRef.current);
     frame = requestAnimationFrame(watch);
 
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      cancelAnimationFrame(frame);
+      animation.cancel();
+      animation = startAnimation(false);
+      previousIteration = 0;
+      monitorPing(alarmingRef.current);
+      frame = requestAnimationFrame(watch);
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
+      document.removeEventListener("visibilitychange", onVisible);
       cancelAnimationFrame(frame);
       animation.cancel();
     };
