@@ -34,3 +34,6 @@ export const BPM_PER_EDIT = 16;
 export const BPM_MAX = 142;
 /** Por encima de este pulso el monitor se pone en rojo. */
 export const BPM_ALARM = 95;
+
+/** Cuánto dura el marcador entre una ronda y la siguiente. */
+export const ROUND_INTERMISSION_MS = 18_000;

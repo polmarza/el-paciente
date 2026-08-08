@@ -10,6 +10,7 @@ import { seedSnapshot, type BrainState, type Identity } from "@el-paciente/share
 import { Monitor } from "./components/Monitor";
 import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
+import { RoundOverlay } from "./components/RoundOverlay";
 import type { ChatEntry } from "./hooks/useChat";
 import type { RemoteCursor } from "./hooks/useBrain";
 import { T } from "./theme";
@@ -48,6 +49,8 @@ const brain: BrainState = {
       editedAt: now - 840_000,
     },
   },
+  round: "cruce",
+  roundEnd: null,
   log: [
     entry("l1", now - 2_000, "r2", "rafa", "#8fb8e8", "—", "Gané un concurso de tortillas en Ourense, 2019"),
     entry("l2", now - 240_000, "nombre", "chispas99", "#f29a6a", "EL PACIENTE", "Aurelio"),
@@ -94,6 +97,19 @@ function App() {
       }}
     >
       <Monitor bpm={108} online={23} sessionSeconds={3127} />
+      {new URLSearchParams(location.search).has("fin") && (
+        <RoundOverlay
+          roundEnd={{
+            kind: "round-end",
+            outcome: "revelado",
+            secret: "Valeria",
+            by: "marta",
+            lasted: 214_000,
+            nextAt: now + 12_000,
+          }}
+          now={now}
+        />
+      )}
       <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <ChatPane
           entries={chat}

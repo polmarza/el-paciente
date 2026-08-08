@@ -32,10 +32,14 @@ const lastEditBySlot = new Map<string, number>();
 const lastEditByUser = new Map<string, number>();
 const lastChatByUser = new Map<string, number>();
 
-/** Solo el agente conoce este secreto. Se registra con `portal secrets set AGENT_SECRET`. */
-function isAgent(content: { secret?: string } | undefined): boolean {
+/**
+ * Solo el agente conoce esta firma. Se registra con `portal secrets set AGENT_SECRET`.
+ * Ojo: el campo se llama `auth`, no `secret`. `secret` es el secreto de la ronda, que sí
+ * debe llegar a los clientes cuando la ronda termina.
+ */
+function isAgent(content: { auth?: string } | undefined): boolean {
   const expected = env("AGENT_SECRET");
-  return Boolean(expected && content?.secret && content.secret === expected);
+  return Boolean(expected && content?.auth && content.auth === expected);
 }
 
 const moderateChat = defineMiddleware<ChatMessage>("publish", (ctx) => {
@@ -45,8 +49,8 @@ const moderateChat = defineMiddleware<ChatMessage>("publish", (ctx) => {
     if (!isAgent(content)) {
       return block("Solo EL PACIENTE puede hablar con su propia voz.");
     }
-    // El secreto nunca debe llegar a los navegadores.
-    const { secret: _secret, ...clean } = content;
+    // La firma nunca debe llegar a los navegadores.
+    const { auth: _auth, ...clean } = content;
     return mask<ChatMessage>(clean as ChatMessage);
   }
 
@@ -71,9 +75,11 @@ const moderateBrain = defineMiddleware<BrainMessage>("publish", (ctx) => {
   // Los cursores son efímeros y puro adorno: no tocan la mente de nadie.
   if ((content as { kind?: string })?.kind === "cursor") return allow();
 
-  if (content?.kind === "seed") {
-    if (!isAgent(content)) return block("Solo EL PACIENTE puede restaurarse.");
-    const { secret: _secret, ...clean } = content;
+  // El arranque de ronda y su desenlace solo los publica el agente. El desenlace lleva el
+  // secreto, que hasta ese momento no ha existido fuera de su proceso.
+  if (content?.kind === "seed" || content?.kind === "round-end") {
+    if (!isAgent(content)) return block("Solo EL PACIENTE decide cuándo empieza y acaba.");
+    const { auth: _auth, ...clean } = content as { auth?: string };
     return mask<BrainMessage>(clean as BrainMessage);
   }
 

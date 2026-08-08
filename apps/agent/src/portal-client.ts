@@ -9,9 +9,14 @@ import { env } from "./env.ts";
  */
 export const portal = new Portal({ apiKey: env.portalApiKey });
 
-/** Firma un mensaje como propio del agente. El middleware valida y elimina el secreto. */
-export function signed<T extends object>(content: T): T & { secret: string } {
-  return { ...content, secret: env.agentSecret };
+/**
+ * Firma un mensaje como propio del agente. El middleware valida y elimina la firma.
+ * Se llama `auth` y no `secret` a propósito: `secret` es el secreto de la ronda, que sí
+ * es contenido publicable, y confundirlos haría que el `mask` borrara justo lo que
+ * queremos enseñar.
+ */
+export function signed<T extends object>(content: T): T & { auth: string } {
+  return { ...content, auth: env.agentSecret };
 }
 
 export function openChannel<M>(id: string, history: number): ChannelHandle<M> {

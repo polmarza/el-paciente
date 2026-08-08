@@ -34,14 +34,14 @@ export interface AiMessage {
   body: string;
   /** Marca los episodios de crisis de identidad: cambia el encabezado y el color. */
   crisis: boolean;
-  /** Solo en tránsito agente → Portal. El middleware lo elimina antes de repartir. */
-  secret?: string;
+  /** Firma del agente. Solo en tránsito: el middleware la verifica y la elimina. */
+  auth?: string;
 }
 
 export interface SystemMessage {
   role: "system";
   body: string;
-  secret?: string;
+  auth?: string;
 }
 
 export type ChatMessage = HumanMessage | AiMessage | SystemMessage;
@@ -61,10 +61,30 @@ export interface BrainEdit {
 export interface BrainSeed {
   kind: "seed";
   slots: Record<SlotId, string>;
-  secret?: string;
+  /** Identificador de la ronda que arranca. El secreto NUNCA viaja aquí. */
+  round?: string;
+  auth?: string;
 }
 
-export type BrainMessage = BrainEdit | BrainSeed;
+/**
+ * Fin de ronda. Es el único momento en que el secreto se hace público: hasta aquí ha
+ * vivido solo en el proceso del agente.
+ */
+export interface BrainRoundEnd {
+  kind: "round-end";
+  outcome: "revelado" | "paro";
+  /** El secreto, ya sin valor: la ronda ha terminado. */
+  secret: string;
+  /** Quién se lo arrancó. Ausente si murió. */
+  by?: string;
+  /** Cuánto duró la ronda, en milisegundos. */
+  lasted: number;
+  /** Epoch ms en que arranca la siguiente. */
+  nextAt: number;
+  auth?: string;
+}
+
+export type BrainMessage = BrainEdit | BrainSeed | BrainRoundEnd;
 
 /** Mensaje efímero: el cursor de un espectador sobre una región. No persiste. */
 export interface BrainCursor {

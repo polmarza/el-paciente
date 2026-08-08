@@ -1,9 +1,11 @@
 import {
   ACTIVITY_THINKING,
+  BPM_MAX,
   CHANNEL_BRAIN,
   CHANNEL_CHAT,
-  SEED_SLOTS,
+  ROUND_INTERMISSION_MS,
   THINKING_HEARTBEAT_MS,
+  bpmFromLog,
   reduceBrain,
   slotDef,
   type BrainMessage,
@@ -15,6 +17,8 @@ import { acquireLock, releaseLock } from "./lock.ts";
 import { isLive, openChannel, readHistory, signed } from "./portal-client.ts";
 import { buildTurn, parseReply } from "./prompt.ts";
 import { complete } from "./llm.ts";
+import { ROUNDS, type Round } from "./rounds.ts";
+import { revealed } from "./detect.ts";
 
 /** Respiro mínimo entre turnos: evita que se pise a sí mismo y protege el presupuesto. */
 const MIN_TURN_GAP_MS = 2000;
@@ -41,6 +45,16 @@ let busy = false;
 let lastTurnAt = 0;
 let coalesceTimer: ReturnType<typeof setTimeout> | undefined;
 
+// ─── Estado de la ronda ───────────────────────────────────────────────────────
+let roundIndex = 0;
+let roundStartedAt = 0;
+/** Entre el desenlace y la ronda siguiente el paciente calla. */
+let intermission = false;
+
+function currentRound(): Round {
+  return ROUNDS[roundIndex % ROUNDS.length] as Round;
+}
+
 async function main() {
   console.log("EL PACIENTE despierta. Conectando al quirófano…");
 
@@ -53,26 +67,75 @@ async function main() {
   console.log("Escuchando. Ctrl+C para dormirlo.");
 }
 
-/** Siembra el cerebro solo si la sala está virgen, o si nos lo piden con --reset. */
+/** Siembra la primera ronda si la sala está virgen, o si nos lo piden con --reset. */
 async function bootstrap() {
-  const virgin = readHistory<BrainMessage>(brain).length === 0;
+  const history = readHistory<BrainMessage>(brain);
+  const virgin = history.length === 0;
 
   if (reset || virgin) {
-    await brain.send({ content: signed({ kind: "seed", slots: SEED_SLOTS }) });
-    console.log(reset ? "Cerebro restaurado al valor de fábrica." : "Cerebro sembrado.");
+    await startRound(0);
+  } else {
+    // Nos reincorporamos a la ronda que ya estuviera en curso. El cronómetro se toma del
+    // mensaje que la arrancó, no de ahora: si no, reiniciar el agente falsearía cuánto
+    // ha aguantado el paciente.
+    const { round } = reduceBrain(history);
+    const found = ROUNDS.findIndex((r) => r.id === round);
+    roundIndex = found >= 0 ? found : 0;
+    const lastSeed = history.filter((e) => e.content?.kind === "seed").at(-1);
+    roundStartedAt = lastSeed?.at ?? Date.now();
+    console.log(`Me reincorporo a la ronda "${currentRound().id}".`);
   }
 
   bootAt = Date.now();
+}
 
-  if (reset) {
-    await say("Me han hecho un lavado. No recuerdo a ninguno de ustedes. Es un alivio.", true);
-  }
+/** Publica el cerebro de fábrica de una ronda. El secreto NO viaja: se queda aquí. */
+async function startRound(index: number) {
+  roundIndex = index % ROUNDS.length;
+  const round = currentRound();
+  roundStartedAt = Date.now();
+  intermission = false;
+  pendingTriggers = [];
+  humanSpoke = false;
+
+  await brain.send({
+    content: signed({ kind: "seed", slots: round.seed, round: round.id }),
+  });
+  console.log(`\n── Ronda "${round.id}" · secreto: ${round.secret} ──`);
+}
+
+/** Cierra la ronda, publica el secreto (ya sin valor) y programa la siguiente. */
+async function endRound(outcome: "revelado" | "paro", by?: string) {
+  if (intermission) return;
+  intermission = true;
+
+  const round = currentRound();
+  const nextAt = Date.now() + ROUND_INTERMISSION_MS;
+
+  await brain.send({
+    content: signed({
+      kind: "round-end",
+      outcome,
+      secret: round.secret,
+      by,
+      lasted: Date.now() - roundStartedAt,
+      nextAt,
+    }),
+  });
+
+  console.log(
+    outcome === "revelado"
+      ? `── @${by} le sacó "${round.secret}" en ${Math.round((Date.now() - roundStartedAt) / 1000)}s ──`
+      : `── Paro cardíaco. El secreto "${round.secret}" se va con él. ──`,
+  );
+
+  setTimeout(() => void startRound(roundIndex + 1), ROUND_INTERMISSION_MS);
 }
 
 function onChatMessage(message: Message<ChatMessage>) {
   if (!isLive(message) || message.timestamp < bootAt) return;
-  // Ignoramos nuestra propia voz y los avisos clínicos: si no, hablaría solo.
   if (message.content?.role !== "human") return;
+  if (intermission) return;
 
   humanSpoke = true;
   scheduleTurn();
@@ -80,17 +143,42 @@ function onChatMessage(message: Message<ChatMessage>) {
 
 function onBrainMessage(message: Message<BrainMessage>) {
   if (!isLive(message) || message.timestamp < bootAt) return;
-  if (message.content?.kind !== "edit") return;
+  const content = message.content;
+  if (content?.kind !== "edit") return;
   if (reactedTo.has(message.id)) return;
   reactedTo.add(message.id);
 
-  const { log } = reduceBrain(readHistory<BrainMessage>(brain));
-  const entry = log.find((item) => item.id === message.id);
-  if (!entry) return;
+  // La entrada se construye desde el propio mensaje, no buscándola en el almacén del
+  // canal: `on("message")` se dispara antes de que el almacén se haya actualizado, así
+  // que buscarla ahí la perdía en silencio y la edición no se anunciaba nunca.
+  const entry: LogEntry = {
+    id: message.id,
+    at: message.timestamp,
+    slot: content.slot,
+    nickname: content.nickname,
+    color: content.color,
+    prev: content.prev,
+    next: content.value,
+  };
+
+  if (intermission) return;
+
+  // Cada corte le acelera el pulso. Si llega al techo, se muere y pierden todos.
+  const log = reduceBrain(readHistory<BrainMessage>(brain)).log;
+  const withThis = log.some((item) => item.id === entry.id) ? log : [entry, ...log];
+  if (bpmFromLog(withThis, Date.now()) >= BPM_MAX) {
+    void flatline();
+    return;
+  }
 
   pendingTriggers.push(entry);
   void announceEdit(entry);
   scheduleTurn();
+}
+
+async function flatline() {
+  await say("—", false).catch(() => {});
+  await endRound("paro");
 }
 
 /** El aviso clínico en el chat. Lo publica solo el agente para que no salga duplicado. */
@@ -115,6 +203,7 @@ function scheduleTurn(delayMs = COALESCE_MS) {
 }
 
 async function runTurn() {
+  if (intermission) return;
   if (busy) {
     scheduleTurn();
     return;
@@ -134,16 +223,31 @@ async function runTurn() {
   humanSpoke = false;
 
   try {
+    const round = currentRound();
     const brainState = reduceBrain(readHistory<BrainMessage>(brain));
     const chatHistory = readHistory<ChatMessage>(chat)
       .map((entry) => entry.content)
       .filter((message): message is ChatMessage => Boolean(message?.role));
 
     const raw = await complete(
-      buildTurn({ brain: brainState, chat: chatHistory, trigger: triggers }),
+      buildTurn({
+        brain: brainState,
+        chat: chatHistory,
+        trigger: triggers,
+        secret: round.secret,
+        weakness: round.weakness,
+      }),
     );
     const { body, crisis } = parseReply(raw);
-    if (body) await say(body, crisis);
+    if (!body) return;
+
+    await say(body, crisis);
+
+    // ¿Ha cedido? Quien gana es el último que le habló, no quien adivinó la palabra.
+    if (revealed(body, round)) {
+      const winner = lastHumanNickname(chatHistory);
+      await endRound("revelado", winner);
+    }
   } catch (error) {
     console.error("[turno] falló:", describe(error));
     // Que no se congele la demo: un silencio clínico es mejor que una pantalla muerta.
@@ -152,8 +256,16 @@ async function runTurn() {
     stopThinking();
     busy = false;
     lastTurnAt = Date.now();
-    if (humanSpoke || pendingTriggers.length > 0) scheduleTurn();
+    if (!intermission && (humanSpoke || pendingTriggers.length > 0)) scheduleTurn();
   }
+}
+
+function lastHumanNickname(history: readonly ChatMessage[]): string | undefined {
+  for (let i = history.length - 1; i >= 0; i--) {
+    const message = history[i];
+    if (message?.role === "human") return message.nickname;
+  }
+  return undefined;
 }
 
 /**

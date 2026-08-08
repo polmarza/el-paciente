@@ -5,6 +5,7 @@ import { Monitor } from "./components/Monitor";
 import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
 import { Toast } from "./components/Toast";
+import { RoundOverlay } from "./components/RoundOverlay";
 import { useBrain } from "./hooks/useBrain";
 import { useChat } from "./hooks/useChat";
 import { useNow } from "./hooks/useNow";
@@ -98,6 +99,9 @@ export default function App() {
         />
       </div>
 
+      {brain.roundEnd && brain.roundEnd.nextAt > now && (
+        <RoundOverlay roundEnd={brain.roundEnd} now={now} />
+      )}
       {toast && <Toast text={toast} />}
     </div>
   );

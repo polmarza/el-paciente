@@ -1,4 +1,11 @@
-import type { BrainMessage, BrainSnapshot, SlotId, SlotState, SlotValue } from "./types.ts";
+import type {
+  BrainMessage,
+  BrainRoundEnd,
+  BrainSnapshot,
+  SlotId,
+  SlotState,
+  SlotValue,
+} from "./types.ts";
 import { isSlotId } from "./slots.ts";
 import { seedSnapshot } from "./seed.ts";
 import {
@@ -36,6 +43,14 @@ export interface BrainState {
   snapshot: BrainSnapshot;
   /** Historial clínico, del más reciente al más antiguo. */
   log: LogEntry[];
+  /** Identificador de la ronda en curso, si el seed lo declaró. */
+  round: string | null;
+  /**
+   * Desenlace de la ronda, mientras siga siendo el último acontecimiento. Un `seed`
+   * posterior lo borra, así que el aviso en pantalla desaparece solo cuando empieza la
+   * ronda siguiente.
+   */
+  roundEnd: BrainRoundEnd | null;
 }
 
 /**
@@ -50,6 +65,8 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
 
   let snapshot = seedSnapshot();
   const log: LogEntry[] = [];
+  let round: string | null = null;
+  let roundEnd: BrainRoundEnd | null = null;
 
   for (const entry of ordered) {
     const msg = entry.content;
@@ -59,6 +76,14 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
       for (const [id, content] of Object.entries(msg.slots)) {
         if (isSlotId(id)) snapshot[id] = { content, editor: "", editorColor: "", editedAt: 0 };
       }
+      round = msg.round ?? null;
+      // Empieza ronda nueva: el desenlace anterior deja de estar en pantalla.
+      roundEnd = null;
+      continue;
+    }
+
+    if (msg.kind === "round-end") {
+      roundEnd = msg;
       continue;
     }
 
@@ -85,7 +110,7 @@ export function reduceBrain(entries: readonly HistoryEntry<BrainMessage>[]): Bra
   }
 
   log.reverse();
-  return { snapshot, log };
+  return { snapshot, log, round, roundEnd };
 }
 
 /**
