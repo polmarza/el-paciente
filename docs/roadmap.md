@@ -126,7 +126,32 @@ añade mecánicas: todo va de que se entienda y se sienta.
 
 ---
 
-## Fase 7 — Calibrado y estreno
+## Fase 7 — El bolsillo (versión móvil + PWA) ✅
+
+La audiencia entra desde el teléfono; hasta aquí, la app era solo de escritorio (el
+pasillo ni siquiera existía en pantallas estrechas). Diseño de dos navbars decidido con
+el usuario: nada de columnas apiladas — cada zona es una pestaña a pantalla completa.
+
+- [x] Navbar inferior con cuatro pestañas: PASILLO · CHAT · MENTE · HISTORIAL, con
+      badges de "no leído" por pestaña y el aforo junto al pasillo
+- [x] El historial clínico asciende de cajón a pestaña propia en móvil
+- [x] Navbar superior compacta: la bolita deja de ser decorativa y late con el pulso
+      (mismo reloj que el bip), más el menú ☰ con sonido, pistas, ayuda, nueva partida
+      y tu nombre
+- [x] Edición de regiones a prueba de táctil: sin cancelar por blur, botones ✓/✕
+- [x] Inputs a 16px en móvil (si no, iOS hace zoom al enfocar y descuadra todo)
+- [x] Onboarding a pantalla completa, apilado en vertical
+- [x] `100dvh`, `viewport-fit=cover` y áreas seguras de iPhone
+- [x] PWA instalable: manifest + iconos con el motivo del electro (192/512/maskable/
+      apple-touch). **Sin service worker a propósito** — juego realtime, y un SW
+      cacheando bundles nos daría clientes con código viejo
+- [x] Verificado a 375×812 con emulación táctil (las 4 pestañas, onboarding, borrador
+      que sobrevive al blur, sin scroll horizontal) y regresión de escritorio a
+      1000/1400px
+- [ ] Prueba en un iPhone/Android real: no-zoom al enfocar, teclado + navbar, instalación
+      desde Chrome y "Añadir a pantalla de inicio" en Safari — la emulación no cubre esto
+
+## Fase 8 — Calibrado y estreno
 
 Todo lo anterior funciona y está verificado. Lo que queda no es código: es afinar con gente
 delante, que es lo único que no se puede hacer en solitario.

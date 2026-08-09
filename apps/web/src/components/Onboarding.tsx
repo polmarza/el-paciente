@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FONT, T, SIZE } from "../theme";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 interface OnboardingProps {
   nickname: string;
@@ -14,7 +15,7 @@ interface OnboardingProps {
  */
 function DibujoObjetivo() {
   return (
-    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+    <svg viewBox="0 0 180 210" width="100%" aria-hidden="true">
       {/* Una sola idea: lo que diría, bajo llave. La burbuja es lo que se le quiere sacar;
           el candado, lo que lo impide. Nada más en el encuadre. */}
       <rect x="14" y="58" width="152" height="76" rx="4"
@@ -36,7 +37,7 @@ function DibujoObjetivo() {
 
 function DibujoMecanica() {
   return (
-    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+    <svg viewBox="0 0 180 210" width="100%" aria-hidden="true">
       {/* La mesa de operaciones, tal como se ve a la derecha en la app */}
       {[
         [10, 8, 78, 26], [96, 8, 74, 26],
@@ -66,7 +67,7 @@ function DibujoMecanica() {
 
 function DibujoFinal() {
   return (
-    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+    <svg viewBox="0 0 180 210" width="100%" aria-hidden="true">
       {/* Arriba: se gana — el secreto sale */}
       <text x="14" y="24" fontFamily={FONT.mono} fontSize="10" fill={T.vital} letterSpacing="1.5">
         GANÁIS
@@ -162,6 +163,9 @@ const TOTAL = STEPS.length + 1;
 export function Onboarding({ nickname, onFinish }: OnboardingProps) {
   const [index, setIndex] = useState(0);
   const [name, setName] = useState(nickname);
+  // En móvil el modal es la pantalla entera, por encima de las dos navbars: apilado en
+  // vertical (dibujo arriba, texto debajo) — el layout horizontal dejaba ~5px al texto.
+  const mobile = useIsMobile();
 
   const last = index === STEPS.length;
   const step = STEPS[index];
@@ -177,21 +181,35 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
         background: "rgba(4,6,8,.93)",
         backdropFilter: "blur(4px)",
         animation: "toastIn .3s ease-out",
-        padding: 20,
+        padding: mobile ? 0 : 20,
       }}
     >
       <div
         role="dialog"
         aria-label="Cómo funciona esto"
         style={{
-          width: "min(680px, 100%)",
-          border: `1px solid ${T.slotBorder}`,
+          width: mobile ? "100%" : "min(680px, 100%)",
+          height: mobile ? "100%" : undefined,
+          boxSizing: "border-box",
+          display: mobile ? "flex" : undefined,
+          flexDirection: mobile ? "column" : undefined,
+          overflowY: mobile ? "auto" : undefined,
+          border: mobile ? "none" : `1px solid ${T.slotBorder}`,
           background: T.monitorBg,
-          borderRadius: 3,
-          padding: "34px 38px 24px",
+          borderRadius: mobile ? 0 : 3,
+          padding: mobile ? "26px 22px 18px" : "34px 38px 24px",
         }}
       >
-        <div style={{ display: "flex", gap: 34, alignItems: "center", minHeight: 262 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: mobile ? "column-reverse" : "row",
+            gap: mobile ? 20 : 34,
+            alignItems: mobile ? "stretch" : "center",
+            minHeight: mobile ? undefined : 262,
+            flex: mobile ? 1 : undefined,
+          }}
+        >
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2
               style={{
@@ -228,7 +246,7 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
                     if (event.key === "Enter" && name.trim()) onFinish(name);
                   }}
                   aria-label="Tu nombre en la sala"
-                  className="chat-input"
+                  className="chat-input input-grande"
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
@@ -269,7 +287,13 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
             )}
           </div>
 
-          <div style={{ flex: "none", width: 220 }}>
+          <div
+            style={{
+              flex: "none",
+              width: mobile ? 160 : 220,
+              alignSelf: mobile ? "center" : undefined,
+            }}
+          >
             {last ? <DibujoNombre nickname={name} /> : step?.drawing()}
           </div>
         </div>
@@ -279,6 +303,8 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 10,
             marginTop: 22,
             paddingTop: 18,
             borderTop: `1px solid ${T.brainRule}`,
@@ -343,7 +369,7 @@ export function Onboarding({ nickname, onFinish }: OnboardingProps) {
 function DibujoNombre({ nickname }: { nickname: string }) {
   const visible = (nickname || "tú").slice(0, 12);
   return (
-    <svg viewBox="0 0 180 210" width="100%" height="257" aria-hidden="true">
+    <svg viewBox="0 0 180 210" width="100%" aria-hidden="true">
       <text x="14" y="26" fontFamily={FONT.mono} fontSize="9" fill={T.textFaint} letterSpacing="1.5">
         HISTORIAL CLÍNICO
       </text>

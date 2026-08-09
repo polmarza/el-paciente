@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { BrainRoundEnd } from "@el-paciente/shared";
 import { FONT, T, SIZE } from "../theme";
 import { downloadBlob, drawDiploma, formatLasted } from "../lib/diploma";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 interface RoundOverlayProps {
   roundEnd: BrainRoundEnd;
@@ -17,6 +18,7 @@ interface RoundOverlayProps {
 export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mobile = useIsMobile();
 
   const secondsLeft = Math.max(0, Math.ceil((roundEnd.nextAt - now) / 1000));
   const won = roundEnd.outcome === "revelado";
@@ -52,6 +54,7 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         background: "rgba(4,6,8,.88)",
         backdropFilter: "blur(3px)",
         animation: "toastIn .3s ease-out",
+        padding: mobile ? 14 : 0,
       }}
       onClick={onClose}
     >
@@ -62,7 +65,10 @@ export function RoundOverlay({ roundEnd, now, onClose }: RoundOverlayProps) {
         style={{
           position: "relative",
           maxWidth: 620,
-          padding: "38px 44px 34px",
+          maxHeight: "90dvh",
+          overflowY: "auto",
+          boxSizing: "border-box",
+          padding: mobile ? "30px 20px 24px" : "38px 44px 34px",
           textAlign: "center",
           border: `1px solid ${accent}44`,
           background: T.monitorBg,

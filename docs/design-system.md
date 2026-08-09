@@ -99,6 +99,35 @@ Legibilidad en proyector: el chat no baja de 16px.
   **pasa por encima** de la mesa de operaciones en vez de comprimirla — las regiones son el
   juego y no deben reordenarse cada vez que alguien consulta el historial.
 
+### Móvil (≤700px)
+
+El umbral vive duplicado en `hooks/useIsMobile.ts` y en la media query de `styles.css`
+(CSS no lee constantes de JS; hay comentario cruzado en ambos). Por debajo, la app cambia
+de estructura, no solo de tamaño — por eso lo decide React y no solo CSS:
+
+- **Dos navbars.** La inferior (`MobileTabBar`) con cuatro pestañas: PASILLO (con el
+  aforo), CHAT (por defecto), MENTE (mesa + parte de ingreso) e HISTORIAL — el cajón del
+  historial asciende a pestaña propia (`HistorialPane`): en un teléfono, un cajón que se
+  despliega taparía justo la mesa que estás mirando. Badges ámbar de "no leído" por
+  pestaña (`useUnreadCounts`), con la activa siempre a cero.
+- La superior es el `Monitor` compacto: una fila con la **bolita-latido** (deja de ser
+  decorativa: late una vez por ciclo del pulso con el mismo reloj WAAPI que dispara el
+  bip — verde en reposo, roja en alarma, sustituye al electro) + `NN LPM` + menú ☰
+  (`BurgerMenu`: sonido, pistas, cómo se juega, nueva partida con confirmación, tu
+  nombre). Expediente y reloj se sacrifican en 375px.
+- Los cuatro paneles quedan **montados y superpuestos**; se oculta con `visibility`
+  (no `display:none`, que resetea el scroll en Safari) según el atributo `data-tab`.
+- **Inputs a 16px** vía regla CSS con `!important` sobre `chat-input`/`slot-input`
+  (`input-grande` exime a los que ya van más grandes): con menos, iOS hace zoom al
+  enfocar y descuadra el shell. Los estilos inline no pueden ganar esto de otro modo.
+- **La edición de una región no se cancela por blur** en móvil (cerrar el teclado
+  dispararía blur y tiraría el borrador): botones ✓ GUARDAR / ✕ con `onPointerDown`.
+- El onboarding va a pantalla completa, apilado en vertical (dibujo arriba).
+- La raíz usa `100dvh` con fallback a `100vh` (clase `.paciente-app`).
+- Es PWA instalable (`manifest.webmanifest` + iconos con el motivo del electro), **sin
+  service worker a propósito**: juego realtime, el offline no significa nada, y un SW
+  cacheando bundles nos daría clientes con código viejo.
+
 ---
 
 ## Estados de una región
@@ -138,8 +167,12 @@ Se respeta `prefers-reduced-motion`.
 | `BrainPane` | La mesa de operaciones: rejilla de regiones + parte + historial |
 | `BrainSlot` | Una región con todos sus estados |
 | `CaseBrief` | El parte de ingreso: qué se investiga, sin decir la respuesta |
-| `EditLog` | Historial clínico en cajón arrastrable, diff tachado → valor nuevo |
+| `EditLog` | Historial clínico en cajón arrastrable, diff tachado → valor nuevo (exporta `LogEntries`, la lista compartida) |
 | `Toast` | Aviso arriba a la derecha: pista (ámbar) o rechazo del middleware (rojo) |
+| `MobileTabBar` | Navbar inferior móvil: cuatro pestañas con badges y aforo |
+| `HistorialPane` | El historial como pestaña a pantalla completa (solo móvil) |
+| `BurgerMenu` | El menú ☰ de la cabecera móvil: sonido, pistas, ayuda, nueva partida, tu nombre |
+| `PasilloPane` | El pasillo: deliberación del público, plegable a riel (solo escritorio) |
 
 ---
 

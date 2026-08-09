@@ -5,14 +5,21 @@
  * cuota de Portal ni depender de que el agente esté levantado. NO es la aplicación:
  * aquí nada se publica, nada llega y la IA no piensa. La app real es index.html.
  */
+import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { seedSnapshot, type BrainState, type Identity } from "@el-paciente/shared";
 import { Monitor } from "./components/Monitor";
 import { ChatPane } from "./components/ChatPane";
 import { BrainPane } from "./components/BrainPane";
+import { PasilloPane } from "./components/PasilloPane";
+import { HistorialPane } from "./components/HistorialPane";
+import { MobileTabBar, type MobileTab } from "./components/MobileTabBar";
 import { RoundOverlay } from "./components/RoundOverlay";
 import { NewGameLoading } from "./components/NewGameLoading";
+import { Onboarding } from "./components/Onboarding";
+import { useIsMobile } from "./hooks/useIsMobile";
 import type { ChatEntry } from "./hooks/useChat";
+import type { PasilloEntry } from "./hooks/usePasillo";
 import type { RemoteCursor } from "./hooks/useBrain";
 import { T } from "./theme";
 import "./styles.css";
@@ -25,6 +32,10 @@ const relevo = params.has("relevo");
 const fin = params.get("fin") as "revelado" | "paro" | "retirado" | null;
 /** ?cargando=1 muestra el aviso de "pidiendo paciente nuevo…". */
 const cargando = params.has("cargando");
+/** ?tab=pasillo|chat|mente|historial fija la pestaña inicial del shell móvil. */
+const initialTab = (params.get("tab") as MobileTab | null) ?? "chat";
+/** ?onboarding=1 fuerza el modal de entrada, sin tocar localStorage. */
+const conOnboarding = params.has("onboarding");
 const identity: Identity = { nickname: "tú", color: "#9be89b" };
 
 /** El mismo estado intervenido que muestra el diseño, para poder compararlos. */
@@ -98,11 +109,21 @@ const chat: ChatEntry[] = [
   }),
 ];
 
+/** El pasillo del preview: la deliberación de muestra. */
+const pasillo: PasilloEntry[] = [
+  { id: "p1", at: now - 200_000, message: { nickname: "marta", color: "#e8a0c8", body: "Propongo borrarle la regla primero." } },
+  { id: "p2", at: now - 150_000, message: { nickname: "rafa", color: "#8fb8e8", body: "Y algo que le dé permiso, si no se cierra en banda." } },
+  { id: "p3", at: now - 90_000, message: { nickname: "lucia", color: "#d4c46a", body: "Cuidado con el pulso, que se nos muere." } },
+];
+
 function App() {
+  const mobile = useIsMobile();
+  const [tab, setTab] = useState<MobileTab>(initialTab);
+
   return (
     <div
+      className="paciente-app"
       style={{
-        height: "100vh",
         display: "flex",
         flexDirection: "column",
         background: T.bg,
@@ -118,6 +139,7 @@ function App() {
         sessionSeconds={3127}
         expediente="001-A"
         onShowHelp={() => {}}
+        compact={mobile}
       />
       {fin && (
         <RoundOverlay
@@ -137,7 +159,23 @@ function App() {
         />
       )}
       {cargando && <NewGameLoading />}
-      <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      {conOnboarding && (
+        <Onboarding nickname="tú" onFinish={() => location.assign(location.pathname)} />
+      )}
+      <div
+        className="paciente-body"
+        data-tab={mobile ? tab : undefined}
+        style={{ flex: 1, display: "flex", minHeight: 0 }}
+      >
+        <PasilloPane
+          entries={pasillo}
+          identity={identity}
+          online={4}
+          collapsed={false}
+          plegable={!mobile}
+          onToggle={() => {}}
+          onSend={async () => null}
+        />
         <ChatPane
           entries={chat}
           typingNicknames={["marta"]}
@@ -151,11 +189,22 @@ function App() {
           cursors={cursors}
           now={now}
           locked={relevo}
+          mobile={mobile}
           onEdit={async () => null}
           onCursor={() => {}}
           onReject={() => {}}
         />
+        {mobile && <HistorialPane log={brain.log} />}
       </div>
+
+      {mobile && (
+        <MobileTabBar
+          active={tab}
+          onSelect={setTab}
+          badges={{ pasillo: 2, chat: 0, mente: 0, historial: 5 }}
+          online={4}
+        />
+      )}
     </div>
   );
 }

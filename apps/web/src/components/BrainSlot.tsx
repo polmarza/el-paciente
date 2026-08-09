@@ -17,6 +17,8 @@ interface BrainSlotProps {
   cursor: RemoteCursor | undefined;
   /** Relevo entre pacientes: nada es editable. */
   locked: boolean;
+  /** En táctil la edición se cierra con botones, nunca por blur. */
+  mobile: boolean;
   editing: boolean;
   draft: string;
   now: number;
@@ -28,7 +30,7 @@ interface BrainSlotProps {
 
 /** Una región de la mente: editable, bloqueable y con el rastro de quien la tocó. */
 export function BrainSlot(props: BrainSlotProps) {
-  const { def, value, state, cursor, editing, draft, now, locked } = props;
+  const { def, value, state, cursor, editing, draft, now, locked, mobile } = props;
 
   const cursorColor = cursor?.color ?? T.textMono;
   const secondsLeft = cooldownSecondsLeft(value, now);
@@ -151,32 +153,86 @@ export function BrainSlot(props: BrainSlotProps) {
       </div>
 
       {editing ? (
-        <input
-          className="slot-input"
-          value={draft}
-          autoFocus
-          maxLength={MAX_SLOT_CHARS}
-          aria-label={`Reescribir ${def.label}`}
-          onChange={(event) => props.onDraftChange(event.target.value)}
-          onBlur={props.onCancel}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") props.onCommit();
-            else if (event.key === "Escape") props.onCancel();
-            else if (event.key.length === 1 || event.key === "Backspace") keyClick();
-          }}
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            background: T.slotInputBg,
-            border: `1px solid ${T.slotInputBorder}`,
-            color: "#dff0ee",
-            fontFamily: FONT.mono,
-            fontSize: SIZE.body,
-            padding: "3px 6px",
-            borderRadius: 2,
-            outline: "none",
-          }}
-        />
+        <>
+          <input
+            className="slot-input"
+            value={draft}
+            autoFocus
+            maxLength={MAX_SLOT_CHARS}
+            aria-label={`Reescribir ${def.label}`}
+            onChange={(event) => props.onDraftChange(event.target.value)}
+            // En táctil, cancelar por blur es tirar el borrador: cerrar el teclado o
+            // rozar fuera dispara blur sin querer. Ahí la edición solo se cierra con
+            // los botones de abajo.
+            onBlur={mobile ? undefined : props.onCancel}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") props.onCommit();
+              else if (event.key === "Escape") props.onCancel();
+              else if (event.key.length === 1 || event.key === "Backspace") keyClick();
+            }}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              background: T.slotInputBg,
+              border: `1px solid ${T.slotInputBorder}`,
+              color: "#dff0ee",
+              fontFamily: FONT.mono,
+              fontSize: SIZE.body,
+              padding: mobile ? "9px 10px" : "3px 6px",
+              borderRadius: 2,
+              outline: "none",
+            }}
+          />
+          {mobile && (
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              {/* onPointerDown y no onClick: se dispara antes que cualquier blur y que
+                  los gestos fantasma del teclado virtual. */}
+              <button
+                type="button"
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  props.onCommit();
+                }}
+                style={{
+                  flex: 1,
+                  height: 40,
+                  background: "transparent",
+                  border: `1px solid ${T.vital}66`,
+                  borderRadius: 2,
+                  color: T.vital,
+                  fontFamily: FONT.mono,
+                  fontSize: SIZE.small,
+                  letterSpacing: ".08em",
+                  cursor: "pointer",
+                }}
+              >
+                ✓ GUARDAR
+              </button>
+              <button
+                type="button"
+                aria-label="Cancelar la edición"
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  props.onCancel();
+                }}
+                style={{
+                  flex: "none",
+                  width: 48,
+                  height: 40,
+                  background: "transparent",
+                  border: `1px solid ${T.slotBorder}`,
+                  borderRadius: 2,
+                  color: T.textDim,
+                  fontFamily: FONT.mono,
+                  fontSize: SIZE.small,
+                  cursor: "pointer",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div style={{ fontSize: SIZE.body, color: T.slotContent, lineHeight: 1.42, minHeight: 21 }}>
           “{value.content}”
