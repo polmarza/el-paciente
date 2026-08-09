@@ -12,6 +12,8 @@ interface BrainPaneProps {
   now: number;
   /** Durante el relevo entre pacientes no se opera: la mesa está vacía. */
   locked: boolean;
+  /** En el shell móvil el historial tiene pestaña propia: aquí no va el cajón. */
+  mobile: boolean;
   onEdit: (slot: SlotId, value: string) => Promise<string | null>;
   onCursor: (slot: SlotId | null) => void;
   onReject: (reason: string) => void;
@@ -23,6 +25,7 @@ export function BrainPane({
   cursors,
   now,
   locked,
+  mobile,
   onEdit,
   onCursor,
   onReject,
@@ -108,6 +111,7 @@ export function BrainPane({
               value={value}
               state={slotStateAt(value, now)}
               locked={locked}
+              mobile={mobile}
               cursor={cursorBySlot.get(def.id)}
               editing={editingSlot === def.id}
               draft={draft}
@@ -123,11 +127,15 @@ export function BrainPane({
 
       <CaseBrief caso={brain.caso} />
 
-      {/* Hueco para la pestaña cerrada del historial, que va en absoluto: sin él taparía
-          el final del parte de ingreso. */}
-      <div style={{ flex: "none", height: LOG_HANDLE_HEIGHT }} />
-
-      <EditLog log={brain.log} />
+      {/* En móvil el historial vive en su propia pestaña; el cajón y su hueco sobran. */}
+      {!mobile && (
+        <>
+          {/* Hueco para la pestaña cerrada del historial, que va en absoluto: sin él
+              taparía el final del parte de ingreso. */}
+          <div style={{ flex: "none", height: LOG_HANDLE_HEIGHT }} />
+          <EditLog log={brain.log} />
+        </>
+      )}
     </div>
   );
 }

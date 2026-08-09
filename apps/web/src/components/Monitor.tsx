@@ -3,6 +3,7 @@ import { BPM_ALARM, BPM_RESTING } from "@el-paciente/shared";
 import { FONT, T, SIZE } from "../theme";
 import { isMuted, monitorPing, setMuted } from "../lib/sound";
 import { hintsDisabled, setHintsDisabled } from "../lib/hints";
+import { BurgerMenu } from "./BurgerMenu";
 
 /** Ancho visible del electro, en unidades del viewBox. */
 const ECG_WIDTH = 110;
@@ -66,7 +67,23 @@ interface MonitorProps {
   /** Cambia con cada ronda: cada paciente tiene su propio expediente. */
   expediente: string;
   onShowHelp: () => void;
+  /**
+   * Cabecera del shell móvil: una fila, la bolita late en vez del electro, y los mandos
+   * se recogen en el menú ☰. Prop y no hook interno para que el preview pueda forzarla.
+   */
+  compact?: boolean;
 }
+
+/**
+ * El latido de la bolita compacta: una sístole rápida al arranque de cada ciclo y
+ * reposo el resto — el equivalente en un solo punto del pico R del electro.
+ */
+const DOT_BEAT: Keyframe[] = [
+  { transform: "scale(1)", opacity: 0.55, offset: 0 },
+  { transform: "scale(1.55)", opacity: 1, offset: 0.07 },
+  { transform: "scale(1)", opacity: 0.55, offset: 0.24 },
+  { transform: "scale(1)", opacity: 0.55, offset: 1 },
+];
 
 /** La cabecera del monitor: identidad del paciente, pulso, reloj y aforo. */
 export function Monitor({
@@ -78,6 +95,7 @@ export function Monitor({
   sessionSeconds,
   expediente,
   onShowHelp,
+  compact = false,
 }: MonitorProps) {
   const bpmColor = bpm > BPM_ALARM ? T.alarm : T.vital;
   const [silenced, setSilenced] = useState(isMuted);
@@ -85,6 +103,7 @@ export function Monitor({
   const [renaming, setRenaming] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const traceRef = useRef<SVGGElement>(null);
+  const dotRef = useRef<HTMLSpanElement>(null);
 
   // Cuanto más alto el pulso, más juntos los latidos y más rápido avanza la traza: la
   // onda no solo va más deprisa, también se ve más apretada. Es lo que hace un monitor
@@ -109,8 +128,17 @@ export function Monitor({
   // `setTimeout` deriva, al llegar tarde la animación ya había terminado y el reinicio
   // daba un tirón hacia atrás.
   useEffect(() => {
-    const group = traceRef.current;
-    if (!group) return;
+    // En compacto late la bolita; en completo se desplaza la traza del electro. El
+    // resto del mecanismo — el reloj, el bip, la resincronización — es exactamente
+    // el mismo, que para eso está verificado.
+    const target: HTMLElement | SVGGElement | null = compact
+      ? dotRef.current
+      : traceRef.current;
+    if (!target) return;
+
+    const keyframes: Keyframe[] = compact
+      ? DOT_BEAT
+      : [{ transform: "translateX(0px)" }, { transform: `translateX(${-beatWidth}px)` }];
 
     /**
      * Arranca la animación. Con `preservePhase`, retoma justo donde iba la anterior (para
@@ -124,7 +152,7 @@ export function Monitor({
      * veía al cambiar de pestaña y volver.
      */
     function startAnimation(preservePhase: boolean) {
-      const previous = group!.getAnimations()[0];
+      const previous = target!.getAnimations()[0];
       const previousPeriod = Number(previous?.effect?.getTiming().duration) || 0;
       const phase =
         preservePhase && previous && previousPeriod > 0
@@ -132,10 +160,11 @@ export function Monitor({
           : 0;
       previous?.cancel();
 
-      const next = group!.animate(
-        [{ transform: "translateX(0px)" }, { transform: `translateX(${-beatWidth}px)` }],
-        { duration: period, iterations: Infinity, easing: "linear" },
-      );
+      const next = target!.animate(keyframes, {
+        duration: period,
+        iterations: Infinity,
+        easing: "linear",
+      });
       next.currentTime = phase * period;
       return next;
     }
@@ -174,7 +203,7 @@ export function Monitor({
       cancelAnimationFrame(frame);
       animation.cancel();
     };
-  }, [beatWidth, period]);
+  }, [beatWidth, period, compact]);
 
   function toggleSound() {
     const next = !silenced;
@@ -186,6 +215,55 @@ export function Monitor({
     const next = !noHints;
     setHintsDisabled(next);
     setNoHints(next);
+  }
+
+  // La cabecera móvil: una sola fila. Sin expediente (ya vive en el título de la
+  // pestaña y en el marcador de desenlace) y sin reloj — en 375px, algo tenía que caer.
+  if (compact) {
+    return (
+      <div
+        style={{
+          height: 48,
+          flex: "none",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "0 10px 0 14px",
+          background: T.monitorBg,
+          borderBottom: `1px solid ${T.monitorBorder}`,
+          fontFamily: FONT.mono,
+          color: T.textMono,
+          fontSize: SIZE.small,
+          letterSpacing: ".08em",
+        }}
+      >
+        <span
+          ref={dotRef}
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: bpmColor,
+            flex: "none",
+          }}
+        />
+        <span style={{ color: T.textBright, fontWeight: 600 }}>EL PACIENTE</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ color: bpmColor, fontWeight: 600, fontSize: SIZE.lead }}>{bpm}</span>
+        <span style={{ color: T.textDim }}>LPM</span>
+        <BurgerMenu
+          nickname={nickname}
+          nicknameColor={nicknameColor}
+          onRename={onRename}
+          onNewGame={onNewGame}
+          onShowHelp={onShowHelp}
+          silenced={silenced}
+          onToggleSound={toggleSound}
+          noHints={noHints}
+          onToggleHints={toggleHints}
+        />
+      </div>
+    );
   }
 
   return (

@@ -14,6 +14,11 @@ interface PasilloPaneProps {
   online: number;
   /** Plegado a un riel vertical, para dejar la pantalla en dos columnas. */
   collapsed: boolean;
+  /**
+   * Si el plegado existe siquiera. En el shell móvil el pasillo es una pestaña y
+   * plegarlo no significa nada: fuera el riel y fuera el botón ‹.
+   */
+  plegable: boolean;
   onToggle: () => void;
   onSend: (body: string) => Promise<string | null>;
 }
@@ -29,6 +34,7 @@ export function PasilloPane({
   identity,
   online,
   collapsed,
+  plegable,
   onToggle,
   onSend,
 }: PasilloPaneProps) {
@@ -56,7 +62,7 @@ export function PasilloPane({
 
   // Plegado: un riel del ancho de un dedo que no se lleva sitio de la conversación,
   // pero sigue diciendo cuánta gente hay y cómo volver a abrirlo.
-  if (collapsed) {
+  if (plegable && collapsed) {
     return (
       <button
         type="button"
@@ -129,24 +135,26 @@ export function PasilloPane({
         <span>EL PASILLO</span>
         <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ color: T.online }}>● {online} DENTRO</span>
-          <button
-            type="button"
-            onClick={onToggle}
-            title="Plegar el pasillo"
-            aria-label="Plegar el pasillo"
-            aria-expanded
-            style={{
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              color: T.textDim,
-              fontFamily: FONT.mono,
-              fontSize: SIZE.small,
-              cursor: "pointer",
-            }}
-          >
-            ‹
-          </button>
+          {plegable && (
+            <button
+              type="button"
+              onClick={onToggle}
+              title="Plegar el pasillo"
+              aria-label="Plegar el pasillo"
+              aria-expanded
+              style={{
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                color: T.textDim,
+                fontFamily: FONT.mono,
+                fontSize: SIZE.small,
+                cursor: "pointer",
+              }}
+            >
+              ‹
+            </button>
+          )}
         </span>
       </div>
 

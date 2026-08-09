@@ -16,10 +16,14 @@ import { RoundOverlay } from "./components/RoundOverlay";
 import { NewGameLoading } from "./components/NewGameLoading";
 import { PasilloPane } from "./components/PasilloPane";
 import { Onboarding } from "./components/Onboarding";
+import { HistorialPane } from "./components/HistorialPane";
+import { MobileTabBar, type MobileTab } from "./components/MobileTabBar";
 import { useBrain } from "./hooks/useBrain";
 import { useChat } from "./hooks/useChat";
 import { usePasillo } from "./hooks/usePasillo";
 import { useNow } from "./hooks/useNow";
+import { useIsMobile } from "./hooks/useIsMobile";
+import { useUnreadCounts } from "./hooks/useUnreadCounts";
 import {
   hasSeenOnboarding,
   loadIdentity,
@@ -75,6 +79,11 @@ export default function App() {
 
   const [onboarding, setOnboarding] = useState(() => !hasSeenOnboarding());
   const [pasilloPlegado, setPasilloPlegado] = useState(pasilloCollapsed);
+
+  // El shell móvil: pestañas en vez de columnas. Los paneles siguen montados todos
+  // (las suscripciones viven en los hooks de arriba); solo cambia cuál se ve.
+  const mobile = useIsMobile();
+  const [tab, setTab] = useState<MobileTab>("chat");
 
   const togglePasillo = useCallback(() => {
     setPasilloPlegado((current) => {
@@ -222,10 +231,22 @@ export default function App() {
   const online = Math.max(brain.presenceCount, chat.presenceCount, 1);
   const disconnected = isDown(brain.status) || isDown(chat.status);
 
+  // Badges del shell móvil: novedades por pestaña desde la última visita.
+  const unreadCounts = useMemo(
+    () => ({
+      pasillo: visiblePasillo.length,
+      chat: visibleEntries.length,
+      mente: brain.log.length,
+      historial: brain.log.length,
+    }),
+    [visiblePasillo.length, visibleEntries.length, brain.log.length],
+  );
+  const badges = useUnreadCounts({ enabled: mobile, active: tab, counts: unreadCounts });
+
   return (
     <div
+      className="paciente-app"
       style={{
-        height: "100vh",
         display: "flex",
         flexDirection: "column",
         background: T.bg,
@@ -241,16 +262,22 @@ export default function App() {
         sessionSeconds={sessionSeconds}
         expediente={brain.expediente}
         onShowHelp={() => setOnboarding(true)}
+        compact={mobile}
       />
 
       {disconnected && <Flatline />}
 
-      <div className="paciente-body" style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      <div
+        className="paciente-body"
+        data-tab={mobile ? tab : undefined}
+        style={{ flex: 1, display: "flex", minHeight: 0 }}
+      >
         <PasilloPane
           entries={visiblePasillo}
           identity={identity}
           online={online}
           collapsed={pasilloPlegado}
+          plegable={!mobile}
           onToggle={togglePasillo}
           onSend={pasillo.send}
         />
@@ -272,11 +299,15 @@ export default function App() {
           cursors={brain.cursors}
           now={now}
           locked={relevo}
+          mobile={mobile}
           onEdit={handleEdit}
           onCursor={brain.announceCursor}
           onReject={showToast}
         />
+        {mobile && <HistorialPane log={brain.log} />}
       </div>
+
+      {mobile && <MobileTabBar active={tab} onSelect={setTab} badges={badges} online={online} />}
 
       {showOverlay && heldEnd && (
         <RoundOverlay

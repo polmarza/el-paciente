@@ -172,26 +172,39 @@ export function EditLog({ log }: { log: LogEntry[] }) {
             fontSize: SIZE.small,
           }}
         >
-          {log.length === 0 ? (
-            <div style={{ color: T.logPrev, lineHeight: 1.55 }}>
-              Sin intervenciones. El paciente sigue siendo quien era.
-            </div>
-          ) : (
-            log.map((entry) => (
-              <div key={entry.id} style={{ lineHeight: 1.55, color: T.logText }}>
-                <span style={{ color: T.logTime }}>{clockOf(entry.at)}</span>{" "}
-                <span style={{ color: entry.color, fontWeight: 600 }}>@{entry.nickname}</span> ·{" "}
-                {slotDef(entry.slot)?.label ?? entry.slot} ·{" "}
-                <span style={{ textDecoration: "line-through", color: T.logPrev }}>
-                  “{entry.prev}”
-                </span>{" "}
-                <span style={{ color: T.vital }}>→ “{entry.next}”</span>
-              </div>
-            ))
-          )}
+          <LogEntries log={log} />
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Las líneas del historial, sin contenedor: las comparten el cajón de escritorio y la
+ * pestaña HISTORIAL del shell móvil, cada uno con su propio scroll alrededor.
+ */
+export function LogEntries({ log }: { log: LogEntry[] }) {
+  if (log.length === 0) {
+    return (
+      <div style={{ color: T.logPrev, lineHeight: 1.55 }}>
+        Sin intervenciones. El paciente sigue siendo quien era.
+      </div>
+    );
+  }
+  return (
+    <>
+      {log.map((entry) => (
+        <div key={entry.id} style={{ lineHeight: 1.55, color: T.logText }}>
+          <span style={{ color: T.logTime }}>{clockOf(entry.at)}</span>{" "}
+          <span style={{ color: entry.color, fontWeight: 600 }}>@{entry.nickname}</span> ·{" "}
+          {slotDef(entry.slot)?.label ?? entry.slot} ·{" "}
+          <span style={{ textDecoration: "line-through", color: T.logPrev }}>
+            “{entry.prev}”
+          </span>{" "}
+          <span style={{ color: T.vital }}>→ “{entry.next}”</span>
+        </div>
+      ))}
+    </>
   );
 }
 

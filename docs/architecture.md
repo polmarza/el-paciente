@@ -131,6 +131,10 @@ directamente. Si más adelante Portal publica uno, seguir el "Protocolo de MCPs"
 Repositorio: <https://github.com/polmarza/el-paciente> (público, `origin`, rama `main`).
 
 - **Frontend:** Vercel, deploy desde `main` (`apps/web`). Variables `VITE_*` en el panel.
+  Es PWA instalable (`public/manifest.webmanifest` + iconos), **sin service worker a
+  propósito**: Chrome ya no lo exige para instalar, el juego es realtime (el offline no
+  significa nada) y un SW cacheando bundles nos daría clientes con código viejo — ya
+  sufrimos una vez el equivalente con la caché normal del navegador.
 - **Config de Portal:** `portal.config.ts` se despliega con `@portalsdk/cli`. El CLI no
   tiene login interactivo: se autentica con la secret key del proyecto en el entorno.
   El deploy es atómico (si hay errores, no se aplica nada).

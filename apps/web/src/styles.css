@@ -106,10 +106,21 @@ a:hover {
   border-color: #3d5a66;
 }
 
+/* La raíz de la app. dvh con fallback: en iOS Safari, 100vh incluye la barra de URL y
+   deja el composer medio enterrado; dvh sigue al viewport real. El fallback en cascada
+   no se puede expresar en un estilo inline — por eso esto es una clase. */
+.paciente-app {
+  height: 100vh;
+  height: 100dvh;
+}
+
 /* Tres columnas para proyector. El pasillo es lo primero que sobra al estrecharse:
    es conversación entre el público, no la pieza. El chat no lleva ancho fijo — absorbe
-   lo que quede, tanto aquí como cuando el usuario pliega el pasillo a mano. */
-@media (max-width: 1250px) {
+   lo que quede, tanto aquí como cuando el usuario pliega el pasillo a mano.
+
+   OJO al `min-width: 701px`: por debajo de eso manda el shell móvil de pestañas, y
+   estas reglas (sobre todo el display:none del pasillo) matarían su pestaña. */
+@media (max-width: 1250px) and (min-width: 701px) {
   .paciente-pasillo {
     display: none !important;
   }
@@ -118,7 +129,7 @@ a:hover {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900px) and (min-width: 701px) {
   .paciente-body {
     flex-direction: column;
   }
@@ -129,6 +140,46 @@ a:hover {
   .paciente-chat {
     flex: 1 1 55% !important;
     border-right: none !important;
+  }
+}
+
+/* ─── El shell móvil ──────────────────────────────────────────────────────────
+   Umbral duplicado a la fuerza con MOBILE_BREAKPOINT en hooks/useIsMobile.ts:
+   CSS no puede leer constantes de JS. Si cambias uno, cambia el otro.
+
+   Los cuatro paneles se quedan MONTADOS y superpuestos; se oculta con visibility
+   (no display:none, que en Safari resetea el scroll del panel) y solo el activo
+   recibe eventos. App marca el activo con data-tab en .paciente-body. */
+@media (max-width: 700px) {
+  .paciente-body[data-tab] {
+    position: relative;
+  }
+  .paciente-body[data-tab] > .paciente-pasillo,
+  .paciente-body[data-tab] > .paciente-chat,
+  .paciente-body[data-tab] > .paciente-brain,
+  .paciente-body[data-tab] > .paciente-historial {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    border-right: none !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .paciente-body[data-tab="pasillo"] > .paciente-pasillo,
+  .paciente-body[data-tab="chat"] > .paciente-chat,
+  .paciente-body[data-tab="mente"] > .paciente-brain,
+  .paciente-body[data-tab="historial"] > .paciente-historial {
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* iOS hace zoom automático al enfocar un input con fuente <16px, y el zoom
+     descuadra todo el shell. Los estilos de la app son inline, así que solo un
+     !important sobre las clases que ya llevan todos los inputs puede ganarles.
+     `input-grande` exime a los que ya van a 16px o más (el del onboarding). */
+  input.chat-input:not(.input-grande),
+  input.slot-input {
+    font-size: 16px !important;
   }
 }
 

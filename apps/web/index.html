@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>EL PACIENTE</title>
     <meta
       name="description"
@@ -11,6 +11,19 @@
     <meta name="theme-color" content="#07090b" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!--
+      PWA instalable, SIN service worker a propósito: Chrome ya no lo exige para
+      instalar, el juego es realtime (el offline no significa nada aquí) y un SW
+      cacheando bundles nos daría clientes con código viejo — ya nos pasó una vez
+      con la caché normal del navegador, no lo queremos crónico.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="EL PACIENTE" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://elpaciente.es" />
