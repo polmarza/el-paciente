@@ -113,8 +113,12 @@ de estructura, no solo de tamaño — por eso lo decide React y no solo CSS:
 - La superior es el `Monitor` compacto: una fila con la **bolita-latido** (deja de ser
   decorativa: late una vez por ciclo del pulso con el mismo reloj WAAPI que dispara el
   bip — verde en reposo, roja en alarma, sustituye al electro) + `NN LPM` + menú ☰
-  (`BurgerMenu`: sonido, pistas, cómo se juega, nueva partida con confirmación, tu
-  nombre). Expediente y reloj se sacrifican en 375px.
+  (`BurgerMenu`: sonido, pistas, cómo se juega, tu nombre y nueva partida). Expediente y
+  reloj se sacrifican en 375px.
+- Las dos entradas del menú que **piden algo** —cambiar de nombre y traer un paciente
+  nuevo— abren un diálogo propio (`MobileModal`) en vez de resolverse dentro del
+  desplegable: el menú se cierra al tocar fuera, que es justo lo que haces al ir a por el
+  teclado, y en un panel de 250px ni un campo de texto ni un "¿seguro?" tienen sitio.
 - Los cuatro paneles quedan **montados y superpuestos**; se oculta con `visibility`
   (no `display:none`, que resetea el scroll en Safari) según el atributo `data-tab`.
 - **Inputs a 16px** vía regla CSS con `!important` sobre `chat-input`/`slot-input`
@@ -171,7 +175,8 @@ Se respeta `prefers-reduced-motion`.
 | `Toast` | Aviso arriba a la derecha: pista (ámbar) o rechazo del middleware (rojo) |
 | `MobileTabBar` | Navbar inferior móvil: cuatro pestañas con badges y aforo |
 | `HistorialPane` | El historial como pestaña a pantalla completa (solo móvil) |
-| `BurgerMenu` | El menú ☰ de la cabecera móvil: sonido, pistas, ayuda, nueva partida, tu nombre |
+| `BurgerMenu` | El menú ☰ de la cabecera móvil: sonido, pistas, ayuda, tu nombre, nueva partida |
+| `MobileModal` | Diálogo de las decisiones del menú móvil (renombrar, confirmar relevo) |
 | `PasilloPane` | El pasillo: deliberación del público, plegable a riel (solo escritorio) |
 
 ---

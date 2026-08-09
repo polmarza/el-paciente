@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FONT, T, SIZE } from "../theme";
+import { MobileModal } from "./MobileModal";
 
 interface BurgerMenuProps {
   nickname: string;
@@ -14,10 +15,17 @@ interface BurgerMenuProps {
   onToggleHints: () => void;
 }
 
+/** Qué diálogo hay abierto por encima del menú, si hay alguno. */
+type Dialog = null | "nombre" | "partida";
+
 /**
  * El menú de la cabecera móvil: lo que en escritorio son botones sueltos, aquí en
- * columna con dedales de verdad (≥44px). La confirmación de NUEVA PARTIDA vive dentro
- * del propio menú: mismo patrón de dos toques que en escritorio.
+ * columna con dedales de verdad (≥46px).
+ *
+ * Las dos acciones que piden algo del usuario —cambiar de nombre y traer un paciente
+ * nuevo— salen del menú y abren su propio diálogo. Dentro del desplegable eran
+ * incómodas: el menú se cierra al tocar fuera (justo lo que haces al buscar el teclado),
+ * y en un panel estrecho ni un campo de texto ni un "¿seguro?" tienen sitio.
  */
 export function BurgerMenu({
   nickname,
@@ -31,18 +39,20 @@ export function BurgerMenu({
   onToggleHints,
 }: BurgerMenuProps) {
   const [open, setOpen] = useState(false);
-  const [confirmNew, setConfirmNew] = useState(false);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const [draftName, setDraftName] = useState(nickname);
 
-  function close() {
+  function openDialog(which: Exclude<Dialog, null>) {
     setOpen(false);
-    setConfirmNew(false);
+    if (which === "nombre") setDraftName(nickname);
+    setDialog(which);
   }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => setOpen((current) => !current)}
         aria-label={open ? "Cerrar el menú" : "Abrir el menú"}
         aria-expanded={open}
         style={{
@@ -66,7 +76,7 @@ export function BurgerMenu({
         <>
           {/* Telón invisible: tocar fuera cierra el menú. */}
           <div
-            onClick={close}
+            onClick={() => setOpen(false)}
             style={{ position: "fixed", inset: 0, zIndex: 54, background: "rgba(4,6,8,.45)" }}
           />
           <div
@@ -86,50 +96,6 @@ export function BurgerMenu({
               overflow: "hidden",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "10px 14px",
-                borderBottom: `1px solid ${T.brainRule}`,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: FONT.mono,
-                  fontSize: SIZE.micro,
-                  letterSpacing: ".12em",
-                  color: T.textDim,
-                }}
-              >
-                TU NOMBRE
-              </span>
-              <input
-                className="chat-input"
-                defaultValue={nickname}
-                maxLength={24}
-                aria-label="Cambiar tu nombre en la sala"
-                onBlur={(event) => onRename(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") event.currentTarget.blur();
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  boxSizing: "border-box",
-                  background: T.chatInputBg,
-                  border: `1px solid ${T.chatInputBorder}`,
-                  color: nicknameColor,
-                  fontFamily: FONT.mono,
-                  fontSize: SIZE.body,
-                  padding: "8px 10px",
-                  borderRadius: 2,
-                  outline: "none",
-                }}
-              />
-            </div>
-
             <MenuRow
               label={silenced ? "♪ Sonido: apagado" : "♪ Sonido: encendido"}
               tone={silenced ? T.textFaint : T.vital}
@@ -144,31 +110,117 @@ export function BurgerMenu({
               label="? Cómo se juega"
               tone={T.textMono}
               onClick={() => {
-                close();
+                setOpen(false);
                 onShowHelp();
               }}
             />
             <MenuRow
-              label={confirmNew ? "¿SEGURO? Se lo llevan" : "Nueva partida"}
-              tone={confirmNew ? T.alarm : T.textMono}
-              onClick={() => {
-                if (confirmNew) {
-                  onNewGame();
-                  close();
-                } else {
-                  setConfirmNew(true);
-                  setTimeout(() => setConfirmNew(false), 4000);
-                }
-              }}
+              label={`@${nickname}`}
+              hint="Cambiar tu nombre"
+              tone={nicknameColor}
+              onClick={() => openDialog("nombre")}
+            />
+            <MenuRow
+              label="Nueva partida"
+              hint="Se llevan a este paciente"
+              tone={T.textMono}
+              onClick={() => openDialog("partida")}
             />
           </div>
         </>
+      )}
+
+      {dialog === "nombre" && (
+        <MobileModal
+          title="TU NOMBRE EN LA SALA"
+          confirmLabel="GUARDAR"
+          confirmDisabled={!draftName.trim()}
+          onCancel={() => setDialog(null)}
+          onConfirm={() => {
+            onRename(draftName);
+            setDialog(null);
+          }}
+        >
+          <input
+            className="chat-input"
+            value={draftName}
+            autoFocus
+            maxLength={24}
+            aria-label="Cambiar tu nombre en la sala"
+            onChange={(event) => setDraftName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" || !draftName.trim()) return;
+              onRename(draftName);
+              setDialog(null);
+            }}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              background: T.chatInputBg,
+              border: `1px solid ${T.chatInputBorder}`,
+              color: nicknameColor,
+              fontFamily: FONT.mono,
+              fontSize: SIZE.body,
+              padding: "12px 14px",
+              borderRadius: 2,
+              outline: "none",
+            }}
+          />
+          <p
+            style={{
+              margin: "10px 0 0",
+              fontFamily: FONT.mono,
+              fontSize: SIZE.micro,
+              lineHeight: 1.6,
+              color: T.textFaint,
+            }}
+          >
+            Queda escrito en su historial cada vez que le tocas algo, y es como te
+            reconoce el resto de la sala.
+          </p>
+        </MobileModal>
+      )}
+
+      {dialog === "partida" && (
+        <MobileModal
+          title="¿TRAER UN PACIENTE NUEVO?"
+          confirmLabel="SÍ, TRAER OTRO"
+          danger
+          onCancel={() => setDialog(null)}
+          onConfirm={() => {
+            onNewGame();
+            setDialog(null);
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: FONT.mono,
+              fontSize: SIZE.small,
+              lineHeight: 1.65,
+              color: T.textMono,
+            }}
+          >
+            Se acaba la partida de todos los que están en la sala, y su secreto se va con
+            él sin que nadie lo sepa.
+          </p>
+        </MobileModal>
       )}
     </>
   );
 }
 
-function MenuRow({ label, tone, onClick }: { label: string; tone: string; onClick: () => void }) {
+function MenuRow({
+  label,
+  hint,
+  tone,
+  onClick,
+}: {
+  label: string;
+  hint?: string;
+  tone: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -179,7 +231,7 @@ function MenuRow({ label, tone, onClick }: { label: string; tone: string; onClic
         width: "100%",
         minHeight: 46,
         textAlign: "left",
-        padding: "0 14px",
+        padding: hint ? "9px 14px" : "0 14px",
         background: "transparent",
         border: "none",
         borderBottom: `1px solid ${T.brainRule}`,
@@ -191,6 +243,11 @@ function MenuRow({ label, tone, onClick }: { label: string; tone: string; onClic
       }}
     >
       {label}
+      {hint && (
+        <span style={{ display: "block", marginTop: 3, fontSize: SIZE.micro, color: T.textFaint }}>
+          {hint}
+        </span>
+      )}
     </button>
   );
 }
